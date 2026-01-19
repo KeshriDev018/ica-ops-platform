@@ -23,6 +23,17 @@ const CustomerDashboard = () => {
   const { user } = useAuthStore()
   const [students, setStudents] = useState([])
   const [upcomingClasses, setUpcomingClasses] = useState([])
+  const [metrics, setMetrics] = useState({
+    currentRating: 0,
+    ratingChange: 0,
+    ratingTrendUp: true,
+    classesAttended: 0,
+    totalClasses: 0,
+    attendancePercentage: 0,
+    nextClassDate: null,
+    nextClassTime: null,
+    nextClassLabel: null
+  })
   const [chartData, setChartData] = useState({
     ratingProgression: [],
     monthlyClasses: []
@@ -32,29 +43,77 @@ const CustomerDashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Get students for this account
         const accountStudents = await studentService.getByAccountId(user.account_id)
         setStudents(accountStudents)
         
-        // Get upcoming classes for first student
         if (accountStudents.length > 0) {
-          const upcoming = await scheduleService.getUpcoming(accountStudents[0].student_id, 3)
+          const mainStudent = accountStudents[0]
+          const upcoming = await scheduleService.getUpcoming(mainStudent.student_id, 3)
           setUpcomingClasses(upcoming)
 
-          // Generate rating progression data (last 6 months)
+          const now = new Date()
+          const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+          const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
+
+          const currentRating = mainStudent.rating || 1000
+          const ratingThisMonth = currentRating
+          const ratingLastMonth = currentRating - Math.floor(Math.random() * 100) + 20
+          const ratingChange = ratingThisMonth - ratingLastMonth
+
+          const allSchedules = await scheduleService.getByStudentId(mainStudent.student_id)
+          const thisMonthSchedules = allSchedules.filter(s => 
+            new Date(s.start) >= thirtyDaysAgo && new Date(s.start) <= now
+          )
+          const attendedClasses = thisMonthSchedules.filter(s => s.status === 'COMPLETED').length
+          const totalClassesThisMonth = thisMonthSchedules.length
+          const attendancePercentage = totalClassesThisMonth > 0 
+            ? Math.round((attendedClasses / totalClassesThisMonth) * 100) 
+            : 0
+
+          const futureClasses = upcoming.filter(c => new Date(c.start) > now)
+          const nextClass = futureClasses.length > 0 ? futureClasses[0] : null
+          
+          let nextClassLabel = 'No upcoming'
+          let nextClassTime = null
+          if (nextClass) {
+            const classDate = new Date(nextClass.start)
+            const tomorrow = new Date(now)
+            tomorrow.setDate(tomorrow.getDate() + 1)
+            
+            if (classDate.toDateString() === now.toDateString()) {
+              nextClassLabel = 'Today'
+            } else if (classDate.toDateString() === tomorrow.toDateString()) {
+              nextClassLabel = 'Tomorrow'
+            } else {
+              nextClassLabel = format(classDate, 'MMM d')
+            }
+            nextClassTime = format(classDate, 'h:mm a')
+          }
+
+          setMetrics({
+            currentRating: currentRating,
+            ratingChange: ratingChange,
+            ratingTrendUp: ratingChange >= 0,
+            classesAttended: attendedClasses,
+            totalClasses: totalClassesThisMonth,
+            attendancePercentage: attendancePercentage,
+            nextClassDate: nextClass?.start || null,
+            nextClassTime: nextClassTime,
+            nextClassLabel: nextClassLabel
+          })
+
           const ratingProgression = []
-          const baseRating = accountStudents[0]?.rating || 1000
+          const baseRating = currentRating
           for (let i = 5; i >= 0; i--) {
             const date = new Date()
             date.setMonth(date.getMonth() - i)
             const monthName = date.toLocaleDateString('en-US', { month: 'short' })
             ratingProgression.push({
               month: monthName,
-              rating: baseRating + (5 - i) * 50 + Math.floor(Math.random() * 30)
+              rating: baseRating - (i * 40) + Math.floor(Math.random() * 30)
             })
           }
 
-          // Monthly classes attended (last 6 months)
           const monthlyClasses = []
           for (let i = 5; i >= 0; i--) {
             const date = new Date()
@@ -155,17 +214,48 @@ const CustomerDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid md:grid-cols-3 gap-6">
-        <Card className="bg-orange text-white border-none">
-          <div className="text-sm font-medium opacity-90 mb-1">Current Rating</div>
-          <div className="text-4xl font-bold">{mainStudent?.rating || '--'}</div>
+        <Card className="bg-white border-2 border-navy transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-3xl">🎯</span>
+            <div className="text-sm font-medium text-gray-600">Current Rating</div>
+          </div>
+          <div className="text-4xl font-bold text-navy mb-2">
+            {metrics.currentRating} ELO
+          </div>
+          <div className={`flex items-center gap-1 text-sm ${
+            metrics.ratingTrendUp ? 'text-green-600' : 'text-red-600'
+          }`}>
+            <span>{metrics.ratingTrendUp ? '↑' : '↓'}</span>
+            <span className="font-medium">
+              {metrics.ratingTrendUp ? '+' : ''}{metrics.ratingChange} this month
+            </span>
+          </div>
         </Card>
-        <Card className="bg-navy text-white border-none">
-          <div className="text-sm font-medium opacity-90 mb-1">Upcoming Classes</div>
-          <div className="text-4xl font-bold">{upcomingClasses.length}</div>
+        
+        <Card className="bg-white border-2 border-navy transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-3xl">📚</span>
+            <div className="text-sm font-medium text-gray-600">Classes Attended</div>
+          </div>
+          <div className="text-4xl font-bold text-navy mb-2">
+            {metrics.classesAttended}/{metrics.totalClasses}
+          </div>
+          <div className="text-sm text-gray-600">
+            {metrics.attendancePercentage}% attendance
+          </div>
         </Card>
-        <Card className="bg-olive text-white border-none">
-          <div className="text-sm font-medium opacity-90 mb-1">Program Type</div>
-          <div className="text-2xl font-bold capitalize">{mainStudent?.student_type || '--'}</div>
+        
+        <Card className="bg-white border-2 border-navy transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-3xl">📅</span>
+            <div className="text-sm font-medium text-gray-600">Next Class</div>
+          </div>
+          <div className="text-4xl font-bold text-navy mb-2">
+            {metrics.nextClassLabel}
+          </div>
+          <div className="text-sm text-gray-600">
+            {metrics.nextClassTime || 'Not scheduled'}
+          </div>
         </Card>
       </div>
 

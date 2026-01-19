@@ -16,12 +16,22 @@ import {
 import studentService from '../../services/studentService'
 import demoService from '../../services/demoService'
 import subscriptionService from '../../services/subscriptionService'
+import coachService from '../../services/coachService'
+import batchService from '../../services/batchService'
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
     totalStudents: 0,
-    activeDemos: 0,
+    studentsTrend: 0,
+    studentsTrendUp: true,
+    activeCoaches: 0,
+    coachesOnLeave: 0,
+    activeBatches: 0,
+    upcomingBatches: 0,
     totalRevenue: 0,
+    revenueTrend: 0,
+    revenueTrendUp: true,
+    activeDemos: 0,
     activeSubscriptions: 0
   })
   const [recentDemos, setRecentDemos] = useState([])
@@ -34,10 +44,12 @@ const AdminDashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [students, demos, subscriptions] = await Promise.all([
+        const [students, demos, subscriptions, coaches, batches] = await Promise.all([
           studentService.getAll(),
           demoService.getAll(),
-          subscriptionService.getAll()
+          subscriptionService.getAll(),
+          coachService.getAll(),
+          batchService.getAll()
         ])
 
         const activeDemos = demos.filter(d => 
@@ -46,7 +58,41 @@ const AdminDashboard = () => {
         const activeSubs = subscriptions.filter(s => s.status === 'ACTIVE')
         const totalRevenue = activeSubs.reduce((sum, sub) => sum + sub.amount, 0)
 
-        // Generate weekly revenue data (last 7 days)
+        const now = new Date()
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
+
+        const studentsThisMonth = students.filter(s => 
+          new Date(s.created_at) >= thirtyDaysAgo
+        ).length
+        const studentsLastMonth = students.filter(s => {
+          const created = new Date(s.created_at)
+          return created >= sixtyDaysAgo && created < thirtyDaysAgo
+        }).length
+        const studentsTrend = studentsThisMonth - studentsLastMonth
+
+        const revenueThisMonth = activeSubs
+          .filter(s => new Date(s.created_at) >= thirtyDaysAgo)
+          .reduce((sum, sub) => sum + sub.amount, 0)
+        const revenueLastMonth = activeSubs
+          .filter(s => {
+            const created = new Date(s.created_at)
+            return created >= sixtyDaysAgo && created < thirtyDaysAgo
+          })
+          .reduce((sum, sub) => sum + sub.amount, 0)
+        const revenueTrendPercent = revenueLastMonth > 0 
+          ? Math.round(((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100)
+          : 0
+
+        const coachesOnLeave = coaches.filter(c => c.status === 'ON_LEAVE' || c.status === 'INACTIVE').length
+        const activeCoaches = coaches.filter(c => c.status === 'ACTIVE').length
+
+        const activeBatches = batches.filter(b => b.status === 'ACTIVE').length
+        const upcomingBatches = batches.filter(b => {
+          const startDate = new Date(b.start_date)
+          return b.status === 'SCHEDULED' && startDate > now && startDate <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+        }).length
+
         const weeklyRevenue = []
         const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         for (let i = 6; i >= 0; i--) {
@@ -59,7 +105,6 @@ const AdminDashboard = () => {
           })
         }
 
-        // Demo conversion trends (last 7 days)
         const demoConversions = []
         for (let i = 6; i >= 0; i--) {
           const date = new Date()
@@ -76,8 +121,16 @@ const AdminDashboard = () => {
 
         setStats({
           totalStudents: students.length,
-          activeDemos: activeDemos.length,
+          studentsTrend: studentsTrend,
+          studentsTrendUp: studentsTrend >= 0,
+          activeCoaches: activeCoaches,
+          coachesOnLeave: coachesOnLeave,
+          activeBatches: activeBatches,
+          upcomingBatches: upcomingBatches,
           totalRevenue: totalRevenue,
+          revenueTrend: revenueTrendPercent,
+          revenueTrendUp: revenueTrendPercent >= 0,
+          activeDemos: activeDemos.length,
           activeSubscriptions: activeSubs.length
         })
 
@@ -116,21 +169,58 @@ const AdminDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid md:grid-cols-4 gap-6">
-        <Card className="bg-navy text-white border-none">
-          <div className="text-sm font-medium opacity-90 mb-1">Total Students</div>
-          <div className="text-4xl font-bold">{stats.totalStudents}</div>
+        <Card className="bg-white border-2 border-navy transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-3xl">📊</span>
+            <div className="text-sm font-medium text-gray-600">Total Students</div>
+          </div>
+          <div className="text-4xl font-bold text-navy mb-2">{stats.totalStudents}</div>
+          <div className={`flex items-center gap-1 text-sm ${
+            stats.studentsTrendUp ? 'text-green-600' : 'text-red-600'
+          }`}>
+            <span>{stats.studentsTrendUp ? '↑' : '↓'}</span>
+            <span className="font-medium">
+              {stats.studentsTrendUp ? '+' : ''}{stats.studentsTrend} this month
+            </span>
+          </div>
         </Card>
-        <Card className="bg-orange text-white border-none">
-          <div className="text-sm font-medium opacity-90 mb-1">Active Demos</div>
-          <div className="text-4xl font-bold">{stats.activeDemos}</div>
+        
+        <Card className="bg-white border-2 border-navy transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-3xl">👨‍🏫</span>
+            <div className="text-sm font-medium text-gray-600">Active Coaches</div>
+          </div>
+          <div className="text-4xl font-bold text-navy mb-2">{stats.activeCoaches}</div>
+          <div className="text-sm text-gray-600">
+            {stats.coachesOnLeave > 0 ? `${stats.coachesOnLeave} on leave` : 'All active'}
+          </div>
         </Card>
-        <Card className="bg-olive text-white border-none">
-          <div className="text-sm font-medium opacity-90 mb-1">Active Subscriptions</div>
-          <div className="text-4xl font-bold">{stats.activeSubscriptions}</div>
+        
+        <Card className="bg-white border-2 border-navy transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-3xl">📚</span>
+            <div className="text-sm font-medium text-gray-600">Active Batches</div>
+          </div>
+          <div className="text-4xl font-bold text-navy mb-2">{stats.activeBatches}</div>
+          <div className="text-sm text-gray-600">
+            {stats.upcomingBatches > 0 ? `${stats.upcomingBatches} starting soon` : 'None upcoming'}
+          </div>
         </Card>
-        <Card className="bg-cream border-2 border-navy">
-          <div className="text-sm font-medium text-gray-600 mb-1">Total Revenue</div>
-          <div className="text-4xl font-bold text-navy">{formatCurrency(stats.totalRevenue)}</div>
+        
+        <Card className="bg-cream border-2 border-navy transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-3xl">💰</span>
+            <div className="text-sm font-medium text-gray-600">Total Revenue</div>
+          </div>
+          <div className="text-4xl font-bold text-navy mb-2">{formatCurrency(stats.totalRevenue)}</div>
+          <div className={`flex items-center gap-1 text-sm ${
+            stats.revenueTrendUp ? 'text-green-600' : 'text-red-600'
+          }`}>
+            <span>{stats.revenueTrendUp ? '↑' : '↓'}</span>
+            <span className="font-medium">
+              {stats.revenueTrendUp ? '+' : ''}{stats.revenueTrend}% MoM
+            </span>
+          </div>
         </Card>
       </div>
 

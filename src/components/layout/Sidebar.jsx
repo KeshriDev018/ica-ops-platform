@@ -1,9 +1,15 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import useAuthStore from '../../store/authStore'
 
 const Sidebar = () => {
   const location = useLocation()
+  const navigate = useNavigate()
   const { role, logout } = useAuthStore()
+  
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
   
   const getNavItems = () => {
     switch (role) {
@@ -78,10 +84,10 @@ const Sidebar = () => {
         </ul>
       </nav>
       
-      <div className="mt-auto pt-6 px-4">
+      <div className="mt-auto pt-6 px-4 border-t border-navy/50">
         <button
-          onClick={logout}
-          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-navy/80 hover:text-white transition-colors"
+          onClick={handleLogout}
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-red-600 hover:text-white transition-colors"
         >
           <span className="text-xl">🚪</span>
           <span>Logout</span>
