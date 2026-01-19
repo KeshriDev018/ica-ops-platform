@@ -313,25 +313,31 @@ const LandingPage = () => {
           </p>
           <div className="grid md:grid-cols-3 gap-8">
               <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <span className="text-gray-400">GM</span>
-                </div>
+                <img 
+                  src="/coaches/COACH1.png" 
+                  alt="GM Rahul Sharma" 
+                  className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-navy/10"
+                />
                 <h3 className="text-xl font-secondary font-bold text-navy mb-1">GM Rahul Sharma</h3>
                 <p className="text-orange mb-3">Grandmaster, Head Coach</p>
                 <p className="text-gray-700 text-sm">Experienced Grandmaster with over 15 years of coaching expertise.</p>
               </Card>
               <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <span className="text-gray-400">WFM</span>
-                </div>
+                <img 
+                  src="/coaches/COACH2.png" 
+                  alt="WFM Priya Singh" 
+                  className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-navy/10"
+                />
                 <h3 className="text-xl font-secondary font-bold text-navy mb-1">WFM Priya Singh</h3>
                 <p className="text-orange mb-3">FIDE Master, Senior Coach</p>
                 <p className="text-gray-700 text-sm">Dedicated to developing young talent with personalized attention.</p>
               </Card>
               <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-              <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-gray-400">FM</span>
-              </div>
+              <img 
+                src="/coaches/COACH3.png" 
+                alt="FM Anil Kumar" 
+                className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-navy/10"
+              />
               <h3 className="text-xl font-secondary font-bold text-navy mb-1">FM Anil Kumar</h3>
               <p className="text-orange mb-3">FIDE Master, Junior Coach</p>
               <p className="text-gray-700 text-sm">Passionate about making chess accessible to all age groups.</p>
@@ -348,9 +354,9 @@ const LandingPage = () => {
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { quote: "Indian Chess Academy has transformed my son's logical thinking. He is more focused and confident now!", author: "Deepika Sharma", role: "Parent of Rohan" },
-              { quote: "I've improved my rating significantly since joining. The personalized game analysis is simply invaluable!", author: "Aryan Mehta", role: "Advanced Student" },
-              { quote: "The coaches are patient and encouraging. My daughter loves her classes and looks forward to each session!", author: "Rajesh Patel", role: "Parent of Ananya" }
+              { quote: "Indian Chess Academy has transformed my son's logical thinking. He is more focused and confident now!", author: "Deepika Sharma", role: "Parent of Rohan", image: "/Testimonials/PARENT1.png" },
+              { quote: "I've improved my rating significantly since joining. The personalized game analysis is simply invaluable!", author: "Aryan Mehta", role: "Advanced Student", image: "/Testimonials/STUDENT.png" },
+              { quote: "The coaches are patient and encouraging. My daughter loves her classes and looks forward to each session!", author: "Rajesh Patel", role: "Parent of Ananya", image: "/Testimonials/PARENT2.png" }
             ].map((testimonial, idx) => (
                 <Card key={idx} className="transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                   <div className="flex mb-4">
@@ -360,7 +366,11 @@ const LandingPage = () => {
                   </div>
                   <p className="text-gray-700 mb-6 italic">"{testimonial.quote}"</p>
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full mr-4"></div>
+                    <img 
+                      src={testimonial.image} 
+                      alt={testimonial.author} 
+                      className="w-12 h-12 rounded-full mr-4 object-cover border-2 border-navy/10"
+                    />
                     <div>
                       <p className="font-semibold text-navy">{testimonial.author}</p>
                       <p className="text-sm text-gray-600">{testimonial.role}</p>
