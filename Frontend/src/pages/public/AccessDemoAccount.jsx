@@ -1,66 +1,168 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import Card from '../../components/common/Card'
-import Button from '../../components/common/Button'
-import useDemoStore from '../../store/demoStore'
-import demoAccountService from '../../services/demoAccountService'
-import paymentService from '../../services/paymentService'
-import { format } from 'date-fns'
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Card from "../../components/common/Card";
+import Button from "../../components/common/Button";
+import useDemoStore from "../../store/demoStore";
+import demoAccountService from "../../services/demoAccountService";
+import paymentService from "../../services/paymentService";
+import { format } from "date-fns";
 
 const AccessDemoAccount = () => {
-  const navigate = useNavigate()
-  const { demoData, demoEmail, hasDemoAccess } = useDemoStore()
-  const [plans, setPlans] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [meetingLink, setMeetingLink] = useState(null)
+  const navigate = useNavigate();
+  const { demoData, demoEmail, hasDemoAccess } = useDemoStore();
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [meetingLink, setMeetingLink] = useState(null);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     // Check if user has demo access
     if (!hasDemoAccess()) {
       // Redirect to demo login if no access
-      navigate('/demo-login', { replace: true })
-      return
+      navigate("/demo-login", { replace: true });
+      return;
     }
 
     const loadData = async () => {
       try {
         // Load subscription plans
-        const availablePlans = await paymentService.getPlans()
-        setPlans(availablePlans)
+        const availablePlans = await paymentService.getPlans();
+        setPlans(availablePlans);
 
         // Get demo meeting link if available
         if (demoData?._id && demoData?.meetingLink) {
-          setMeetingLink(demoData.meetingLink)
+          setMeetingLink(demoData.meetingLink);
         }
       } catch (error) {
-        console.error('Error loading demo account data:', error)
+        console.error("Error loading demo account data:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadData()
-  }, [demoData, demoEmail, hasDemoAccess, navigate])
+    loadData();
+  }, [demoData, demoEmail, hasDemoAccess, navigate]);
 
   const handlePlanSelect = (planId) => {
     // Navigate to demo payment with selected plan
-    navigate(`/demo-payment?plan=${planId}`)
-  }
+    navigate(`/demo-payment?plan=${planId}`);
+  };
 
-  const formatCurrency = (amount) => `₹${amount.toLocaleString('en-IN')}`
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayNow = async () => {
+    if (!demoData?.paymentOrderId) {
+      alert("No payment order found. Please contact support.");
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error("Failed to load Razorpay SDK");
+      }
+
+      // Get order details
+      const orderData = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: demoData.paymentAmount,
+        currency: "INR",
+        orderId: demoData.paymentOrderId,
+      };
+
+      const options = {
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "ICA Chess Academy",
+        description: `Payment for ${demoData.studentName}`,
+        order_id: orderData.orderId,
+        prefill: {
+          name: demoData.parentName,
+          email: demoData.parentEmail,
+          contact: demoData.parentPhone,
+        },
+        theme: {
+          color: "#1e3a8a",
+        },
+        handler: async function (response) {
+          await handlePaymentSuccess(response);
+        },
+        modal: {
+          ondismiss: function () {
+            setProcessing(false);
+            alert("Payment cancelled. You can try again anytime.");
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error("Payment initiation error:", error);
+      alert("Failed to open payment gateway: " + error.message);
+      setProcessing(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (response) => {
+    try {
+      setProcessing(true);
+
+      const verificationData = {
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+        demoId: demoData._id,
+        amount: demoData.paymentAmount / 100, // Convert paise to rupees
+        billingCycle: "MONTHLY",
+      };
+
+      await paymentService.verifyPayment(verificationData);
+
+      alert(
+        "✅ Payment successful!\n\n✓ Your student account has been created\n✓ Subscription is now active\n✓ Password setup email sent to " +
+          demoData.parentEmail +
+          "\n\nPlease check your email to set up your password and login!",
+      );
+
+      // Reload page to show updated status
+      window.location.reload();
+    } catch (error) {
+      console.error("Payment verification error:", error);
+      alert(
+        "❌ Payment verification failed: " +
+          (error.response?.data?.message || error.message) +
+          "\n\nPlease contact support with your payment details.",
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const formatCurrency = (amount) => `₹${amount.toLocaleString("en-IN")}`;
 
   const formatDateTime = (dateString) => {
-    if (!dateString) return 'To be confirmed'
-    const date = new Date(dateString)
-    return format(date, 'EEEE, MMMM d, yyyy • h:mm a')
-  }
+    if (!dateString) return "To be confirmed";
+    const date = new Date(dateString);
+    return format(date, "EEEE, MMMM d, yyyy • h:mm a");
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center">
         <div className="text-gray-500">Loading demo account...</div>
       </div>
-    )
+    );
   }
 
   if (!demoData) {
@@ -75,16 +177,24 @@ const AccessDemoAccount = () => {
             Please book a demo first or login with your demo email.
           </p>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => navigate('/book-demo')} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/book-demo")}
+              className="flex-1"
+            >
               Book Demo
             </Button>
-            <Button variant="primary" onClick={() => navigate('/demo-login')} className="flex-1">
+            <Button
+              variant="primary"
+              onClick={() => navigate("/demo-login")}
+              className="flex-1"
+            >
               Demo Login
             </Button>
           </div>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -96,7 +206,8 @@ const AccessDemoAccount = () => {
             Your Demo Account
           </h1>
           <p className="text-gray-600 text-lg">
-            Access your demo session details and make payment to unlock full features
+            Access your demo session details and make payment to unlock full
+            features
           </p>
         </div>
 
@@ -104,11 +215,15 @@ const AccessDemoAccount = () => {
         <Card className="bg-gradient-to-r from-navy to-navy/90 text-white">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h2 className="text-2xl font-secondary font-bold mb-4">Demo Session Details</h2>
+              <h2 className="text-2xl font-secondary font-bold mb-4">
+                Demo Session Details
+              </h2>
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-white/80 mb-1">Student Name</p>
-                  <p className="text-lg font-semibold">{demoData.studentName}</p>
+                  <p className="text-lg font-semibold">
+                    {demoData.studentName}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-white/80 mb-1">Parent Name</p>
@@ -116,11 +231,15 @@ const AccessDemoAccount = () => {
                 </div>
                 <div>
                   <p className="text-sm text-white/80 mb-1">Email</p>
-                  <p className="text-lg font-semibold">{demoData.parentEmail}</p>
+                  <p className="text-lg font-semibold">
+                    {demoData.parentEmail}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-white/80 mb-1">Student Age</p>
-                  <p className="text-lg font-semibold">{demoData.studentAge} years</p>
+                  <p className="text-lg font-semibold">
+                    {demoData.studentAge} years
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-white/80 mb-1">Country</p>
@@ -129,11 +248,15 @@ const AccessDemoAccount = () => {
               </div>
             </div>
             <div>
-              <h2 className="text-2xl font-secondary font-bold mb-4">Schedule</h2>
+              <h2 className="text-2xl font-secondary font-bold mb-4">
+                Schedule
+              </h2>
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-white/80 mb-1">Demo Date & Time</p>
-                  <p className="text-lg font-semibold">{formatDateTime(demoData.scheduledStart)}</p>
+                  <p className="text-lg font-semibold">
+                    {formatDateTime(demoData.scheduledStart)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-white/80 mb-1">Timezone</p>
@@ -141,11 +264,15 @@ const AccessDemoAccount = () => {
                 </div>
                 <div>
                   <p className="text-sm text-white/80 mb-1">Status</p>
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                    demoData.status === 'BOOKED' ? 'bg-blue-500 text-white' :
-                    demoData.status === 'ATTENDED' ? 'bg-green-500 text-white' :
-                    'bg-gray-500 text-white'
-                  }`}>
+                  <span
+                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                      demoData.status === "BOOKED"
+                        ? "bg-blue-500 text-white"
+                        : demoData.status === "ATTENDED"
+                          ? "bg-green-500 text-white"
+                          : "bg-gray-500 text-white"
+                    }`}
+                  >
                     {demoData.status}
                   </span>
                 </div>
@@ -169,7 +296,8 @@ const AccessDemoAccount = () => {
               {meetingLink ? (
                 <>
                   <p className="text-orange-800 mb-4">
-                    Your demo session link is ready. Click below to join at the scheduled time.
+                    Your demo session link is ready. Click below to join at the
+                    scheduled time.
                   </p>
                   <a
                     href={meetingLink}
@@ -184,8 +312,9 @@ const AccessDemoAccount = () => {
                 </>
               ) : (
                 <p className="text-orange-800">
-                  Your demo meeting link will be shared by our team before the scheduled session time.
-                  Please check your email or contact support.
+                  Your demo meeting link will be shared by our team before the
+                  scheduled session time. Please check your email or contact
+                  support.
                 </p>
               )}
             </div>
@@ -196,26 +325,73 @@ const AccessDemoAccount = () => {
         <Card>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-xl font-secondary font-bold text-navy">Payment Status</h3>
-              <p className="text-gray-600 text-sm">Complete payment to unlock full account access</p>
+              <h3 className="text-xl font-secondary font-bold text-navy">
+                Payment Status
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Complete payment to unlock full account access
+              </p>
             </div>
-            <span className={`px-4 py-2 rounded-full text-sm font-medium ${
-              demoData.status === 'CONVERTED' ? 'bg-green-100 text-green-800' :
-              demoData.status === 'PAYMENT_PENDING' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-gray-100 text-gray-800'
-            }`}>
-              {demoData.status === 'CONVERTED' ? 'PAID' : demoData.status === 'PAYMENT_PENDING' ? 'PENDING' : demoData.status}
+            <span
+              className={`px-4 py-2 rounded-full text-sm font-medium ${
+                demoData.status === "CONVERTED"
+                  ? "bg-green-100 text-green-800"
+                  : demoData.status === "PAYMENT_PENDING"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {demoData.status === "CONVERTED"
+                ? "PAID"
+                : demoData.status === "PAYMENT_PENDING"
+                  ? "PENDING"
+                  : demoData.status}
             </span>
           </div>
-          {demoData.status !== 'CONVERTED' && (
+
+          {/* Show Pay Now button if order exists and not paid */}
+          {demoData.paymentOrderId && demoData.status === "PAYMENT_PENDING" && (
+            <div className="mb-4 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border-2 border-orange">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-navy mb-1">
+                    💳 Payment Order Ready
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Amount: ₹
+                    {demoData.paymentAmount
+                      ? (demoData.paymentAmount / 100).toLocaleString("en-IN")
+                      : "N/A"}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Secure payment powered by Razorpay • Account activated
+                    instantly
+                  </p>
+                </div>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={handlePayNow}
+                  disabled={processing}
+                  className="min-w-[160px]"
+                >
+                  {processing ? "Opening..." : "💳 Pay Now"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {demoData.status !== "CONVERTED" && !demoData.paymentOrderId && (
             <p className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              💡 <strong>Tip:</strong> Make payment now to receive your password setup email immediately and get instant access to your learning dashboard!
+              💡 <strong>Tip:</strong> Make payment now to receive your password
+              setup email immediately and get instant access to your learning
+              dashboard!
             </p>
           )}
         </Card>
 
         {/* Subscription Plans */}
-        {demoData.status !== 'CONVERTED' && (
+        {demoData.status !== "CONVERTED" && (
           <>
             <div className="text-center">
               <h2 className="text-3xl font-secondary font-bold text-navy mb-2">
@@ -238,15 +414,21 @@ const AccessDemoAccount = () => {
                     </h3>
                     <div className="text-4xl font-bold text-navy mb-1">
                       {formatCurrency(plan.price)}
-                      <span className="text-lg font-normal text-gray-600">/month</span>
+                      <span className="text-lg font-normal text-gray-600">
+                        /month
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-500 capitalize">{plan.billing_cycle} billing</p>
+                    <p className="text-sm text-gray-500 capitalize">
+                      {plan.billing_cycle} billing
+                    </p>
                   </div>
 
                   <ul className="space-y-3 mb-6">
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start">
-                        <span className="text-olive mr-2 font-bold text-lg flex-shrink-0">✓</span>
+                        <span className="text-olive mr-2 font-bold text-lg flex-shrink-0">
+                          ✓
+                        </span>
                         <span className="text-gray-700">{feature}</span>
                       </li>
                     ))}
@@ -267,7 +449,7 @@ const AccessDemoAccount = () => {
         )}
 
         {/* Already Paid Message */}
-        {demoData.status === 'CONVERTED' && (
+        {demoData.status === "CONVERTED" && (
           <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200">
             <div className="text-center py-8">
               <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -277,19 +459,21 @@ const AccessDemoAccount = () => {
                 Payment Complete!
               </h3>
               <p className="text-green-800 text-lg mb-4">
-                Your account has been activated. Login to access your full dashboard.
+                Your account has been activated. Login to access your full
+                dashboard.
               </p>
               <div className="space-y-3 max-w-md mx-auto">
-                <Button 
-                  variant="primary" 
+                <Button
+                  variant="primary"
                   size="lg"
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate("/login")}
                   className="w-full"
                 >
                   Login to Main Dashboard
                 </Button>
                 <p className="text-green-700 text-sm">
-                  Use your email (<strong>{demoData.parentEmail}</strong>) and the password you set up to login.
+                  Use your email (<strong>{demoData.parentEmail}</strong>) and
+                  the password you set up to login.
                 </p>
               </div>
             </div>
@@ -298,13 +482,13 @@ const AccessDemoAccount = () => {
 
         {/* Back Button */}
         <div className="text-center">
-          <Button variant="outline" onClick={() => navigate('/')}>
+          <Button variant="outline" onClick={() => navigate("/")}>
             Back to Home
           </Button>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AccessDemoAccount
+export default AccessDemoAccount;

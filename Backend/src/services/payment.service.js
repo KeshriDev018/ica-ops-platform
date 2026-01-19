@@ -1,21 +1,17 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
-
-
-
 /* =====================================================
    CREATE ORDER
    ===================================================== */
 export const createRazorpayOrder = async ({ amount, receiptId }) => {
-
   const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
 
   const options = {
-    amount: amount * 100, // ₹ → paise
+    amount: amount, // Already in paise from frontend
     currency: process.env.RAZORPAY_CURRENCY || "INR",
     receipt: receiptId,
   };
@@ -41,5 +37,3 @@ export const verifyRazorpayPayment = ({
 
   return expectedSignature === razorpay_signature;
 };
-
-

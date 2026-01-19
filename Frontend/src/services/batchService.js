@@ -1,42 +1,47 @@
-import { mockBatches } from './mockData'
-
-let batches = [...mockBatches]
+import api from "../lib/api";
 
 const batchService = {
   getAll: async () => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return batches
+    const response = await api.get("/batch");
+    return response.data;
   },
-  
-  getById: async (id) => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const batch = batches.find(b => b.batch_id === id)
-    if (!batch) throw new Error('Batch not found')
-    return batch
-  },
-  
-  getByCoachId: async (coachId) => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return batches.filter(b => b.coach_id === coachId)
-  },
-  
-  create: async (data) => {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    const newBatch = {
-      batch_id: `batch-${Date.now()}`,
-      ...data
-    }
-    batches.push(newBatch)
-    return newBatch
-  },
-  
-  update: async (id, data) => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    const batch = batches.find(b => b.batch_id === id)
-    if (!batch) throw new Error('Batch not found')
-    Object.assign(batch, data)
-    return batch
-  }
-}
 
-export default batchService
+  getById: async (id) => {
+    const response = await api.get(`/batch/${id}`);
+    return response.data;
+  },
+
+  getByCoachId: async (coachId) => {
+    const response = await api.get("/batch/my-batches");
+    return response.data;
+  },
+
+  create: async (data) => {
+    const response = await api.post("/batch", data);
+    return response.data;
+  },
+
+  update: async (id, data) => {
+    const response = await api.patch(`/batch/${id}`, data);
+    return response.data;
+  },
+
+  addStudent: async (batchId, studentId) => {
+    const response = await api.post(`/batch/${batchId}/students/${studentId}`);
+    return response.data;
+  },
+
+  removeStudent: async (batchId, studentId) => {
+    const response = await api.delete(
+      `/batch/${batchId}/students/${studentId}`,
+    );
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/batch/${id}`);
+    return response.data;
+  },
+};
+
+export default batchService;

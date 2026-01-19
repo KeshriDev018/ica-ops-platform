@@ -35,6 +35,7 @@ export const createPaymentOrder = async (req, res) => {
 
     demo.status = "PAYMENT_PENDING";
     demo.paymentOrderId = order.id;
+    demo.paymentAmount = order.amount; // Store amount in paise
     await demo.save();
 
     res.json({
@@ -89,7 +90,7 @@ export const verifyPayment = async (req, res) => {
     await account.save();
 
     const link = `${process.env.FRONTEND_URL}/set-password?token=${rawToken}`;
-    await sendSetPasswordEmail(account.email, link,"CUSTOMER");
+    await sendSetPasswordEmail(account.email, link, "CUSTOMER");
 
     res.json({
       message: "Payment verified, student created, onboarding started",

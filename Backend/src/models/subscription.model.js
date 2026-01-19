@@ -24,7 +24,8 @@ const subscriptionSchema = new mongoose.Schema(
     billingCycle: {
       type: String,
       required: true,
-      trim: true, // e.g. monthly / quarterly / yearly
+      enum: ["MONTHLY", "QUARTERLY", "YEARLY"],
+      trim: true,
     },
 
     status: {
@@ -46,7 +47,7 @@ const subscriptionSchema = new mongoose.Schema(
   },
   {
     timestamps: false, // spec defines explicit dates, not generic created_at
-  }
+  },
 );
 
 // Indexes for admin & billing ops

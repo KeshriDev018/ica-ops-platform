@@ -1,42 +1,53 @@
-import { mockStudents } from './mockData'
-
-let students = [...mockStudents]
+import api from "../lib/api";
 
 const studentService = {
   getAll: async () => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return students
+    const response = await api.get("/students");
+    return response.data;
   },
-  
-  getById: async (id) => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const student = students.find(s => s.student_id === id)
-    if (!student) throw new Error('Student not found')
-    return student
-  },
-  
-  getByAccountId: async (accountId) => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return students.filter(s => s.account_id === accountId)
-  },
-  
-  create: async (data) => {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    const newStudent = {
-      student_id: `stu-${Date.now()}`,
-      ...data
-    }
-    students.push(newStudent)
-    return newStudent
-  },
-  
-  update: async (id, data) => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    const student = students.find(s => s.student_id === id)
-    if (!student) throw new Error('Student not found')
-    Object.assign(student, data)
-    return student
-  }
-}
 
-export default studentService
+  getById: async (id) => {
+    const response = await api.get(`/students/${id}`);
+    return response.data;
+  },
+
+  getByAccountId: async (accountId) => {
+    const response = await api.get(`/students/account/${accountId}`);
+    return response.data;
+  },
+
+  getMyStudent: async () => {
+    const response = await api.get("/students/me");
+    return response.data;
+  },
+
+  getCoachStudents: async () => {
+    const response = await api.get("/students/coach");
+    return response.data;
+  },
+
+  create: async (data) => {
+    const response = await api.post("/students", data);
+    return response.data;
+  },
+
+  update: async (id, data) => {
+    const response = await api.patch(`/students/${id}`, data);
+    return response.data;
+  },
+
+  updateStatus: async (id, status) => {
+    const response = await api.patch(`/students/${id}/status`, { status });
+    return response.data;
+  },
+
+  reassign: async (id, coachId, batchId) => {
+    const response = await api.patch(`/students/${id}/reassign`, {
+      coachId,
+      batchId,
+    });
+    return response.data;
+  },
+};
+
+export default studentService;

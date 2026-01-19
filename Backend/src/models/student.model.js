@@ -67,7 +67,8 @@ const studentSchema = new mongoose.Schema(
     assignedCoachId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Account",
-      required: true,
+      required: false,
+      default: null,
     },
 
     assignedBatchId: {
@@ -83,7 +84,7 @@ const studentSchema = new mongoose.Schema(
   },
   {
     timestamps: true, // created_at, updated_at
-  }
+  },
 );
 
 // Indexes for ops & dashboards

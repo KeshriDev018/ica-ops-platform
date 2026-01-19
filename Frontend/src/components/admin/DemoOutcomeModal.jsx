@@ -1,82 +1,190 @@
-import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
-import Button from '../../components/common/Button'
-import FormInput from '../../components/forms/FormInput'
-import FormSelect from '../../components/forms/FormSelect'
-import demoService from '../../services/demoService'
-import coachService from '../../services/coachService'
+import { useState, useEffect } from "react";
+import { X } from "lucide-react";
+import Button from "../../components/common/Button";
+import FormInput from "../../components/forms/FormInput";
+import FormSelect from "../../components/forms/FormSelect";
+import FormTextarea from "../../components/forms/FormTextarea";
+import demoService from "../../services/demoService";
+import coachService from "../../services/coachService";
 
-const DemoOutcomeModal = ({ demo, isOpen, onClose, onUpdate }) => {
-  const [coaches, setCoaches] = useState([])
-  const [loading, setLoading] = useState(false)
+const DemoOutcomeModal = ({
+  demo,
+  isOpen,
+  onClose,
+  onUpdate,
+  mode = "schedule",
+}) => {
+  const [coaches, setCoaches] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    coachId: demo?.coachId?._id || '',
-    meetingLink: demo?.meetingLink || '',
-  })
-  const [errors, setErrors] = useState({})
+    coachId: demo?.coachId?._id || "",
+    meetingLink: demo?.meetingLink || "",
+    attendanceStatus: "",
+    outcomeStatus: "",
+    recommendedStudentType: "1-1",
+    recommendedLevel: "",
+    adminNotes: "",
+  });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (isOpen) {
-      loadCoaches()
+      if (mode === "schedule") {
+        loadCoaches();
+      }
       setFormData({
-        coachId: demo?.coachId?._id || '',
-        meetingLink: demo?.meetingLink || '',
-      })
+        coachId: demo?.coachId?._id || "",
+        meetingLink: demo?.meetingLink || "",
+        attendanceStatus: "",
+        outcomeStatus: "",
+        recommendedStudentType: "1-1",
+        recommendedLevel: "",
+        adminNotes: "",
+      });
     }
-  }, [isOpen, demo])
+  }, [isOpen, demo, mode]);
 
   const loadCoaches = async () => {
     try {
-      const allCoaches = await coachService.getAll()
-      setCoaches(allCoaches)
+      const allCoaches = await coachService.getAll();
+      setCoaches(allCoaches);
     } catch (error) {
-      console.error('Error loading coaches:', error)
+      console.error("Error loading coaches:", error);
     }
-  }
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setErrors({})
-    
-    // Validation
-    const newErrors = {}
+  const handleScheduleSubmit = async (e) => {
+    e.preventDefault();
+    setErrors({});
+
+    const newErrors = {};
     if (!formData.coachId) {
-      newErrors.coachId = 'Please select a coach'
+      newErrors.coachId = "Please select a coach";
     }
     if (!formData.meetingLink) {
-      newErrors.meetingLink = 'Meeting link is required'
-    } else if (!formData.meetingLink.startsWith('http')) {
-      newErrors.meetingLink = 'Please enter a valid URL (must start with http:// or https://)'
+      newErrors.meetingLink = "Meeting link is required";
+    } else if (!formData.meetingLink.startsWith("http")) {
+      newErrors.meetingLink =
+        "Please enter a valid URL (must start with http:// or https://)";
     }
 
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      return
+      setErrors(newErrors);
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       await demoService.schedule(demo._id, {
         coachId: formData.coachId,
         meetingLink: formData.meetingLink,
-      })
-      
-      onUpdate()
-      onClose()
+      });
+
+      onUpdate();
+      onClose();
     } catch (error) {
-      console.error('Error updating demo:', error)
-      setErrors({ submit: error.message || 'Failed to update demo' })
+      console.error("Error updating demo:", error);
+      setErrors({
+        submit:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to update demo",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  const handleAttendanceSubmit = async (e) => {
+    e.preventDefault();
+    setErrors({});
 
-  const coachOptions = coaches.map(coach => ({
+    if (!formData.attendanceStatus) {
+      setErrors({ attendanceStatus: "Please select an attendance status" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await demoService.markAttendance(demo._id, formData.attendanceStatus);
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error("Error marking attendance:", error);
+      setErrors({
+        submit:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to mark attendance",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOutcomeSubmit = async (e) => {
+    e.preventDefault();
+    setErrors({});
+
+    const newErrors = {};
+    if (!formData.outcomeStatus) {
+      newErrors.outcomeStatus = "Please select an outcome";
+    }
+    if (!formData.recommendedLevel) {
+      newErrors.recommendedLevel = "Please specify recommended level";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await demoService.submitOutcome(demo._id, {
+        status: formData.outcomeStatus,
+        recommendedStudentType: formData.recommendedStudentType,
+        recommendedLevel: formData.recommendedLevel,
+        adminNotes: formData.adminNotes,
+      });
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error("Error submitting outcome:", error);
+      setErrors({
+        submit:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to submit outcome",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const coachOptions = coaches.map((coach) => ({
     value: coach._id,
-    label: `${coach.email}${coach.name ? ` - ${coach.name}` : ''}`
-  }))
+    label: `${coach.email}${coach.name ? ` - ${coach.name}` : ""}`,
+  }));
+
+  const attendanceOptions = [
+    { value: "ATTENDED", label: "Attended" },
+    { value: "NO_SHOW", label: "No Show" },
+    { value: "RESCHEDULED", label: "Rescheduled" },
+    { value: "CANCELLED", label: "Cancelled" },
+  ];
+
+  const outcomeOptions = [
+    { value: "INTERESTED", label: "Interested" },
+    { value: "NOT_INTERESTED", label: "Not Interested" },
+  ];
+
+  const studentTypeOptions = [
+    { value: "1-1", label: "1-on-1 Coaching" },
+    { value: "group", label: "Group Coaching" },
+  ];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -85,10 +193,19 @@ const DemoOutcomeModal = ({ demo, isOpen, onClose, onUpdate }) => {
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 className="text-2xl font-secondary font-bold text-navy">
-              Manage Demo - {demo?.studentName}
+              {mode === "schedule"
+                ? "Schedule Demo"
+                : mode === "attendance"
+                  ? "Mark Attendance"
+                  : "Submit Outcome"}{" "}
+              - {demo?.studentName}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Assign coach and set meeting link
+              {mode === "schedule"
+                ? "Assign coach and set meeting link"
+                : mode === "attendance"
+                  ? "Mark the demo attendance status"
+                  : "Record demo outcome and recommendations"}
             </p>
           </div>
           <button
@@ -104,7 +221,9 @@ const DemoOutcomeModal = ({ demo, isOpen, onClose, onUpdate }) => {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-600">Student:</span>
-              <span className="ml-2 font-medium text-navy">{demo?.studentName}</span>
+              <span className="ml-2 font-medium text-navy">
+                {demo?.studentName}
+              </span>
             </div>
             <div>
               <span className="text-gray-600">Age:</span>
@@ -125,129 +244,356 @@ const DemoOutcomeModal = ({ demo, isOpen, onClose, onUpdate }) => {
             <div>
               <span className="text-gray-600">Scheduled:</span>
               <span className="ml-2 font-medium">
-                {demo?.scheduledStart ? new Date(demo.scheduledStart).toLocaleString() : 'Not scheduled'}
+                {demo?.scheduledStart
+                  ? new Date(demo.scheduledStart).toLocaleString()
+                  : "Not scheduled"}
               </span>
             </div>
             <div className="col-span-2">
               <span className="text-gray-600">Status:</span>
-              <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                demo?.status === 'BOOKED' ? 'bg-blue-100 text-blue-800' :
-                demo?.status === 'ATTENDED' ? 'bg-green-100 text-green-800' :
-                demo?.status === 'PAYMENT_PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                demo?.status === 'CONVERTED' ? 'bg-green-100 text-green-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
+              <span
+                className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                  demo?.status === "BOOKED"
+                    ? "bg-blue-100 text-blue-800"
+                    : demo?.status === "ATTENDED"
+                      ? "bg-green-100 text-green-800"
+                      : demo?.status === "PAYMENT_PENDING"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : demo?.status === "CONVERTED"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                }`}
+              >
                 {demo?.status}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {errors.submit && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {errors.submit}
-            </div>
-          )}
-
-          {/* Assign Coach */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Assign Coach <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={formData.coachId}
-              onChange={(e) => setFormData({ ...formData, coachId: e.target.value })}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent ${
-                errors.coachId ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">Select a coach</option>
-              {coachOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {errors.coachId && (
-              <p className="mt-1 text-sm text-red-600">{errors.coachId}</p>
+        {/* Form - Schedule Mode */}
+        {mode === "schedule" && (
+          <form onSubmit={handleScheduleSubmit} className="p-6 space-y-6">
+            {errors.submit && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                {errors.submit}
+              </div>
             )}
-            {coaches.length === 0 && (
-              <p className="mt-1 text-sm text-amber-600">
-                No coaches available. Please create coach accounts first.
-              </p>
-            )}
-          </div>
 
-          {/* Meeting Link */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Meeting Link (Google Meet, Zoom, etc.) <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="url"
-              value={formData.meetingLink}
-              onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
-              placeholder="https://meet.google.com/xxx-xxxx-xxx"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent ${
-                errors.meetingLink ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.meetingLink && (
-              <p className="mt-1 text-sm text-red-600">{errors.meetingLink}</p>
-            )}
-            <p className="mt-1 text-sm text-gray-500">
-              This link will be visible to the parent/student on their demo access page
-            </p>
-          </div>
-
-          {/* Current Assignment (if exists) */}
-          {demo?.coachId && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
-                <strong>Current Coach:</strong> {demo.coachId.email}
-              </p>
-              {demo.meetingLink && (
-                <p className="text-sm text-blue-800 mt-1">
-                  <strong>Current Link:</strong>{' '}
-                  <a 
-                    href={demo.meetingLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="underline hover:text-blue-900"
-                  >
-                    {demo.meetingLink}
-                  </a>
+            {/* Assign Coach */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assign Coach <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.coachId}
+                onChange={(e) =>
+                  setFormData({ ...formData, coachId: e.target.value })
+                }
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent ${
+                  errors.coachId ? "border-red-500" : "border-gray-300"
+                }`}
+              >
+                <option value="">Select a coach</option>
+                {coachOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {errors.coachId && (
+                <p className="mt-1 text-sm text-red-600">{errors.coachId}</p>
+              )}
+              {coaches.length === 0 && (
+                <p className="mt-1 text-sm text-amber-600">
+                  No coaches available. Please create coach accounts first.
                 </p>
               )}
             </div>
-          )}
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              className="flex-1"
-              disabled={loading || coaches.length === 0}
-            >
-              {loading ? 'Updating...' : 'Update Demo'}
-            </Button>
-          </div>
-        </form>
+            {/* Meeting Link */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Meeting Link (Google Meet, Zoom, etc.){" "}
+                <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="url"
+                value={formData.meetingLink}
+                onChange={(e) =>
+                  setFormData({ ...formData, meetingLink: e.target.value })
+                }
+                placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent ${
+                  errors.meetingLink ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.meetingLink && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.meetingLink}
+                </p>
+              )}
+              <p className="mt-1 text-sm text-gray-500">
+                This link will be visible to the parent/student on their demo
+                access page
+              </p>
+            </div>
+
+            {/* Current Assignment (if exists) */}
+            {demo?.coachId && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Current Coach:</strong> {demo.coachId.email}
+                </p>
+                {demo.meetingLink && (
+                  <p className="text-sm text-blue-800 mt-1">
+                    <strong>Current Link:</strong>{" "}
+                    <a
+                      href={demo.meetingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-blue-900"
+                    >
+                      {demo.meetingLink}
+                    </a>
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="flex-1"
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                className="flex-1"
+                disabled={loading || coaches.length === 0}
+              >
+                {loading ? "Scheduling..." : "Schedule Demo"}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* Form - Attendance Mode */}
+        {mode === "attendance" && (
+          <form onSubmit={handleAttendanceSubmit} className="p-6 space-y-6">
+            {errors.submit && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                {errors.submit}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Attendance Status <span className="text-red-500">*</span>
+              </label>
+              <div className="space-y-3">
+                {attendanceOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      formData.attendanceStatus === option.value
+                        ? "border-gold bg-gold bg-opacity-10"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="attendanceStatus"
+                      value={option.value}
+                      checked={formData.attendanceStatus === option.value}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          attendanceStatus: e.target.value,
+                        }))
+                      }
+                      className="mr-3 h-4 w-4 text-gold focus:ring-gold"
+                    />
+                    <span className="font-medium text-navy">
+                      {option.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {errors.attendanceStatus && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.attendanceStatus}
+                </p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="flex-1"
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                className="flex-1"
+                disabled={loading}
+              >
+                {loading ? "Marking..." : "Mark Attendance"}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* Form - Outcome Mode */}
+        {mode === "outcome" && (
+          <form onSubmit={handleOutcomeSubmit} className="p-6 space-y-6">
+            {errors.submit && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                {errors.submit}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Demo Outcome <span className="text-red-500">*</span>
+              </label>
+              <div className="space-y-3">
+                {outcomeOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      formData.outcomeStatus === option.value
+                        ? "border-gold bg-gold bg-opacity-10"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="outcomeStatus"
+                      value={option.value}
+                      checked={formData.outcomeStatus === option.value}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          outcomeStatus: e.target.value,
+                        }))
+                      }
+                      className="mr-3 h-4 w-4 text-gold focus:ring-gold"
+                    />
+                    <span className="font-medium text-navy">
+                      {option.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {errors.outcomeStatus && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.outcomeStatus}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Recommended Student Type <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.recommendedStudentType}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    recommendedStudentType: e.target.value,
+                  }))
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+              >
+                {studentTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Recommended Level <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.recommendedLevel}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    recommendedLevel: e.target.value,
+                  }))
+                }
+                placeholder="e.g., Beginner, Intermediate, Advanced"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent ${
+                  errors.recommendedLevel ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.recommendedLevel && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.recommendedLevel}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Admin Notes
+              </label>
+              <textarea
+                value={formData.adminNotes}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    adminNotes: e.target.value,
+                  }))
+                }
+                placeholder="Enter any additional notes or observations..."
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent resize-none"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="flex-1"
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                className="flex-1"
+                disabled={loading}
+              >
+                {loading ? "Submitting..." : "Submit Outcome"}
+              </Button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default DemoOutcomeModal
+export default DemoOutcomeModal;

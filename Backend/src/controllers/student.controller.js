@@ -7,8 +7,9 @@ export const getMyStudent = async (req, res) => {
   const accountId = req.user._id;
 
   const student = await Student.findOne({ accountId })
-    .populate("assignedCoachId", "role")
-    .populate("assignedBatchId");
+    .populate("assignedCoachId", "email role")
+    .populate("assignedBatchId", "name level timezone status maxStudents")
+    .populate("accountId", "email role");
 
   if (!student) {
     return res.status(404).json({ message: "Student not found" });
@@ -23,9 +24,11 @@ export const getMyStudent = async (req, res) => {
 export const getCoachStudents = async (req, res) => {
   const coachId = req.user._id;
 
-  const students = await Student.find({ assignedCoachId: coachId }).select(
-    "-parentEmail"
-  );
+  const students = await Student.find({ assignedCoachId: coachId })
+    .populate("assignedCoachId", "email role")
+    .populate("assignedBatchId", "name level timezone status maxStudents")
+    .populate("accountId", "email role")
+    .select("-parentEmail");
 
   res.json(students);
 };
@@ -35,12 +38,12 @@ export const getCoachStudents = async (req, res) => {
  */
 export const getAllStudents = async (req, res) => {
   const students = await Student.find()
-    .populate("assignedCoachId", "role")
-    .populate("assignedBatchId");
+    .populate("assignedCoachId", "email role")
+    .populate("assignedBatchId", "name level timezone status maxStudents")
+    .populate("accountId", "email role");
 
   res.json(students);
 };
-
 
 /**
  * ADMIN: Pause / Cancel student
@@ -56,7 +59,7 @@ export const updateStudentStatus = async (req, res) => {
   const student = await Student.findByIdAndUpdate(
     studentId,
     { status },
-    { new: true }
+    { new: true },
   );
 
   if (!student) {
@@ -68,68 +71,68 @@ export const updateStudentStatus = async (req, res) => {
 
 /**
  * ADMIN: Reassign coach or batch
- */export const reassignStudent = async (req, res) => {
-   const { studentId } = req.params;
-   const { assignedCoachId, assignedBatchId } = req.body;
+ */ export const reassignStudent = async (req, res) => {
+  const { studentId } = req.params;
+  const { assignedCoachId, assignedBatchId } = req.body;
 
-   const student = await Student.findById(studentId);
-   if (!student) {
-     return res.status(404).json({ message: "Student not found" });
-   }
+  const student = await Student.findById(studentId);
+  if (!student) {
+    return res.status(404).json({ message: "Student not found" });
+  }
 
-   // Coach reassignment
-   if (assignedCoachId) {
-     student.assignedCoachId = assignedCoachId;
-   }
+  // Coach reassignment
+  if (assignedCoachId) {
+    student.assignedCoachId = assignedCoachId;
+  }
 
-   // Batch reassignment
-   if (assignedBatchId !== undefined) {
-     if (student.studentType !== "group") {
-       return res.status(400).json({
-         message: "Only group students can be assigned to a batch",
-       });
-     }
+  // Batch reassignment
+  if (assignedBatchId !== undefined) {
+    if (student.studentType !== "group") {
+      return res.status(400).json({
+        message: "Only group students can be assigned to a batch",
+      });
+    }
 
-     const batch = await Batch.findById(assignedBatchId);
-     if (!batch) {
-       return res.status(404).json({ message: "Batch not found" });
-     }
+    const batch = await Batch.findById(assignedBatchId);
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
 
-     // Coach must match
-     if (student.assignedCoachId.toString() !== batch.coachId.toString()) {
-       return res.status(400).json({
-         message: "Batch coach does not match student's coach",
-       });
-     }
+    // Coach must match
+    if (student.assignedCoachId.toString() !== batch.coachId.toString()) {
+      return res.status(400).json({
+        message: "Batch coach does not match student's coach",
+      });
+    }
 
-     // Capacity check
-     if (batch.studentIds.length >= batch.maxStudents) {
-       return res.status(400).json({
-         message: "Batch is already full",
-       });
-     }
+    // Capacity check
+    if (batch.studentIds.length >= batch.maxStudents) {
+      return res.status(400).json({
+        message: "Batch is already full",
+      });
+    }
 
-     // Remove from old batch (if any)
-     if (student.assignedBatchId) {
-       await Batch.updateOne(
-         { _id: student.assignedBatchId },
-         { $pull: { studentIds: student._id } },
-       );
-     }
+    // Remove from old batch (if any)
+    if (student.assignedBatchId) {
+      await Batch.updateOne(
+        { _id: student.assignedBatchId },
+        { $pull: { studentIds: student._id } },
+      );
+    }
 
-     // Add to new batch
-     batch.studentIds.push(student._id);
+    // Add to new batch
+    batch.studentIds.push(student._id);
 
-     if (batch.studentIds.length >= batch.maxStudents) {
-       batch.status = "FULL";
-     }
+    if (batch.studentIds.length >= batch.maxStudents) {
+      batch.status = "FULL";
+    }
 
-     await batch.save();
+    await batch.save();
 
-     student.assignedBatchId = batch._id;
-   }
+    student.assignedBatchId = batch._id;
+  }
 
-   await student.save();
+  await student.save();
 
-   res.json(student);
- };
+  res.json(student);
+};

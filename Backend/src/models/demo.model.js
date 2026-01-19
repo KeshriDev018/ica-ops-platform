@@ -77,6 +77,11 @@ const demoSchema = new mongoose.Schema(
       index: true,
     },
 
+    paymentAmount: {
+      type: Number,
+      default: null,
+    },
+
     status: {
       type: String,
       enum: [
@@ -111,7 +116,7 @@ const demoSchema = new mongoose.Schema(
   },
   {
     timestamps: true, // created_at, updated_at
-  }
+  },
 );
 
 // Indexes for analytics & dashboards

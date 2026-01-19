@@ -1,42 +1,35 @@
-import { mockSubscriptions } from './mockData'
-
-let subscriptions = [...mockSubscriptions]
+import api from "../lib/api";
 
 const subscriptionService = {
   getAll: async () => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return subscriptions
+    const response = await api.get("/subscriptions");
+    return response.data;
   },
-  
-  getByAccountId: async (accountId) => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return subscriptions.filter(s => s.account_id === accountId)
-  },
-  
-  getById: async (id) => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const subscription = subscriptions.find(s => s.subscription_id === id)
-    if (!subscription) throw new Error('Subscription not found')
-    return subscription
-  },
-  
-  create: async (data) => {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    const newSubscription = {
-      subscription_id: `sub-${Date.now()}`,
-      ...data
-    }
-    subscriptions.push(newSubscription)
-    return newSubscription
-  },
-  
-  update: async (id, data) => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    const subscription = subscriptions.find(s => s.subscription_id === id)
-    if (!subscription) throw new Error('Subscription not found')
-    Object.assign(subscription, data)
-    return subscription
-  }
-}
 
-export default subscriptionService
+  getByAccountId: async (accountId) => {
+    const response = await api.get(`/subscriptions/account/${accountId}`);
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/subscriptions/${id}`);
+    return response.data;
+  },
+
+  create: async (data) => {
+    const response = await api.post("/subscriptions", data);
+    return response.data;
+  },
+
+  update: async (id, data) => {
+    const response = await api.patch(`/subscriptions/${id}`, data);
+    return response.data;
+  },
+
+  cancel: async (id) => {
+    const response = await api.patch(`/subscriptions/${id}/cancel`);
+    return response.data;
+  },
+};
+
+export default subscriptionService;
