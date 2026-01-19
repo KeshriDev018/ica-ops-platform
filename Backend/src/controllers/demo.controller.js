@@ -44,6 +44,25 @@ export const createDemo = async (req, res) => {
 };
 
 /**
+ * Get all demos (ADMIN only)
+ */
+export const getAllDemos = async (req, res) => {
+  try {
+    const demos = await Demo.find()
+      .populate("coachId", "email")
+      .populate("adminId", "email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(demos);
+  } catch (error) {
+    console.error("Get all demos error:", error);
+    res.status(500).json({
+      message: "Failed to fetch demos",
+    });
+  }
+};
+
+/**
  * Verify demo by email (for demo login)
  */
 export const verifyDemoByEmail = async (req, res) => {

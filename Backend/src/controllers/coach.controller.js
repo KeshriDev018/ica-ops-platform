@@ -3,6 +3,22 @@ import { generateSetPasswordToken } from "../utils/passToken.util.js";
 import { sendSetPasswordEmail } from "../utils/email.util.js";
 
 /**
+ * ADMIN: Get All Coaches
+ */
+export const getAllCoaches = async (req, res) => {
+  try {
+    const coaches = await Account.find({ role: "COACH" })
+      .select('email name _id')
+      .sort({ createdAt: -1 });
+
+    res.json(coaches);
+  } catch (error) {
+    console.error("Get all coaches error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
  * ADMIN: Create Coach Account
  */
 export const createCoach = async (req, res) => {

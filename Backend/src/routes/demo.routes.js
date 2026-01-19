@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createDemo,
+  getAllDemos,
   verifyDemoByEmail,
   scheduleDemo,
   markDemoAttendance,
@@ -12,6 +13,7 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 const router = express.Router();
 
 router.post("/", createDemo); // public demo booking
+router.get("/", authMiddleware, allowRoles("ADMIN"), getAllDemos); // admin get all demos
 router.post("/verify", verifyDemoByEmail); // public demo verification by email
 
 router.patch(
