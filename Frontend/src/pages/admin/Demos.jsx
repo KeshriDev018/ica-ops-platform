@@ -11,6 +11,7 @@ import {
 import Card from '../../components/common/Card'
 import Button from '../../components/common/Button'
 import demoService from '../../services/demoService'
+import DemoOutcomeModal from '../../components/admin/DemoOutcomeModal'
 
 const columnHelper = createColumnHelper()
 
@@ -19,37 +20,54 @@ const AdminDemos = () => {
   const [loading, setLoading] = useState(true)
   const [globalFilter, setGlobalFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [selectedDemo, setSelectedDemo] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const loadDemos = async () => {
+    setLoading(true)
+    try {
+      const allDemos = await demoService.getAll()
+      setDemos(allDemos)
+    } catch (error) {
+      console.error('Error loading demos:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const allDemos = await demoService.getAll()
-        setDemos(allDemos)
-      } catch (error) {
-        console.error('Error loading demos:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    
-    loadData()
+    loadDemos()
   }, [])
+
+  const handleViewOutcome = (demo) => {
+    setSelectedDemo(demo)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedDemo(null)
+  }
+
+  const handleUpdate = () => {
+    loadDemos() // Reload demos after update
+  }
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor('student_name', {
+      columnHelper.accessor('studentName', {
         header: 'Student',
         cell: info => <span className="font-medium text-navy">{info.getValue()}</span>,
       }),
-      columnHelper.accessor('parent_name', {
+      columnHelper.accessor('parentName', {
         header: 'Parent',
         cell: info => <span className="text-gray-600">{info.getValue()}</span>,
       }),
-      columnHelper.accessor('parent_email', {
+      columnHelper.accessor('parentEmail', {
         header: 'Email',
         cell: info => <span className="text-gray-600">{info.getValue()}</span>,
       }),
-      columnHelper.accessor('scheduled_start', {
+      columnHelper.accessor('scheduledStart', {
         header: 'Date',
         cell: info => new Date(info.getValue()).toLocaleDateString(),
       }),
@@ -73,8 +91,14 @@ const AdminDemos = () => {
       columnHelper.display({
         id: 'actions',
         header: 'Action',
-        cell: () => (
-          <Button variant="outline" size="sm">View Outcome</Button>
+        cell: ({ row }) => (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => handleViewOutcome(row.original)}
+          >
+            View Outcome
+          </Button>
         ),
       }),
     ],
@@ -116,6 +140,14 @@ const AdminDemos = () => {
 
   return (
     <div className="space-y-6">
+      {/* Demo Outcome Modal */}
+      <DemoOutcomeModal
+        demo={selectedDemo}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onUpdate={handleUpdate}
+      />
+
       <div>
         <h1 className="text-3xl font-secondary font-bold text-navy mb-2">Demos</h1>
         <p className="text-gray-600">Manage demo requests and outcomes</p>

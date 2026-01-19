@@ -52,10 +52,6 @@ export const bookDemoSchema = z.object({
 
 // Login Form Schema
 export const loginSchema = z.object({
-  role: z.enum(["CUSTOMER", "COACH", "ADMIN"], {
-    errorMap: () => ({ message: "Please select a valid role" }),
-  }),
-
   email: z
     .string()
     .email("Please enter a valid email address")

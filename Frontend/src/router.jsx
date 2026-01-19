@@ -57,7 +57,7 @@ const Router = () => {
         <Route path="/demo-login" element={<DemoLogin />} />
         <Route path="/demo-payment" element={<DemoPayment />} />
         <Route path="/demo-payment-success" element={<DemoPaymentSuccess />} />
-        <Route path="/set-password/:token" element={<SetPassword />} />
+        <Route path="/set-password" element={<SetPassword />} />
         <Route path="/account-created" element={<AccountCreated />} />
         
         {/* Auth Routes */}

@@ -13,7 +13,7 @@ const useDemoStore = create(
       setDemoData: (data) => {
         set({
           demoData: data,
-          demoEmail: data?.parent_email || null,
+          demoEmail: data?.parentEmail || null,
           isAuthenticated: true
         })
       },

@@ -25,13 +25,12 @@ const setPasswordSchema = z.object({
 
 const SetPassword = () => {
   const navigate = useNavigate()
-  const { token: urlToken } = useParams()
   const [searchParams] = useSearchParams()
-  const emailFromQuery = searchParams.get('email')
+  const tokenFromQuery = searchParams.get('token')
   
-  const [validating, setValidating] = useState(true)
-  const [tokenValid, setTokenValid] = useState(false)
-  const [email, setEmail] = useState(emailFromQuery || '')
+  const [validating, setValidating] = useState(false)
+  const [tokenValid, setTokenValid] = useState(true)
+  const [email, setEmail] = useState('')
   const [passwordStrength, setPasswordStrength] = useState(0)
 
   const {
@@ -63,47 +62,27 @@ const SetPassword = () => {
     setPasswordStrength(strength)
   }, [passwordValue])
 
-  // Validate token on component mount
+  // Check if token exists
   useEffect(() => {
-    const validateToken = async () => {
-      try {
-        // TODO: Backend integration - Validate token
-        // const response = await authService.validatePasswordToken(urlToken)
-        // setEmail(response.email)
-        // setTokenValid(true)
-
-        // Mock validation
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // For demo, accept any token and use email from query param
-        if (urlToken && emailFromQuery) {
-          setEmail(emailFromQuery)
-          setTokenValid(true)
-        } else {
-          throw new Error('Invalid or expired token')
-        }
-      } catch (error) {
-        console.error('Token validation error:', error)
-        setTokenValid(false)
-      } finally {
-        setValidating(false)
-      }
+    if (!tokenFromQuery) {
+      setTokenValid(false)
+      setValidating(false)
     }
-
-    validateToken()
-  }, [urlToken, emailFromQuery])
+  }, [tokenFromQuery])
 
   const onSubmit = async (data) => {
     try {
-      // TODO: Backend integration - Set password and create account
-      // await authService.setPasswordForDemoAccount(urlToken, data.password)
+      await authService.setPassword({
+        token: tokenFromQuery,
+        password: data.password
+      })
       
-      // Mock password setup
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Navigate to account created page
-      navigate('/account-created', { 
-        state: { email } 
+      // Navigate to login page after successful password setup
+      navigate('/login', { 
+        state: { 
+          message: 'Password set successfully! Please login with your credentials.',
+          email: email 
+        } 
       })
     } catch (error) {
       console.error('Password setup error:', error)
@@ -191,7 +170,7 @@ const SetPassword = () => {
           />
           <h1 className="text-3xl font-secondary font-bold text-navy mb-2">
             Set Your Password
-          </h1>
+          </h1>your coach account
           <p className="text-gray-600">
             Create a secure password for <strong>{email}</strong>
           </p>
@@ -283,7 +262,7 @@ const SetPassword = () => {
             className="w-full" 
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Creating Account...' : 'Set Password & Create Account'}
+            {isSubmitting ? 'Setting Password...' : 'Create Password'}
           </Button>
         </form>
       </Card>

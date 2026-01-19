@@ -1,26 +1,29 @@
-import { mockCoaches, mockBatches, mockStudents } from './mockData'
+import api from '../lib/api'
 
 const coachService = {
   getAll: async () => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return mockCoaches
+    const response = await api.get('/coach')
+    return response.data
   },
   
   getById: async (id) => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const coach = mockCoaches.find(c => c.coach_id === id)
-    if (!coach) throw new Error('Coach not found')
-    return coach
+    const response = await api.get(`/coach/${id}`)
+    return response.data
+  },
+
+  create: async (coachData) => {
+    const response = await api.post('/coach/create', coachData)
+    return response.data
   },
   
   getBatches: async (coachId) => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return mockBatches.filter(b => b.coach_id === coachId)
+    const response = await api.get(`/coach/${coachId}/batches`)
+    return response.data
   },
   
   getStudents: async (coachId) => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return mockStudents.filter(s => s.assigned_coach_id === coachId)
+    const response = await api.get(`/coach/${coachId}/students`)
+    return response.data
   }
 }
 

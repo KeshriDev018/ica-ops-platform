@@ -29,9 +29,8 @@ const AccessDemoAccount = () => {
         setPlans(availablePlans)
 
         // Get demo meeting link if available
-        if (demoData?.demo_id) {
-          const link = await demoAccountService.getDemoMeetingLink(demoData.demo_id)
-          setMeetingLink(link)
+        if (demoData?._id && demoData?.meetingLink) {
+          setMeetingLink(demoData.meetingLink)
         }
       } catch (error) {
         console.error('Error loading demo account data:', error)
@@ -109,19 +108,23 @@ const AccessDemoAccount = () => {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-white/80 mb-1">Student Name</p>
-                  <p className="text-lg font-semibold">{demoData.student_name}</p>
+                  <p className="text-lg font-semibold">{demoData.studentName}</p>
                 </div>
                 <div>
                   <p className="text-sm text-white/80 mb-1">Parent Name</p>
-                  <p className="text-lg font-semibold">{demoData.parent_name}</p>
+                  <p className="text-lg font-semibold">{demoData.parentName}</p>
                 </div>
                 <div>
                   <p className="text-sm text-white/80 mb-1">Email</p>
-                  <p className="text-lg font-semibold">{demoData.parent_email}</p>
+                  <p className="text-lg font-semibold">{demoData.parentEmail}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-white/80 mb-1">Preferred Language</p>
-                  <p className="text-lg font-semibold">{demoData.preferred_language || 'English'}</p>
+                  <p className="text-sm text-white/80 mb-1">Student Age</p>
+                  <p className="text-lg font-semibold">{demoData.studentAge} years</p>
+                </div>
+                <div>
+                  <p className="text-sm text-white/80 mb-1">Country</p>
+                  <p className="text-lg font-semibold">{demoData.country}</p>
                 </div>
               </div>
             </div>
@@ -130,7 +133,7 @@ const AccessDemoAccount = () => {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-white/80 mb-1">Demo Date & Time</p>
-                  <p className="text-lg font-semibold">{formatDateTime(demoData.scheduled_start)}</p>
+                  <p className="text-lg font-semibold">{formatDateTime(demoData.scheduledStart)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-white/80 mb-1">Timezone</p>
@@ -197,14 +200,14 @@ const AccessDemoAccount = () => {
               <p className="text-gray-600 text-sm">Complete payment to unlock full account access</p>
             </div>
             <span className={`px-4 py-2 rounded-full text-sm font-medium ${
-              demoData.payment_status === 'PAID' ? 'bg-green-100 text-green-800' :
-              demoData.payment_status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+              demoData.status === 'CONVERTED' ? 'bg-green-100 text-green-800' :
+              demoData.status === 'PAYMENT_PENDING' ? 'bg-yellow-100 text-yellow-800' :
               'bg-gray-100 text-gray-800'
             }`}>
-              {demoData.payment_status || 'PENDING'}
+              {demoData.status === 'CONVERTED' ? 'PAID' : demoData.status === 'PAYMENT_PENDING' ? 'PENDING' : demoData.status}
             </span>
           </div>
-          {demoData.payment_status !== 'PAID' && (
+          {demoData.status !== 'CONVERTED' && (
             <p className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-4">
               💡 <strong>Tip:</strong> Make payment now to receive your password setup email immediately and get instant access to your learning dashboard!
             </p>
@@ -212,7 +215,7 @@ const AccessDemoAccount = () => {
         </Card>
 
         {/* Subscription Plans */}
-        {demoData.payment_status !== 'PAID' && (
+        {demoData.status !== 'CONVERTED' && (
           <>
             <div className="text-center">
               <h2 className="text-3xl font-secondary font-bold text-navy mb-2">
@@ -264,7 +267,7 @@ const AccessDemoAccount = () => {
         )}
 
         {/* Already Paid Message */}
-        {demoData.payment_status === 'PAID' && (
+        {demoData.status === 'CONVERTED' && (
           <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200">
             <div className="text-center py-8">
               <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -286,7 +289,7 @@ const AccessDemoAccount = () => {
                   Login to Main Dashboard
                 </Button>
                 <p className="text-green-700 text-sm">
-                  Use your email (<strong>{demoData.parent_email}</strong>) and the password you set up to login.
+                  Use your email (<strong>{demoData.parentEmail}</strong>) and the password you set up to login.
                 </p>
               </div>
             </div>

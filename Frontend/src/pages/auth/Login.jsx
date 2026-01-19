@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import Button from '../../components/common/Button'
 import Card from '../../components/common/Card'
 import FormInput from '../../components/forms/FormInput'
@@ -14,6 +14,8 @@ import authService from '../../services/authService'
 
 const Login = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const successMessage = location.state?.message
   const { login, linkDemoAccount, role, token } = useAuthStore()
   const { demoData, clearDemoData } = useDemoStore()
   const {
@@ -22,10 +24,7 @@ const Login = () => {
     formState: { errors, isSubmitting },
     setError
   } = useForm({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      role: 'CUSTOMER'
-    }
+    resolver: zodResolver(loginSchema)
   })
 
   // Redirect if already authenticated
@@ -40,11 +39,11 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await authService.login(data.email, data.password, data.role)
+      const response = await authService.login(data.email, data.password)
       login(response.user, response.token)
       
       // Check if logging in with demo account email
-      if (demoData && demoData.parent_email === data.email && demoData.payment_status === 'PAID') {
+      if (demoData && demoData.parentEmail === data.email && demoData.status === 'CONVERTED') {
         // Link demo account data to user account
         linkDemoAccount(demoData)
         // Clear demo store after linking
@@ -91,6 +90,12 @@ const Login = () => {
           <p className="text-gray-600">Login to your Indian Chess Academy account</p>
         </div>
 
+        {successMessage && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+            {successMessage}
+          </div>
+        )}
+
         {errors.root && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
             {errors.root.message}
@@ -98,14 +103,6 @@ const Login = () => {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <FormSelect
-            id="role"
-            label="Select Role"
-            options={roleOptions}
-            error={errors.role}
-            {...register('role')}
-          />
-
           <FormInput
             id="email"
             label="Email"

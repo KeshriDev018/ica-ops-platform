@@ -1,85 +1,115 @@
-import { mockAccounts } from './mockData'
-
-// Mock auth tokens
-const mockTokens = {
-  'admin@chessacademy.com': 'mock-admin-token-123',
-  'coach1@chessacademy.com': 'mock-coach-token-123',
-  'parent1@example.com': 'mock-customer-token-123',
-  'test@example.com': 'mock-test-token-123'
-}
+import api from "../lib/api";
+import { setAccessToken, setUser, logout as logoutAction } from "../redux/authslice";
+import store from "../redux/store";
 
 const authService = {
-  login: async (email, password, role) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    // Find account by email
-    const account = mockAccounts.find(acc => acc.email === email)
-    
-    if (!account) {
-      throw new Error('Invalid email or password')
-    }
-    
-    // Validate role matches account role
-    if (role && account.role !== role) {
-      throw new Error(`Invalid role. This account is for ${account.role}`)
-    }
-    
-    // In real app, password would be verified
-    // For mock, accept any password
-    if (!password) {
-      throw new Error('Password is required')
-    }
-    
-    const token = mockTokens[email] || `mock-token-${Date.now()}`
-    
-    return {
-      user: account,
-      token: token
+  // Login
+  login: async (email, password) => {
+    try {
+      const response = await api.post("/auth/login", { email, password });
+      
+      const { accessToken, role } = response.data;
+      
+      // Store in Redux
+      store.dispatch(setAccessToken(accessToken));
+      store.dispatch(setUser({ email, role }));
+      
+      // Store in localStorage as backup
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("user", JSON.stringify({ email, role }));
+      
+      // Return format expected by Login.jsx
+      return { 
+        token: accessToken,
+        user: { email, role }
+      };
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Login failed. Please check your credentials."
+      );
     }
   },
-  
+
+  // Logout
   logout: async () => {
-    // In real app, invalidate token on backend
-    await new Promise(resolve => setTimeout(resolve, 100))
-    return { success: true }
-  },
-  
-  forgotPassword: async (email) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    return { success: true, message: 'Password reset link sent' }
-  },
-
-  validatePasswordToken: async (token) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    // TODO: Backend integration
-    // const response = await api.post('/api/auth/validate-token', { token })
-    // return response.data
-    
-    // Mock token validation
-    return {
-      valid: true,
-      email: 'user@example.com'
+    try {
+      await api.post("/auth/logout");
+      
+      // Clear Redux
+      store.dispatch(logoutAction());
+      
+      // Clear localStorage
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+      
+      return { success: true };
+    } catch (error) {
+      // Still clear local state even if backend fails
+      store.dispatch(logoutAction());
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+      
+      console.error("Logout error:", error);
+      return { success: true };
     }
   },
 
-  setPasswordForDemoAccount: async (token, password) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // TODO: Backend integration
-    // const response = await api.post('/api/auth/set-password', { token, password })
-    // return response.data
-    
-    // Mock password setup
-    return {
-      success: true,
-      message: 'Password set successfully'
+  // Set password (first time setup)
+  setPassword: async ({ token, password }) => {
+    try {
+      const response = await api.post("/auth/set-password", {
+        token,
+        password,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to set password"
+      );
     }
-  }
-}
+  },
 
-export default authService
+  // Resend password setup link
+  resendSetPasswordLink: async (email) => {
+    try {
+      const response = await api.post("/auth/resend-set-password", { email });
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to resend link"
+      );
+    }
+  },
+
+  // Refresh access token (handled automatically by api.js interceptor)
+  refreshToken: async () => {
+    try {
+      const response = await api.post("/auth/refresh");
+      const { accessToken } = response.data;
+      
+      store.dispatch(setAccessToken(accessToken));
+      localStorage.setItem("accessToken", accessToken);
+      
+      return accessToken;
+    } catch (error) {
+      // Auto logout on refresh failure
+      store.dispatch(logoutAction());
+      localStorage.clear();
+      throw error;
+    }
+  },
+
+  // Get current user from Redux/localStorage
+  getCurrentUser: () => {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) : null;
+  },
+
+  // Check if user is authenticated
+  isAuthenticated: () => {
+    const token = localStorage.getItem("accessToken");
+    return !!token;
+  },
+};
+
+export default authService;

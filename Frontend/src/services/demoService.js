@@ -1,40 +1,46 @@
 import api from "../lib/api";
-import { mockDemos } from "./mockData";
-
-let demos = [...mockDemos];
 
 const demoService = {
+  // Get all demos (ADMIN only)
   getAll: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    return demos;
+    const response = await api.get("/demos");
+    return response.data;
   },
 
+  // Get demo by ID
   getById: async (id) => {
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    const demo = demos.find((d) => d.demo_id === id);
-    if (!demo) throw new Error("Demo not found");
-    return demo;
+    const response = await api.get(`/demos/${id}`);
+    return response.data;
   },
 
+  // Create new demo (PUBLIC - no auth required)
   create: async (data) => {
     const response = await api.post("/demos", data);
     return response.data;
   },
 
-  updateStatus: async (id, status) => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const demo = demos.find((d) => d.demo_id === id);
-    if (!demo) throw new Error("Demo not found");
-    demo.status = status;
-    return demo;
+  // Verify demo by email (PUBLIC)
+  verifyByEmail: async (email) => {
+    const response = await api.post("/demos/verify", { email });
+    return response.data;
   },
 
-  updateOutcome: async (id, outcome) => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const demo = demos.find((d) => d.demo_id === id);
-    if (!demo) throw new Error("Demo not found");
-    Object.assign(demo, outcome);
-    return demo;
+  // Schedule demo (ADMIN only)
+  schedule: async (id, data) => {
+    const response = await api.patch(`/demos/${id}/schedule`, data);
+    return response.data;
+  },
+
+  // Mark attendance (ADMIN only)
+  markAttendance: async (id, status) => {
+    const response = await api.patch(`/demos/${id}/attendance`, { status });
+    return response.data;
+  },
+
+  // Submit outcome (ADMIN only)
+  submitOutcome: async (id, outcomeData) => {
+    const response = await api.patch(`/demos/${id}/outcome`, outcomeData);
+    return response.data;
   },
 };
 
