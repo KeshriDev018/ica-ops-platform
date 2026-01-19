@@ -89,7 +89,6 @@ export const getDemoConversionPrediction = async (req, res) => {
 
 
 
-
 /**
  * ADMIN: Follow-up SLA tracking
  */
@@ -100,20 +99,29 @@ export const getAdminFollowUpSLA = async (req, res) => {
     },
   });
 
-  const results = demos.map((demo) => {
-    const followUpMinutes = (demo.updatedAt - demo.scheduledEnd) / (1000 * 60);
+  const results = demos
+    // ✅ ensure demo actually ended
+    .filter(
+      (demo) =>
+        demo.scheduledEnd &&
+        demo.updatedAt &&
+        demo.updatedAt >= demo.scheduledEnd
+    )
+    .map((demo) => {
+      const followUpMinutes =
+        (demo.updatedAt - demo.scheduledEnd) / (1000 * 60);
 
-    let slaStatus = "EXCELLENT";
-    if (followUpMinutes > 120) slaStatus = "BREACHED";
-    else if (followUpMinutes > 30) slaStatus = "WARNING";
+      let slaStatus = "EXCELLENT";
+      if (followUpMinutes > 120) slaStatus = "BREACHED";
+      else if (followUpMinutes > 30) slaStatus = "WARNING";
 
-    return {
-      demoId: demo._id,
-      adminId: demo.adminId,
-      followUpMinutes: Math.round(followUpMinutes),
-      slaStatus,
-    };
-  });
+      return {
+        demoId: demo._id,
+        adminId: demo.adminId,
+        followUpMinutes: Math.round(followUpMinutes),
+        slaStatus,
+      };
+    });
 
   // Sort worst SLA first
   results.sort((a, b) => b.followUpMinutes - a.followUpMinutes);
@@ -127,66 +135,87 @@ export const getAdminFollowUpSLA = async (req, res) => {
 
 
 /**
- * ADMIN: Coach effectiveness index
+ * ADMIN: Coach effectiveness index (final-stage based)
  */
 export const getCoachEffectiveness = async (req, res) => {
   const pipeline = [
+    // Only demos that reached judgement stages
+    {
+      $match: {
+        coachId: { $ne: null },
+        status: {
+          $in: [
+            "INTERESTED",
+            "NOT_INTERESTED",
+            "PAYMENT_PENDING",
+            "CONVERTED",
+            "DROPPED",
+          ],
+        },
+      },
+    },
+
+    // Aggregate outcomes per coach
     {
       $group: {
         _id: "$coachId",
-        totalDemos: { $sum: 1 },
-        attended: {
-          $sum: {
-            $cond: [{ $eq: ["$status", "ATTENDED"] }, 1, 0],
-          },
+        totalJudgedDemos: { $sum: 1 },
+
+        interested: {
+          $sum: { $cond: [{ $eq: ["$status", "INTERESTED"] }, 1, 0] },
         },
         converted: {
-          $sum: {
-            $cond: [{ $eq: ["$status", "CONVERTED"] }, 1, 0],
-          },
+          $sum: { $cond: [{ $eq: ["$status", "CONVERTED"] }, 1, 0] },
         },
-        noShow: {
-          $sum: {
-            $cond: [{ $eq: ["$status", "NO_SHOW"] }, 1, 0],
-          },
+        dropped: {
+          $sum: { $cond: [{ $eq: ["$status", "DROPPED"] }, 1, 0] },
         },
       },
     },
+
+    // Compute meaningful rates
     {
       $project: {
         coachId: "$_id",
-        attendanceRate: {
+        totalJudgedDemos: 1,
+
+        interestRate: {
           $cond: [
-            { $eq: ["$totalDemos", 0] },
+            { $eq: ["$totalJudgedDemos", 0] },
             0,
-            { $divide: ["$attended", "$totalDemos"] },
+            { $divide: ["$interested", "$totalJudgedDemos"] },
           ],
         },
+
+        // ✅ FIXED: conversion over total judged
         conversionRate: {
           $cond: [
-            { $eq: ["$attended", 0] },
+            { $eq: ["$totalJudgedDemos", 0] },
             0,
-            { $divide: ["$converted", "$attended"] },
+            { $divide: ["$converted", "$totalJudgedDemos"] },
           ],
         },
-        noShowRate: {
+
+        dropRate: {
           $cond: [
-            { $eq: ["$totalDemos", 0] },
+            { $eq: ["$totalJudgedDemos", 0] },
             0,
-            { $divide: ["$noShow", "$totalDemos"] },
+            { $divide: ["$dropped", "$totalJudgedDemos"] },
           ],
         },
       },
     },
+
+    // Final coach score
     {
       $addFields: {
         coachScore: {
           $multiply: [
             {
               $add: [
-                { $multiply: ["$conversionRate", 0.5] },
-                { $multiply: ["$attendanceRate", 0.3] },
-                { $multiply: ["$noShowRate", -0.2] },
+                { $multiply: ["$conversionRate", 0.6] }, // strongest signal
+                { $multiply: ["$interestRate", 0.3] },   // demo quality
+                { $multiply: ["$dropRate", -0.4] },       // penalty
               ],
             },
             100,
@@ -194,9 +223,8 @@ export const getCoachEffectiveness = async (req, res) => {
         },
       },
     },
-    {
-      $sort: { coachScore: -1 },
-    },
+
+    { $sort: { coachScore: -1 } },
   ];
 
   const data = await Demo.aggregate(pipeline);
@@ -205,47 +233,66 @@ export const getCoachEffectiveness = async (req, res) => {
 
 
 
+
+
 /**
  * ADMIN: Early drop-off detector
  */
 export const getEarlyDropOffRisks = async (req, res) => {
   const demos = await Demo.find({
-    status: { $in: ["ATTENDED", "INTERESTED"] },
+    status: { $in: ["ATTENDED", "INTERESTED", "PAYMENT_PENDING"] },
   });
 
-  const results = demos.map((demo) => {
-    const risks = [];
+  const results = demos
+    // ✅ ensure demo actually ended
+    .filter(
+      (demo) =>
+        demo.scheduledEnd &&
+        demo.updatedAt &&
+        demo.updatedAt >= demo.scheduledEnd
+    )
+    .map((demo) => {
+      const risks = [];
 
-    // Delayed follow-up
-    const followUpMinutes = (demo.updatedAt - demo.scheduledEnd) / (1000 * 60);
-    if (followUpMinutes > 120) {
-      risks.push("Delayed admin follow-up");
-    }
+      // Delayed follow-up
+      const followUpMinutes =
+        (demo.updatedAt - demo.scheduledEnd) / (1000 * 60);
 
-    // No interest yet
-    if (demo.status === "ATTENDED") {
-      risks.push("Outcome not submitted yet");
-    }
+      if (followUpMinutes > 120) {
+        risks.push("Delayed admin follow-up");
+      }
 
-    // Odd demo timing
-    const hour = new Date(demo.scheduledStart).getHours();
-    if (hour < 6 || hour > 22) {
-      risks.push("Odd demo timing");
-    }
+      // Outcome missing after attendance
+      if (demo.status === "ATTENDED") {
+        risks.push("Outcome not submitted yet");
+      }
 
-    let riskLevel = "LOW";
-    if (risks.length >= 2) riskLevel = "HIGH";
-    else if (risks.length === 1) riskLevel = "MEDIUM";
+      // Payment stuck
+      if (demo.status === "PAYMENT_PENDING" && followUpMinutes > 1440) {
+        risks.push("Payment pending for too long");
+      }
 
-    return {
-      demoId: demo._id,
-      riskLevel,
-      riskReasons: risks,
-    };
-  });
+      // Odd demo timing
+      const hour = new Date(demo.scheduledStart).getHours();
+      if (hour < 6 || hour > 22) {
+        risks.push("Odd demo timing");
+      }
+
+      let riskLevel = "LOW";
+      if (risks.length >= 2) riskLevel = "HIGH";
+      else if (risks.length === 1) riskLevel = "MEDIUM";
+
+      return {
+        demoId: demo._id,
+        status: demo.status,
+        riskLevel,
+        riskReasons: risks,
+      };
+    });
 
   res.json(results);
 };
+
 
 
 /**
@@ -315,27 +362,94 @@ export const getDemoAuditTimeline = async (req, res) => {
 
 /**
  * ADMIN: Recommend best coach for a student
+ * Uses the SAME judgement logic as getCoachEffectiveness
  */
 export const recommendCoach = async (req, res) => {
   const { studentType, timezone } = req.query;
 
-  // 1. Get coach effectiveness from Phase 1 logic
+  /**
+   * 1️⃣ Coach effectiveness (same logic as analytics)
+   */
   const coachStats = await Demo.aggregate([
+    {
+      $match: {
+        coachId: { $ne: null },
+        status: {
+          $in: [
+            "INTERESTED",
+            "NOT_INTERESTED",
+            "PAYMENT_PENDING",
+            "CONVERTED",
+            "DROPPED",
+          ],
+        },
+      },
+    },
     {
       $group: {
         _id: "$coachId",
-        totalDemos: { $sum: 1 },
+        totalJudgedDemos: { $sum: 1 },
+        interested: {
+          $sum: { $cond: [{ $eq: ["$status", "INTERESTED"] }, 1, 0] },
+        },
         converted: {
-          $sum: {
-            $cond: [{ $eq: ["$status", "CONVERTED"] }, 1, 0],
-          },
+          $sum: { $cond: [{ $eq: ["$status", "CONVERTED"] }, 1, 0] },
+        },
+        dropped: {
+          $sum: { $cond: [{ $eq: ["$status", "DROPPED"] }, 1, 0] },
+        },
+      },
+    },
+    {
+      $project: {
+        coachId: "$_id",
+        totalJudgedDemos: 1,
+        interestRate: {
+          $cond: [
+            { $eq: ["$totalJudgedDemos", 0] },
+            0,
+            { $divide: ["$interested", "$totalJudgedDemos"] },
+          ],
+        },
+        conversionRate: {
+          $cond: [
+            { $eq: ["$totalJudgedDemos", 0] },
+            0,
+            { $divide: ["$converted", "$totalJudgedDemos"] },
+          ],
+        },
+        dropRate: {
+          $cond: [
+            { $eq: ["$totalJudgedDemos", 0] },
+            0,
+            { $divide: ["$dropped", "$totalJudgedDemos"] },
+          ],
+        },
+      },
+    },
+    {
+      $addFields: {
+        effectivenessScore: {
+          $multiply: [
+            {
+              $add: [
+                { $multiply: ["$conversionRate", 0.6] },
+                { $multiply: ["$interestRate", 0.3] },
+                { $multiply: ["$dropRate", -0.4] },
+              ],
+            },
+            100,
+          ],
         },
       },
     },
   ]);
 
-  // Coach load
+  /**
+   * 2️⃣ Coach workload
+   */
   const coachLoad = await Student.aggregate([
+    { $match: { assignedCoachId: { $ne: null } } },
     {
       $group: {
         _id: "$assignedCoachId",
@@ -346,39 +460,44 @@ export const recommendCoach = async (req, res) => {
 
   const loadMap = {};
   coachLoad.forEach((c) => {
-    loadMap[c._id?.toString()] = c.activeStudents;
+    loadMap[c._id.toString()] = c.activeStudents;
   });
 
+  /**
+   * 3️⃣ Final recommendation scoring
+   */
   const recommendations = coachStats.map((coach) => {
     let score = 0;
     const reasons = [];
 
-    const effectiveness =
-      coach.totalDemos === 0 ? 0 : (coach.converted / coach.totalDemos) * 100;
+    // Effectiveness (dominant signal)
+    if (coach.effectivenessScore > 0) {
+      score += coach.effectivenessScore * 0.7;
+      reasons.push("Strong coach effectiveness");
+    }
 
-    score += effectiveness * 0.5;
-    reasons.push("High coach effectiveness");
-
-    // Type compatibility
+    // Student type fit (soft signal)
     if (studentType) {
-      score += 20 * 0.2;
+      score += 10;
       reasons.push(`Experience with ${studentType} students`);
     }
 
-    // Timezone match (simple assumption)
+    // Timezone compatibility (soft signal)
     if (timezone) {
-      score += 20 * 0.2;
+      score += 10;
       reasons.push("Timezone compatible");
     }
 
     // Load penalty
-    const load = loadMap[coach._id?.toString()] || 0;
-    score -= load * 0.1;
-    reasons.push("Balanced workload");
+    const load = loadMap[coach.coachId.toString()] || 0;
+    if (load > 0) {
+      score -= load * 2;
+      reasons.push("Balanced workload");
+    }
 
     return {
-      coachId: coach._id,
-      matchScore: Math.round(score),
+      coachId: coach.coachId,
+      matchScore: Math.max(0, Math.round(score)),
       reasons,
     };
   });
@@ -391,6 +510,7 @@ export const recommendCoach = async (req, res) => {
     recommendations: recommendations.slice(0, 3),
   });
 };
+
 
 
 /**

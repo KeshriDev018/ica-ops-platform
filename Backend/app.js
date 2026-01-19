@@ -42,6 +42,7 @@ import authRoutes from "./src/routes/auth.routes.js";
 import intelligenceRoutes from "./src/routes/intelligence.routes.js";
 import assistantRoutes from "./src/routes/assistant.routes.js";
 import coachRoutes from "./src/routes/coach.routes.js";
+import batchRoutes from "./src/routes/batch.routes.js";
 
 
 
@@ -55,6 +56,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/assistant", assistantRoutes);
 app.use("/api/intelligence", intelligenceRoutes);
 app.use("/api/coach", coachRoutes);
+app.use("/api/batch", batchRoutes);
 
 
 export { app };

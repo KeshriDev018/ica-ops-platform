@@ -6,7 +6,8 @@ import {
   getEarlyDropOffRisks,
   getDemoAuditTimeline,
   recommendCoach,
-  getIntelligenceOverview
+  getIntelligenceOverview,
+  simulateFunnel
 } from "../controllers/intelligence.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
@@ -49,6 +50,12 @@ router.get(
   authMiddleware,
   allowRoles("ADMIN"),
   getDemoAuditTimeline
+);
+router.get(
+  "/simulate-funnel",
+  authMiddleware,
+  allowRoles("ADMIN"),
+  simulateFunnel
 );
 
 router.get(

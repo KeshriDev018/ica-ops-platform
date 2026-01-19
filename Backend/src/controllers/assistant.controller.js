@@ -98,6 +98,15 @@ Format:
         break;
     }
 
+    /* ---------- 2.5 EMPTY DATA GUARD ---------- */
+    if (Array.isArray(systemData) && systemData.length === 0) {
+      return res.json({
+        intent,
+        answer:
+          "No recent attended or interested demos were found to prioritize. Once demos are attended or marked as interested, conversion prioritization will be available.",
+      });
+    }
+
     /* ---------- 3. PROFESSIONAL EXPLANATION (SAFE) ---------- */
     let finalAnswer =
       "Unable to generate insights at the moment. Please try again later.";
@@ -128,7 +137,6 @@ ${JSON.stringify(systemData, null, 2)}
         details: err?.message || err,
       });
     }
-
 
     /* ---------- 4. FINAL RESPONSE ---------- */
     return res.json({

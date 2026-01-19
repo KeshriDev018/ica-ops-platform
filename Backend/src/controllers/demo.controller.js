@@ -13,6 +13,8 @@ export const createDemo = async (req, res) => {
      timezone,
      scheduledStart,
      scheduledEnd,
+     country,
+     studentAge,
    } = req.body;
 
    // find or create account
@@ -32,6 +34,8 @@ export const createDemo = async (req, res) => {
      timezone,
      scheduledStart,
      scheduledEnd,
+     country,
+     studentAge,
      status: "BOOKED",
      meetingLink: null, // explicitly empty
    });

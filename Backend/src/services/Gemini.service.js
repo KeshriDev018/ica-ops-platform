@@ -1,27 +1,44 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+import fetch from "node-fetch";
 
 export async function geminiGenerate({ systemPrompt, userPrompt }) {
-  if (!process.env.GEMINI_API_KEY) {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
     throw new Error("GEMINI_API_KEY is missing");
   }
 
-  // ✅ ONLY model supported reliably on v1beta
-  const model = genAI.getGenerativeModel({
-    model: "models/text-bison-001",
+  // ✅ USE MODEL THAT EXISTS (from your /v1/models output)
+  const endpoint =
+    "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent";
+
+  const body = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: `${systemPrompt}\n\nUser question:\n${userPrompt}`,
+          },
+        ],
+      },
+    ],
+  };
+
+  const response = await fetch(`${endpoint}?key=${apiKey}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
   });
 
-  const prompt = `
-${systemPrompt}
+  const data = await response.json();
 
-User question:
-${userPrompt}
-`;
+  if (!response.ok) {
+    throw new Error(JSON.stringify(data, null, 2));
+  }
 
-  const result = await model.generateContent(prompt);
-
-  const text = result?.response?.text();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!text) {
     throw new Error("Empty response from Gemini");

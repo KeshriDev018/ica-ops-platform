@@ -85,67 +85,90 @@ export const getAdminFollowUpSLAService = async () => {
     status: { $in: ["INTERESTED", "NOT_INTERESTED", "CONVERTED", "DROPPED"] },
   });
 
-  const results = demos.map((demo) => {
-    const followUpMinutes = (demo.updatedAt - demo.scheduledEnd) / (1000 * 60);
+  const results = demos
+    .filter(
+      (demo) =>
+        demo.scheduledEnd &&
+        demo.updatedAt &&
+        demo.updatedAt >= demo.scheduledEnd,
+    )
+    .map((demo) => {
+      const followUpMinutes =
+        (demo.updatedAt - demo.scheduledEnd) / (1000 * 60);
 
-    let slaStatus = "EXCELLENT";
-    if (followUpMinutes > 120) slaStatus = "BREACHED";
-    else if (followUpMinutes > 30) slaStatus = "WARNING";
+      let slaStatus = "EXCELLENT";
+      if (followUpMinutes > 120) slaStatus = "BREACHED";
+      else if (followUpMinutes > 30) slaStatus = "WARNING";
 
-    return {
-      demoId: demo._id,
-      adminId: demo.adminId,
-      followUpMinutes: Math.round(followUpMinutes),
-      slaStatus,
-    };
-  });
+      return {
+        demoId: demo._id,
+        adminId: demo.adminId,
+        followUpMinutes: Math.round(followUpMinutes),
+        slaStatus,
+      };
+    });
 
   results.sort((a, b) => b.followUpMinutes - a.followUpMinutes);
   return results;
 };
 
 /* =====================================================
-   3️⃣ Coach Effectiveness
+   3️⃣ Coach Effectiveness (final-stage based)
    ===================================================== */
 export const getCoachEffectivenessService = async () => {
   return await Demo.aggregate([
     {
+      $match: {
+        coachId: { $ne: null },
+        status: {
+          $in: [
+            "INTERESTED",
+            "NOT_INTERESTED",
+            "PAYMENT_PENDING",
+            "CONVERTED",
+            "DROPPED",
+          ],
+        },
+      },
+    },
+    {
       $group: {
         _id: "$coachId",
-        totalDemos: { $sum: 1 },
-        attended: {
-          $sum: { $cond: [{ $eq: ["$status", "ATTENDED"] }, 1, 0] },
+        totalJudgedDemos: { $sum: 1 },
+        interested: {
+          $sum: { $cond: [{ $eq: ["$status", "INTERESTED"] }, 1, 0] },
         },
         converted: {
           $sum: { $cond: [{ $eq: ["$status", "CONVERTED"] }, 1, 0] },
         },
-        noShow: {
-          $sum: { $cond: [{ $eq: ["$status", "NO_SHOW"] }, 1, 0] },
+        dropped: {
+          $sum: { $cond: [{ $eq: ["$status", "DROPPED"] }, 1, 0] },
         },
       },
     },
     {
       $project: {
         coachId: "$_id",
-        attendanceRate: {
+        totalJudgedDemos: 1,
+        interestRate: {
           $cond: [
-            { $eq: ["$totalDemos", 0] },
+            { $eq: ["$totalJudgedDemos", 0] },
             0,
-            { $divide: ["$attended", "$totalDemos"] },
+            { $divide: ["$interested", "$totalJudgedDemos"] },
           ],
         },
         conversionRate: {
           $cond: [
-            { $eq: ["$attended", 0] },
+            { $eq: ["$totalJudgedDemos", 0] },
             0,
-            { $divide: ["$converted", "$attended"] },
+            { $divide: ["$converted", "$totalJudgedDemos"] },
           ],
         },
-        noShowRate: {
+        dropRate: {
           $cond: [
-            { $eq: ["$totalDemos", 0] },
+            { $eq: ["$totalJudgedDemos", 0] },
             0,
-            { $divide: ["$noShow", "$totalDemos"] },
+            { $divide: ["$dropped", "$totalJudgedDemos"] },
           ],
         },
       },
@@ -156,9 +179,9 @@ export const getCoachEffectivenessService = async () => {
           $multiply: [
             {
               $add: [
-                { $multiply: ["$conversionRate", 0.5] },
-                { $multiply: ["$attendanceRate", 0.3] },
-                { $multiply: ["$noShowRate", -0.2] },
+                { $multiply: ["$conversionRate", 0.6] },
+                { $multiply: ["$interestRate", 0.3] },
+                { $multiply: ["$dropRate", -0.4] },
               ],
             },
             100,
@@ -171,34 +194,48 @@ export const getCoachEffectivenessService = async () => {
 };
 
 /* =====================================================
-   4️⃣ Early Drop-off Risks
+   4️⃣ Early Drop-off Risk Detector
    ===================================================== */
 export const getEarlyDropOffRisksService = async () => {
   const demos = await Demo.find({
-    status: { $in: ["ATTENDED", "INTERESTED"] },
+    status: { $in: ["ATTENDED", "INTERESTED", "PAYMENT_PENDING"] },
   });
 
-  return demos.map((demo) => {
-    const risks = [];
+  return demos
+    .filter(
+      (demo) =>
+        demo.scheduledEnd &&
+        demo.updatedAt &&
+        demo.updatedAt >= demo.scheduledEnd,
+    )
+    .map((demo) => {
+      const risks = [];
 
-    const followUpMinutes = (demo.updatedAt - demo.scheduledEnd) / (1000 * 60);
-    if (followUpMinutes > 120) risks.push("Delayed admin follow-up");
+      const followUpMinutes =
+        (demo.updatedAt - demo.scheduledEnd) / (1000 * 60);
 
-    if (demo.status === "ATTENDED") risks.push("Outcome not submitted yet");
+      if (followUpMinutes > 120) risks.push("Delayed admin follow-up");
 
-    const hour = new Date(demo.scheduledStart).getHours();
-    if (hour < 6 || hour > 22) risks.push("Odd demo timing");
+      if (demo.status === "ATTENDED") risks.push("Outcome not submitted yet");
 
-    let riskLevel = "LOW";
-    if (risks.length >= 2) riskLevel = "HIGH";
-    else if (risks.length === 1) riskLevel = "MEDIUM";
+      if (demo.status === "PAYMENT_PENDING" && followUpMinutes > 1440) {
+        risks.push("Payment pending for too long");
+      }
 
-    return {
-      demoId: demo._id,
-      riskLevel,
-      riskReasons: risks,
-    };
-  });
+      const hour = new Date(demo.scheduledStart).getHours();
+      if (hour < 6 || hour > 22) risks.push("Odd demo timing");
+
+      let riskLevel = "LOW";
+      if (risks.length >= 2) riskLevel = "HIGH";
+      else if (risks.length === 1) riskLevel = "MEDIUM";
+
+      return {
+        demoId: demo._id,
+        status: demo.status,
+        riskLevel,
+        riskReasons: risks,
+      };
+    });
 };
 
 /* =====================================================
@@ -239,13 +276,13 @@ export const simulateFunnelService = async ({
   if (coachEffectivenessBoost > 0) {
     conversionRate += coachEffectivenessBoost;
     assumptions.push(
-      `Coach effectiveness improved by ${coachEffectivenessBoost * 100}%`
+      `Coach effectiveness improved by ${coachEffectivenessBoost * 100}%`,
     );
   }
 
   return {
     current: {
-      attendanceRate: Number((base.attended / base.total || 0).toFixed(2)),
+      attendanceRate: Number(attendanceRate.toFixed(2)),
       conversionRate: Number(conversionRate.toFixed(2)),
     },
     simulated: {
@@ -256,7 +293,9 @@ export const simulateFunnelService = async ({
   };
 };
 
-
+/* =====================================================
+   6️⃣ Explainable Analytics
+   ===================================================== */
 export const getExplainableAnalyticsService = async () => {
   return [
     {
@@ -267,13 +306,10 @@ export const getExplainableAnalyticsService = async () => {
       metric: "Drop-off Risk",
       meaning: "Identifies demos needing urgent follow-up",
     },
-    {
-      metric: "Admin SLA",
-      meaning: "Measures follow-up responsiveness",
-    },
+    { metric: "Admin SLA", meaning: "Measures follow-up responsiveness" },
     {
       metric: "Coach Effectiveness",
-      meaning: "Evaluates coach performance across demos",
+      meaning: "Evaluates coach performance using final outcomes",
     },
     {
       metric: "Funnel Simulation",
@@ -281,4 +317,3 @@ export const getExplainableAnalyticsService = async () => {
     },
   ];
 };
-
