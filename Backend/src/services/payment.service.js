@@ -2,8 +2,6 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 
 
-console.log("this is key id:", process.env.RAZORPAY_KEY_ID);
-
 
 
 /* =====================================================

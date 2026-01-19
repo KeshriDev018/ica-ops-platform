@@ -6,43 +6,76 @@ import { Account } from "../models/account.model.js";
  * Create Account (CUSTOMER) + Demo
  */
 export const createDemo = async (req, res) => {
-   const {
-     studentName,
-     parentName,
-     parentEmail,
-     timezone,
-     scheduledStart,
-     scheduledEnd,
-     country,
-     studentAge,
-   } = req.body;
+  const {
+    studentName,
+    parentName,
+    parentEmail,
+    timezone,
+    scheduledStart,
+    scheduledEnd,
+    country,
+    studentAge,
+  } = req.body;
 
-   // find or create account
-   let account = await Account.findOne({ email: parentEmail });
-   if (!account) {
-     account = await Account.create({
-       email: parentEmail,
-       role: "CUSTOMER",
-     });
-   }
+  // find or create account
+  let account = await Account.findOne({ email: parentEmail });
+  if (!account) {
+    account = await Account.create({
+      email: parentEmail,
+      role: "CUSTOMER",
+    });
+  }
 
-   const demo = await Demo.create({
-     studentName,
-     parentName,
-     parentEmail,
-     accountId: account._id,
-     timezone,
-     scheduledStart,
-     scheduledEnd,
-     country,
-     studentAge,
-     status: "BOOKED",
-     meetingLink: null, // explicitly empty
-   });
+  const demo = await Demo.create({
+    studentName,
+    parentName,
+    parentEmail,
+    accountId: account._id,
+    timezone,
+    scheduledStart,
+    scheduledEnd,
+    country,
+    studentAge,
+    status: "BOOKED",
+    meetingLink: null, // explicitly empty
+  });
 
-   res.status(201).json(demo);
- };
+  res.status(201).json(demo);
+};
 
+/**
+ * Verify demo by email (for demo login)
+ */
+export const verifyDemoByEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+      });
+    }
+
+    // Find demo by parent email
+    const demo = await Demo.findOne({
+      parentEmail: email.toLowerCase(),
+    }).sort({ createdAt: -1 }); // Get the most recent demo
+
+    if (!demo) {
+      return res.status(404).json({
+        message:
+          "No demo booking found for this email. Please book a demo first.",
+      });
+    }
+
+    res.status(200).json(demo);
+  } catch (error) {
+    console.error("Verify demo error:", error);
+    res.status(500).json({
+      message: "Failed to verify demo",
+    });
+  }
+};
 
 export const scheduleDemo = async (req, res) => {
   try {
@@ -91,8 +124,6 @@ export const scheduleDemo = async (req, res) => {
     });
   }
 };
-
-
 
 export const markDemoAttendance = async (req, res) => {
   const { id } = req.params;

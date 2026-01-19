@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createDemo,
+  verifyDemoByEmail,
   scheduleDemo,
   markDemoAttendance,
   submitDemoOutcome,
@@ -11,27 +12,27 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 const router = express.Router();
 
 router.post("/", createDemo); // public demo booking
+router.post("/verify", verifyDemoByEmail); // public demo verification by email
 
 router.patch(
   "/:id/schedule",
   authMiddleware,
   allowRoles("ADMIN"),
-  scheduleDemo
+  scheduleDemo,
 );
-
 
 router.patch(
   "/:id/attendance",
   authMiddleware,
   allowRoles("ADMIN"),
-  markDemoAttendance
+  markDemoAttendance,
 );
 
 router.patch(
   "/:id/outcome",
   authMiddleware,
   allowRoles("ADMIN"),
-  submitDemoOutcome
+  submitDemoOutcome,
 );
 
 export default router;
