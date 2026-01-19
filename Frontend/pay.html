@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Razorpay Order Payment</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+<h2>Pay ₹500</h2>
+<button id="pay-btn">Pay Now</button>
+
+<script>
+  document.getElementById("pay-btn").onclick = function () {
+    const options = {
+      key: "rzp_test_S53TMjHwKnjH6f",        // from backend
+      amount: 50000,                        // from backend
+      currency: "INR",
+      order_id: "order_S5PpzgsvyRyN0D",     // 🔴 THIS IS THE MOST IMPORTANT
+      handler: function (response) {
+        console.log("PAYMENT SUCCESS:", response);
+        /*
+          response = {
+            razorpay_payment_id,
+            razorpay_order_id,
+            razorpay_signature
+          }
+        */
+        alert("Payment successful. Check console.");
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+  };
+</script>
+
+</body>
+</html>
