@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-navy: #003366;
+  --color-orange: #FC8A24;
+  --color-cream: #FFFEF3;
+  --color-olive: #6B8E23;
+  --color-white: #FFFFFF;
+  
+  --font-primary: 'Figtree', sans-serif;
+  --font-secondary: 'Bodoni Moda', serif;
+  
+  --shadow-soft: 0 2px 8px rgba(0, 51, 102, 0.1);
+  --shadow-medium: 0 4px 16px rgba(0, 51, 102, 0.15);
+  --border-radius: 12px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-secondary);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Floating Chess Pieces Animations */
+@keyframes floatAnimation {
+  0%, 100% {
+    transform: translateY(0) rotateY(0deg) rotateX(0deg) scale(1);
+    filter: drop-shadow(0 0 8px var(--glow-color)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15)) brightness(1);
+  }
+  25% {
+    transform: translateY(calc(var(--float-range) * -0.5)) rotateY(90deg) rotateX(5deg) scale(1.05);
+    filter: drop-shadow(0 0 12px var(--glow-color)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15)) brightness(1.1);
+  }
+  50% {
+    transform: translateY(calc(var(--float-range) * -1)) rotateY(180deg) rotateX(0deg) scale(1.1);
+    filter: drop-shadow(0 0 15px var(--glow-color)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15)) brightness(1.15);
+  }
+  75% {
+    transform: translateY(calc(var(--float-range) * -0.5)) rotateY(270deg) rotateX(-5deg) scale(1.05);
+    filter: drop-shadow(0 0 12px var(--glow-color)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15)) brightness(1.1);
+  }
+}
+
+/* Enhanced chess piece styling */
+.chess-piece-glow {
+  transition: filter 0.3s ease;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.chess-piece-halo {
+  animation: inherit;
+  animation-name: floatAnimation;
+}
+
+/* 3D Watermark Background Animations */
+@keyframes watermarkFloat {
+  0%, 100% {
+    transform: translateY(0) translateX(0) rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(1);
+  }
+  25% {
+    transform: translateY(-30px) translateX(20px) rotateY(90deg) rotateX(5deg) rotateZ(5deg) scale(1.1);
+  }
+  50% {
+    transform: translateY(-60px) translateX(-20px) rotateY(180deg) rotateX(0deg) rotateZ(-5deg) scale(1.2);
+  }
+  75% {
+    transform: translateY(-30px) translateX(10px) rotateY(270deg) rotateX(-5deg) rotateZ(5deg) scale(1.1);
+  }
+}
+
+.watermark-3d {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  filter: blur(0.5px);
+}
