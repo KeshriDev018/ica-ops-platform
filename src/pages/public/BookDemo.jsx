@@ -26,13 +26,17 @@ const BookDemo = () => {
 
   const onSubmit = async (data) => {
     try {
-      await demoService.create({
+      const demoData = await demoService.create({
         ...data,
         scheduled_start: `${data.preferred_date}T${data.preferred_time}:00`,
         status: 'BOOKED',
         preferred_language: data.preferred_language
       })
-      navigate('/thank-you')
+      
+      // Navigate to thank you page with demo data
+      navigate('/thank-you', { 
+        state: { demoData } 
+      })
     } catch (err) {
       setError('root', {
         type: 'manual',

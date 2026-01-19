@@ -6,10 +6,16 @@ import ProtectedRoute from './components/layout/ProtectedRoute'
 import LandingPage from './pages/public/LandingPage'
 import BookDemo from './pages/public/BookDemo'
 import ThankYou from './pages/public/ThankYou'
+import AccessDemoAccount from './pages/public/AccessDemoAccount'
+import DemoLogin from './pages/public/DemoLogin'
+import DemoPayment from './pages/public/DemoPayment'
+import DemoPaymentSuccess from './pages/public/DemoPaymentSuccess'
 
 // Auth pages
 import Login from './pages/auth/Login'
 import ForgotPassword from './pages/auth/ForgotPassword'
+import SetPassword from './pages/auth/SetPassword'
+import AccountCreated from './pages/auth/AccountCreated'
 
 // Customer pages
 import CustomerDashboard from './pages/customer/Dashboard'
@@ -47,6 +53,12 @@ const Router = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/book-demo" element={<BookDemo />} />
         <Route path="/thank-you" element={<ThankYou />} />
+        <Route path="/demo-access" element={<AccessDemoAccount />} />
+        <Route path="/demo-login" element={<DemoLogin />} />
+        <Route path="/demo-payment" element={<DemoPayment />} />
+        <Route path="/demo-payment-success" element={<DemoPaymentSuccess />} />
+        <Route path="/set-password/:token" element={<SetPassword />} />
+        <Route path="/account-created" element={<AccountCreated />} />
         
         {/* Auth Routes */}
         <Route path="/login" element={<Login />} />

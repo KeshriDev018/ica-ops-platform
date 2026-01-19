@@ -9,11 +9,13 @@ import FormSelect from '../../components/forms/FormSelect'
 import FloatingChessPieces from '../../components/common/FloatingChessPieces'
 import { loginSchema } from '../../utils/validationSchemas'
 import useAuthStore from '../../store/authStore'
+import useDemoStore from '../../store/demoStore'
 import authService from '../../services/authService'
 
 const Login = () => {
   const navigate = useNavigate()
-  const { login, role, token } = useAuthStore()
+  const { login, linkDemoAccount, role, token } = useAuthStore()
+  const { demoData, clearDemoData } = useDemoStore()
   const {
     register,
     handleSubmit,
@@ -40,6 +42,14 @@ const Login = () => {
     try {
       const response = await authService.login(data.email, data.password, data.role)
       login(response.user, response.token)
+      
+      // Check if logging in with demo account email
+      if (demoData && demoData.parent_email === data.email && demoData.payment_status === 'PAID') {
+        // Link demo account data to user account
+        linkDemoAccount(demoData)
+        // Clear demo store after linking
+        clearDemoData()
+      }
       
       // Redirect based on role
       const userRole = response.user.role
@@ -129,6 +139,10 @@ const Login = () => {
           Don't have an account?{' '}
           <Link to="/book-demo" className="text-orange hover:underline font-medium">
             Book a Free Demo
+          </Link>
+          {' '}or{' '}
+          <Link to="/demo-login" className="text-orange hover:underline font-medium">
+            Access Demo Account
           </Link>
         </div>
       </Card>

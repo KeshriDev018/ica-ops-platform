@@ -49,6 +49,36 @@ const authService = {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000))
     return { success: true, message: 'Password reset link sent' }
+  },
+
+  validatePasswordToken: async (token) => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // TODO: Backend integration
+    // const response = await api.post('/api/auth/validate-token', { token })
+    // return response.data
+    
+    // Mock token validation
+    return {
+      valid: true,
+      email: 'user@example.com'
+    }
+  },
+
+  setPasswordForDemoAccount: async (token, password) => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // TODO: Backend integration
+    // const response = await api.post('/api/auth/set-password', { token, password })
+    // return response.data
+    
+    // Mock password setup
+    return {
+      success: true,
+      message: 'Password set successfully'
+    }
   }
 }
 

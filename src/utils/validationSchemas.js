@@ -99,3 +99,13 @@ export const forgotPasswordSchema = z.object({
     .email('Please enter a valid email address')
     .min(1, 'Email is required')
 })
+
+// Update Password Schema
+export const updatePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
+})

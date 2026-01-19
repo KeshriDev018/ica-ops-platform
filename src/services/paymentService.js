@@ -89,6 +89,42 @@ const paymentService = {
     return newSubscription
   },
   
+  // Process demo account payment
+  processDemoPayment: async (email, planId, paymentDetails) => {
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // TODO: Backend integration
+    // const response = await api.post('/api/payments/demo-payment', {
+    //   email,
+    //   plan_id: planId,
+    //   payment_details: paymentDetails
+    // })
+    // return response.data
+    
+    // Mock payment processing
+    return {
+      success: true,
+      payment_id: `PAY_${Date.now()}`,
+      message: 'Payment successful'
+    }
+  },
+
+  // Send password setup email after payment
+  sendPasswordSetupEmail: async (email) => {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // TODO: Backend integration
+    // const response = await api.post('/api/auth/send-password-setup', { email })
+    // return response.data
+    
+    // Mock email sending
+    return {
+      success: true,
+      message: 'Password setup email sent',
+      token: `TOKEN_${Date.now()}`
+    }
+  },
+
   // Process payment (mock - will be replaced with real payment gateway)
   processPayment: async (accountId, planId, paymentDetails) => {
     await new Promise(resolve => setTimeout(resolve, 1000))

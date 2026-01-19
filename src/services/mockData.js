@@ -75,7 +75,10 @@ export const mockDemos = [
     status: 'BOOKED',
     recommended_student_type: null,
     recommended_level: null,
-    admin_notes: null
+    admin_notes: null,
+    payment_status: 'PENDING',
+    payment_date: null,
+    preferred_language: 'English'
   },
   {
     demo_id: 'demo-2',
@@ -91,7 +94,10 @@ export const mockDemos = [
     status: 'ATTENDED',
     recommended_student_type: 'group',
     recommended_level: 'Beginner',
-    admin_notes: 'Student showed great interest'
+    admin_notes: 'Student showed great interest',
+    payment_status: 'PENDING',
+    payment_date: null,
+    preferred_language: 'English'
   },
   {
     demo_id: 'demo-3',
@@ -107,7 +113,10 @@ export const mockDemos = [
     status: 'ATTENDED',
     recommended_student_type: '1-1',
     recommended_level: 'Intermediate',
-    admin_notes: 'Ready for subscription'
+    admin_notes: 'Ready for subscription',
+    payment_status: 'PENDING',
+    payment_date: null,
+    preferred_language: 'English'
   }
 ]
 

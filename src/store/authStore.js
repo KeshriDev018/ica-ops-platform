@@ -3,10 +3,11 @@ import { persist } from 'zustand/middleware'
 
 const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       role: null,
+      demoAccountLinked: false,
       
       login: (userData, token) => {
         set({
@@ -21,9 +22,25 @@ const useAuthStore = create(
         set({
           user: null,
           token: null,
-          role: null
+          role: null,
+          demoAccountLinked: false
         })
         localStorage.removeItem('auth_token')
+      },
+      
+      linkDemoAccount: (demoData) => {
+        // Link demo account data to the authenticated user
+        const currentUser = get().user
+        if (currentUser) {
+          set({
+            user: {
+              ...currentUser,
+              demo_info: demoData,
+              linked_from_demo: true
+            },
+            demoAccountLinked: true
+          })
+        }
       },
       
       checkAuth: () => {
