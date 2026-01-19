@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '../../components/common/Button'
 import Card from '../../components/common/Card'
+import { FloatCard3D, RotateCard3D, ScaleCard3D, FlipCard3D, GlowPulseCard3D, BounceCard3D } from '../../components/3d/CardHoverEffects'
 import WatermarkBackground from '../../components/common/WatermarkBackground'
 
 const LandingPage = () => {
@@ -82,34 +83,42 @@ const LandingPage = () => {
             About Indian Chess Academy
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="text-center">
-              <div className="w-16 h-16 bg-navy/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🧠</span>
-              </div>
-              <h3 className="text-lg font-secondary font-semibold text-navy mb-2">Cognitive Development</h3>
-              <p className="text-gray-700 text-sm">Enhance memory, concentration, and analytical thinking skills.</p>
-            </Card>
-            <Card className="text-center">
-              <div className="w-16 h-16 bg-navy/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">♚</span>
-              </div>
-              <h3 className="text-lg font-secondary font-semibold text-navy mb-2">Expert Training</h3>
-              <p className="text-gray-700 text-sm">Learn from FIDE-rated Grandmasters and certified coaches.</p>
-            </Card>
-            <Card className="text-center">
+            <FloatCard3D floatHeight={25}>
+              <Card className="text-center">
+                <div className="w-16 h-16 bg-navy/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">🧠</span>
+                </div>
+                <h3 className="text-lg font-secondary font-semibold text-navy mb-2">Cognitive Development</h3>
+                <p className="text-gray-700 text-sm">Enhance memory, concentration, and analytical thinking skills.</p>
+              </Card>
+            </FloatCard3D>
+            <FloatCard3D floatHeight={25}>
+              <Card className="text-center">
+                <div className="w-16 h-16 bg-navy/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">♚</span>
+                </div>
+                <h3 className="text-lg font-secondary font-semibold text-navy mb-2">Expert Training</h3>
+                <p className="text-gray-700 text-sm">Learn from FIDE-rated Grandmasters and certified coaches.</p>
+              </Card>
+            </FloatCard3D>
+            <FloatCard3D floatHeight={25}>
+              <Card className="text-center">
               <div className="w-16 h-16 bg-navy/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">🏆</span>
               </div>
               <h3 className="text-lg font-secondary font-semibold text-navy mb-2">Competition Ready</h3>
               <p className="text-gray-700 text-sm">Prepare for tournaments with strategic training and practice.</p>
-            </Card>
-            <Card className="text-center">
-              <div className="w-16 h-16 bg-navy/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🇮🇳</span>
-              </div>
-              <h3 className="text-lg font-secondary font-semibold text-navy mb-2">Indian Heritage</h3>
-              <p className="text-gray-700 text-sm">Connect with the rich tradition of chess in India.</p>
-            </Card>
+              </Card>
+            </FloatCard3D>
+            <FloatCard3D floatHeight={25}>
+              <Card className="text-center">
+                <div className="w-16 h-16 bg-navy/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">🇮🇳</span>
+                </div>
+                <h3 className="text-lg font-secondary font-semibold text-navy mb-2">Indian Heritage</h3>
+                <p className="text-gray-700 text-sm">Connect with the rich tradition of chess in India.</p>
+              </Card>
+            </FloatCard3D>
           </div>
         </div>
       </section>
@@ -129,13 +138,15 @@ const LandingPage = () => {
               { icon: '🎯', title: 'Personalized Attention', desc: 'Tailored approach to individual learning needs' },
               { icon: '🏅', title: 'Achievement Focused', desc: 'Track progress with clear milestones and goals' }
             ].map((item, idx) => (
-              <Card key={idx} className="bg-white text-center">
-                <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-4xl">{item.icon}</span>
-                </div>
-                <h3 className="text-lg font-secondary font-semibold text-navy mb-2">{item.title}</h3>
-                <p className="text-gray-700 text-sm">{item.desc}</p>
-              </Card>
+              <RotateCard3D key={idx}>
+                <Card className="bg-white text-center">
+                  <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                    <span className="text-4xl">{item.icon}</span>
+                  </div>
+                  <h3 className="text-lg font-secondary font-semibold text-navy mb-2">{item.title}</h3>
+                  <p className="text-gray-700 text-sm">{item.desc}</p>
+                </Card>
+              </RotateCard3D>
             ))}
           </div>
         </div>
@@ -149,7 +160,8 @@ const LandingPage = () => {
           </h2>
           <div className="grid md:grid-cols-2 gap-8">
             {/* 1-on-1 Coaching */}
-            <Card className="p-0 overflow-hidden border-none">
+            <GlowPulseCard3D>
+              <Card className="p-0 overflow-hidden border-none">
               {/* Header Section - Orange background with white text */}
               <div className="bg-orange text-white p-6">
                 <h3 className="text-2xl font-primary font-bold mb-2">
@@ -190,10 +202,12 @@ const LandingPage = () => {
                   Start Learning
                 </button>
               </div>
-            </Card>
+              </Card>
+            </GlowPulseCard3D>
 
             {/* Group Coaching */}
-            <Card className="p-0 overflow-hidden border-none">
+            <GlowPulseCard3D>
+              <Card className="p-0 overflow-hidden border-none">
               {/* Header Section - Olive green background with white text */}
               <div className="bg-olive text-white p-6">
                 <h3 className="text-2xl font-primary font-bold mb-2">
@@ -234,7 +248,8 @@ const LandingPage = () => {
                   Join Group
                 </button>
               </div>
-            </Card>
+              </Card>
+            </GlowPulseCard3D>
           </div>
         </div>
       </section>
@@ -297,30 +312,30 @@ const LandingPage = () => {
             Our team comprises FIDE-rated coaches, Grandmasters, and seasoned educators dedicated to nurturing champions.
           </p>
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="text-center">
-              <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-gray-400">GM</span>
-              </div>
-              <h3 className="text-xl font-secondary font-bold text-navy mb-1">GM Rahul Sharma</h3>
-              <p className="text-orange mb-3">Grandmaster, Head Coach</p>
-              <p className="text-gray-700 text-sm">Experienced Grandmaster with over 15 years of coaching expertise.</p>
-            </Card>
-            <Card className="text-center">
-              <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-gray-400">WFM</span>
-              </div>
-              <h3 className="text-xl font-secondary font-bold text-navy mb-1">WFM Priya Singh</h3>
-              <p className="text-orange mb-3">FIDE Master, Senior Coach</p>
-              <p className="text-gray-700 text-sm">Dedicated to developing young talent with personalized attention.</p>
-            </Card>
-            <Card className="text-center">
+              <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <span className="text-gray-400">GM</span>
+                </div>
+                <h3 className="text-xl font-secondary font-bold text-navy mb-1">GM Rahul Sharma</h3>
+                <p className="text-orange mb-3">Grandmaster, Head Coach</p>
+                <p className="text-gray-700 text-sm">Experienced Grandmaster with over 15 years of coaching expertise.</p>
+              </Card>
+              <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <span className="text-gray-400">WFM</span>
+                </div>
+                <h3 className="text-xl font-secondary font-bold text-navy mb-1">WFM Priya Singh</h3>
+                <p className="text-orange mb-3">FIDE Master, Senior Coach</p>
+                <p className="text-gray-700 text-sm">Dedicated to developing young talent with personalized attention.</p>
+              </Card>
+              <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
                 <span className="text-gray-400">FM</span>
               </div>
               <h3 className="text-xl font-secondary font-bold text-navy mb-1">FM Anil Kumar</h3>
               <p className="text-orange mb-3">FIDE Master, Junior Coach</p>
               <p className="text-gray-700 text-sm">Passionate about making chess accessible to all age groups.</p>
-            </Card>
+              </Card>
           </div>
         </div>
       </section>
@@ -337,21 +352,21 @@ const LandingPage = () => {
               { quote: "I've improved my rating significantly since joining. The personalized game analysis is simply invaluable!", author: "Aryan Mehta", role: "Advanced Student" },
               { quote: "The coaches are patient and encouraging. My daughter loves her classes and looks forward to each session!", author: "Rajesh Patel", role: "Parent of Ananya" }
             ].map((testimonial, idx) => (
-              <Card key={idx}>
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="text-orange text-xl">★</span>
-                  ))}
-                </div>
-                <p className="text-gray-700 mb-6 italic">"{testimonial.quote}"</p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full mr-4"></div>
-                  <div>
-                    <p className="font-semibold text-navy">{testimonial.author}</p>
-                    <p className="text-sm text-gray-600">{testimonial.role}</p>
+                <Card key={idx} className="transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className="flex mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-orange text-xl">★</span>
+                    ))}
                   </div>
-                </div>
-              </Card>
+                  <p className="text-gray-700 mb-6 italic">"{testimonial.quote}"</p>
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-gray-200 rounded-full mr-4"></div>
+                    <div>
+                      <p className="font-semibold text-navy">{testimonial.author}</p>
+                      <p className="text-sm text-gray-600">{testimonial.role}</p>
+                    </div>
+                  </div>
+                </Card>
             ))}
           </div>
         </div>
@@ -392,15 +407,17 @@ const LandingPage = () => {
               { q: "What software or tools are required?", a: "You'll need a computer or tablet with internet connection. We'll provide access to our online chess platform and learning resources." },
               { q: "How do you track student progress?", a: "We use a comprehensive tracking system that includes regular assessments, game analysis, and progress reports shared with parents." }
             ].map((faq, index) => (
-              <Card key={index} className="cursor-pointer hover:shadow-medium transition-shadow" onClick={() => toggleFaq(index)}>
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-navy">{faq.q}</h3>
-                  <span className="text-navy text-xl">{openFaq === index ? '▲' : '▼'}</span>
-                </div>
-                {openFaq === index && (
-                  <p className="mt-4 text-gray-700">{faq.a}</p>
-                )}
-              </Card>
+              <FloatCard3D key={index} floatHeight={10}>
+                <Card className="cursor-pointer hover:shadow-medium transition-shadow" onClick={() => toggleFaq(index)}>
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-navy">{faq.q}</h3>
+                    <span className="text-navy text-xl">{openFaq === index ? '▲' : '▼'}</span>
+                  </div>
+                  {openFaq === index && (
+                    <p className="mt-4 text-gray-700">{faq.a}</p>
+                  )}
+                </Card>
+              </FloatCard3D>
             ))}
           </div>
         </div>
