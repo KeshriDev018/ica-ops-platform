@@ -8,24 +8,36 @@ import {
   flexRender,
   createColumnHelper,
 } from "@tanstack/react-table";
+import { UserCircle, X } from "lucide-react";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import studentService from "../../services/studentService";
+import coachService from "../../services/coachService";
+import FormSelect from "../../components/forms/FormSelect";
 
 const columnHelper = createColumnHelper();
 
 const AdminStudents = () => {
   const [students, setStudents] = useState([]);
+  const [coaches, setCoaches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedCoachId, setSelectedCoachId] = useState("");
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const allStudents = await studentService.getAll();
+        const [allStudents, allCoaches] = await Promise.all([
+          studentService.getAll(),
+          coachService.getAll(),
+        ]);
         setStudents(allStudents);
+        setCoaches(allCoaches);
       } catch (error) {
-        console.error("Error loading students:", error);
+        console.error("Error loading data:", error);
       } finally {
         setLoading(false);
       }
@@ -33,6 +45,43 @@ const AdminStudents = () => {
 
     loadData();
   }, []);
+
+  const handleAssignCoach = (student) => {
+    setSelectedStudent(student);
+    setSelectedCoachId(
+      student.assignedCoachId?._id || student.assignedCoachId || "",
+    );
+    setIsAssignModalOpen(true);
+  };
+
+  const handleSubmitAssignment = async () => {
+    if (!selectedStudent || !selectedCoachId) {
+      alert("Please select a coach");
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      await studentService.reassign(selectedStudent._id, selectedCoachId, null);
+
+      // Reload students
+      const updatedStudents = await studentService.getAll();
+      setStudents(updatedStudents);
+
+      alert(`✅ Coach assigned successfully to ${selectedStudent.studentName}`);
+      setIsAssignModalOpen(false);
+      setSelectedStudent(null);
+      setSelectedCoachId("");
+    } catch (error) {
+      console.error("Error assigning coach:", error);
+      alert(
+        "Failed to assign coach: " +
+          (error.response?.data?.message || error.message),
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   const columns = useMemo(
     () => [
@@ -64,6 +113,17 @@ const AdminStudents = () => {
         header: "Level",
         cell: (info) => info.getValue(),
       }),
+      columnHelper.accessor("assignedCoachId", {
+        header: "Assigned Coach",
+        cell: (info) => {
+          const coach = info.getValue();
+          return (
+            <span className="text-gray-600">
+              {coach?.name || coach?.email || "Not Assigned"}
+            </span>
+          );
+        },
+      }),
       columnHelper.accessor("rating", {
         header: "Rating",
         cell: (info) => info.getValue() || "N/A",
@@ -86,6 +146,20 @@ const AdminStudents = () => {
             </span>
           );
         },
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        cell: (info) => (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAssignCoach(info.row.original)}
+          >
+            <UserCircle size={14} className="mr-1" />
+            Assign Coach
+          </Button>
+        ),
       }),
     ],
     [],
@@ -120,6 +194,103 @@ const AdminStudents = () => {
 
   return (
     <div className="space-y-6">
+      {isAssignModalOpen && selectedStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-navy">Assign Coach</h2>
+              <button
+                onClick={() => setIsAssignModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-4 mb-6">
+              <h3 className="font-semibold text-navy mb-2">Student Details</h3>
+              <div className="space-y-1 text-sm">
+                <p>
+                  <span className="text-gray-600">Name:</span>{" "}
+                  <span className="font-medium">
+                    {selectedStudent.studentName}
+                  </span>
+                </p>
+                <p>
+                  <span className="text-gray-600">Age:</span>{" "}
+                  <span className="font-medium">
+                    {selectedStudent.studentAge} years
+                  </span>
+                </p>
+                <p>
+                  <span className="text-gray-600">Level:</span>{" "}
+                  <span className="font-medium">{selectedStudent.level}</span>
+                </p>
+                <p>
+                  <span className="text-gray-600">Type:</span>{" "}
+                  <span className="font-medium">
+                    {selectedStudent.studentType === "1-1"
+                      ? "One-on-One"
+                      : "Batch"}
+                  </span>
+                </p>
+                <p>
+                  <span className="text-gray-600">Current Coach:</span>{" "}
+                  <span className="font-medium">
+                    {selectedStudent.assignedCoachId?.name ||
+                      selectedStudent.assignedCoachId?.email ||
+                      "Not Assigned"}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Coach
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <select
+                  value={selectedCoachId}
+                  onChange={(e) => setSelectedCoachId(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent bg-white"
+                  required
+                >
+                  <option value="">-- Select a Coach --</option>
+                  {coaches.map((coach) => (
+                    <option key={coach._id} value={coach._id}>
+                      {coach.name || coach.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAssignModalOpen(false)}
+                  className="flex-1"
+                  disabled={processing}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleSubmitAssignment}
+                  disabled={processing || !selectedCoachId}
+                  className="flex-1"
+                >
+                  {processing ? "Assigning..." : "Assign Coach"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-secondary font-bold text-navy mb-2">

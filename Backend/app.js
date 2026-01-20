@@ -43,10 +43,9 @@ import intelligenceRoutes from "./src/routes/intelligence.routes.js";
 import assistantRoutes from "./src/routes/assistant.routes.js";
 import coachRoutes from "./src/routes/coach.routes.js";
 import batchRoutes from "./src/routes/batch.routes.js";
+import classRoutes from "./src/routes/class.routes.js";
 
-
-
-
+app.use("/api/classes", classRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/demos", demoRoutes);
 app.use("/api/payments", paymentRoutes);

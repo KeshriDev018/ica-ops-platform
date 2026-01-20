@@ -73,6 +73,7 @@ const studentSchema = new mongoose.Schema(
 
     assignedBatchId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "Batch",
       default: null, // nullable for 1-1
     },
 

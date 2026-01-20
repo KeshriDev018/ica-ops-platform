@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Trash2, Users, Clock, User } from "lucide-react";
+import { Trash2, Users, Clock, User, Plus, X } from "lucide-react";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import batchService from "../../services/batchService";
 import coachService from "../../services/coachService";
+import studentService from "../../services/studentService";
 import FormInput from "../../components/forms/FormInput";
 import FormSelect from "../../components/forms/FormSelect";
 
@@ -15,6 +16,9 @@ const AdminBatches = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState(null);
+  const [unassignedStudents, setUnassignedStudents] = useState([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     coachId: "",
@@ -110,6 +114,110 @@ const AdminBatches = () => {
 
   const handleCancelDelete = () => {
     setDeleteConfirm(null);
+  };
+
+  const handleBatchClick = async (batch) => {
+    setSelectedBatch(batch);
+    setLoadingStudents(true);
+    try {
+      // Get all students and filter for unassigned group students
+      const allStudents = await studentService.getAll();
+      console.log("All students:", allStudents);
+      console.log("Sample student:", allStudents[0]);
+
+      const unassigned = allStudents.filter((s) => {
+        console.log(
+          `Student ${s.studentName}: type=${s.studentType}, batchId=${s.assignedBatchId}`,
+        );
+        return (
+          s.studentType === "group" &&
+          (!s.assignedBatchId || s.assignedBatchId === null)
+        );
+      });
+      console.log("Unassigned group students:", unassigned);
+      setUnassignedStudents(unassigned);
+    } catch (error) {
+      console.error("Error loading students:", error);
+      alert("Failed to load students");
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
+  const handleAddStudent = async (studentId) => {
+    if (!selectedBatch) return;
+
+    try {
+      const result = await batchService.addStudent(
+        selectedBatch._id,
+        studentId,
+      );
+      console.log("Add student result:", result);
+
+      // Reload all data first
+      await loadData();
+
+      // Get the updated batch from backend
+      const updatedBatch = await batchService.getById(selectedBatch._id);
+      setSelectedBatch(updatedBatch);
+
+      // Reload unassigned students list
+      const allStudents = await studentService.getAll();
+      const unassigned = allStudents.filter(
+        (s) =>
+          s.studentType === "group" &&
+          (!s.assignedBatchId || s.assignedBatchId === null),
+      );
+      setUnassignedStudents(unassigned);
+
+      alert("Student added to batch successfully");
+    } catch (error) {
+      console.error("Error adding student:", error);
+      console.error("Error details:", error.response?.data);
+      alert(error.response?.data?.message || "Failed to add student to batch");
+    }
+  };
+
+  const handleRemoveStudent = async (studentId) => {
+    if (!selectedBatch) return;
+
+    if (
+      !confirm("Are you sure you want to remove this student from the batch?")
+    ) {
+      return;
+    }
+
+    try {
+      const result = await batchService.removeStudent(
+        selectedBatch._id,
+        studentId,
+      );
+      console.log("Remove student result:", result);
+
+      // Reload all data first
+      await loadData();
+
+      // Get the updated batch from backend
+      const updatedBatch = await batchService.getById(selectedBatch._id);
+      setSelectedBatch(updatedBatch);
+
+      // Reload unassigned students list
+      const allStudents = await studentService.getAll();
+      const unassigned = allStudents.filter(
+        (s) =>
+          s.studentType === "group" &&
+          (!s.assignedBatchId || s.assignedBatchId === null),
+      );
+      setUnassignedStudents(unassigned);
+
+      alert("Student removed from batch successfully");
+    } catch (error) {
+      console.error("Error removing student:", error);
+      console.error("Error details:", error.response?.data);
+      alert(
+        error.response?.data?.message || "Failed to remove student from batch",
+      );
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -231,6 +339,170 @@ const AdminBatches = () => {
         </div>
       )}
 
+      {/* Batch Details Modal */}
+      {selectedBatch && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full my-8">
+            <div className="sticky top-0 bg-navy text-white px-6 py-4 rounded-t-xl flex items-center justify-between">
+              <h2 className="text-2xl font-bold">{selectedBatch.name}</h2>
+              <button
+                onClick={() => setSelectedBatch(null)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Batch Info */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Coach</p>
+                  <p className="font-semibold text-navy">
+                    {selectedBatch.coachId?.name || "Not assigned"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Level</p>
+                  <p className="font-semibold text-navy">
+                    {selectedBatch.level}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Timezone</p>
+                  <p className="font-semibold text-navy">
+                    {selectedBatch.timezone}
+                  </p>
+                </div>
+              </div>
+
+              {/* Current Students */}
+              <div>
+                <h3 className="text-lg font-semibold text-navy mb-3 flex items-center gap-2">
+                  <Users size={20} />
+                  Current Students ({selectedBatch.studentIds?.length || 0}/
+                  {selectedBatch.maxStudents || 5})
+                </h3>
+
+                {selectedBatch.studentIds &&
+                selectedBatch.studentIds.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedBatch.studentIds.map((student) => (
+                      <div
+                        key={student._id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-navy text-white rounded-full flex items-center justify-center font-semibold">
+                            {student.studentName?.charAt(0).toUpperCase() ||
+                              "?"}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-navy">
+                              {student.studentName}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {student.studentAge} years • {student.level}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveStudent(student._id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Remove from batch"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <Users size={48} className="mx-auto text-gray-300 mb-2" />
+                    <p className="text-gray-500">
+                      No students in this batch yet
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Unassigned Students */}
+              <div>
+                <h3 className="text-lg font-semibold text-navy mb-3 flex items-center gap-2">
+                  <Plus size={20} />
+                  Add Students to Batch
+                </h3>
+
+                {loadingStudents ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">
+                      Loading available students...
+                    </p>
+                  </div>
+                ) : unassignedStudents.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {unassignedStudents.map((student) => (
+                      <div
+                        key={student._id}
+                        className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold">
+                            {student.studentName?.charAt(0).toUpperCase() ||
+                              "?"}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-navy">
+                              {student.studentName}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {student.studentAge} years • {student.level} •
+                              Unassigned
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleAddStudent(student._id)}
+                          disabled={
+                            selectedBatch.studentIds?.length >=
+                            selectedBatch.maxStudents
+                          }
+                          className="px-4 py-2 bg-navy text-white rounded-lg hover:bg-navy/90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed text-sm font-medium"
+                          title={
+                            selectedBatch.studentIds?.length >=
+                            selectedBatch.maxStudents
+                              ? "Batch is full"
+                              : "Add to batch"
+                          }
+                        >
+                          Add
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <p className="text-gray-500">
+                      No unassigned group students available
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {selectedBatch.studentIds?.length >=
+                selectedBatch.maxStudents && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-yellow-800 text-sm">
+                    ⚠️ This batch is full. Remove a student before adding new
+                    ones.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -310,7 +582,12 @@ const AdminBatches = () => {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {batches.map((batch) => (
-            <Card key={batch._id} hover>
+            <Card
+              key={batch._id}
+              hover
+              className="cursor-pointer"
+              onClick={() => handleBatchClick(batch)}
+            >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold text-navy mb-2">
@@ -323,7 +600,10 @@ const AdminBatches = () => {
                   </span>
                 </div>
                 <button
-                  onClick={() => handleDeleteClick(batch)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick(batch);
+                  }}
                   className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   title="Delete batch"
                 >

@@ -76,10 +76,19 @@ export const verifyPayment = async (req, res) => {
       });
     }
 
-    await createStudentAndSubscriptionFromDemo(demoId, {
-      amount,
-      billingCycle,
-    });
+    await createStudentAndSubscriptionFromDemo(
+      demoId,
+      {
+        amount,
+        billingCycle,
+      },
+      {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        paymentMethod: "Razorpay",
+      },
+    );
 
     const demo = await Demo.findById(demoId);
     const account = await Account.findById(demo.accountId);

@@ -12,6 +12,7 @@ import Button from "../../components/common/Button";
 import demoService from "../../services/demoService";
 import paymentService from "../../services/paymentService";
 import subscriptionService from "../../services/subscriptionService";
+import studentService from "../../services/studentService";
 import FormInput from "../../components/forms/FormInput";
 import FormSelect from "../../components/forms/FormSelect";
 import { format } from "date-fns";
@@ -19,16 +20,24 @@ import { format } from "date-fns";
 const AdminPayments = () => {
   const [interestedDemos, setInterestedDemos] = useState([]);
   const [pendingPaymentDemos, setPendingPaymentDemos] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [allPayments, setAllPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("interested");
   const [selectedDemo, setSelectedDemo] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [paymentData, setPaymentData] = useState({
     amount: "",
     billingCycle: "monthly",
     studentType: "1-1",
+  });
+  const [subscriptionPaymentData, setSubscriptionPaymentData] = useState({
+    amount: "",
+    notes: "",
   });
   const [verificationData, setVerificationData] = useState({
     razorpay_order_id: "",
@@ -52,6 +61,13 @@ const AdminPayments = () => {
 
       setInterestedDemos(interested);
       setPendingPaymentDemos(pending);
+
+      // Load students and payment history
+      const studentsData = await studentService.getAll();
+      setStudents(studentsData);
+
+      const paymentsData = await subscriptionService.getAllPayments();
+      setAllPayments(paymentsData);
     } catch (error) {
       console.error("Error loading payments:", error);
     } finally {
@@ -115,6 +131,68 @@ const AdminPayments = () => {
       });
     } catch (error) {
       console.error("Order generation error:", error);
+      setPaymentErrors({
+        submit: error.response?.data?.message || error.message,
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleCreateSubscriptionPayment = (student) => {
+    setSelectedStudent(student);
+    const suggestedAmount = student.studentType === "1-1" ? "2999" : "1499";
+    setSubscriptionPaymentData({
+      amount: suggestedAmount,
+      notes: `Monthly subscription payment for ${student.studentName}`,
+    });
+    setIsSubscriptionModalOpen(true);
+  };
+
+  const handleGenerateSubscriptionOrder = async () => {
+    if (!selectedStudent) return;
+
+    setPaymentErrors({});
+    const errors = {};
+
+    if (
+      !subscriptionPaymentData.amount ||
+      parseFloat(subscriptionPaymentData.amount) <= 0
+    ) {
+      errors.amount = "Please enter a valid amount";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setPaymentErrors(errors);
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const orderData = await subscriptionService.createPaymentOrder(
+        selectedStudent._id,
+        parseFloat(subscriptionPaymentData.amount) * 100,
+        subscriptionPaymentData.notes,
+      );
+
+      alert(
+        `✅ Subscription payment order generated!\n\n` +
+          `Order ID: ${orderData.orderId}\n` +
+          `Amount: ₹${subscriptionPaymentData.amount}\n` +
+          `Student: ${selectedStudent.studentName}\n\n` +
+          `✓ Student will receive payment notification\n` +
+          `✓ Order valid for 1 hour`,
+      );
+
+      loadData();
+      setIsSubscriptionModalOpen(false);
+      setSelectedStudent(null);
+      setSubscriptionPaymentData({
+        amount: "",
+        notes: "",
+      });
+    } catch (error) {
+      console.error("Subscription order error:", error);
       setPaymentErrors({
         submit: error.response?.data?.message || error.message,
       });
@@ -482,7 +560,8 @@ const AdminPayments = () => {
           Payment Management
         </h1>
         <p className="text-gray-600">
-          Generate orders for interested students and verify payments
+          Generate demo orders, verify payments, and create subscription orders
+          for active students
         </p>
       </div>
 
@@ -511,6 +590,32 @@ const AdminPayments = () => {
           <div className="flex items-center gap-2">
             <Clock size={18} />
             Pending Payments ({pendingPaymentDemos.length})
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab("subscriptions")}
+          className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+            activeTab === "subscriptions"
+              ? "border-navy text-navy"
+              : "border-transparent text-gray-600 hover:text-navy"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <CreditCard size={18} />
+            Subscription Payments ({students.length})
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+            activeTab === "history"
+              ? "border-navy text-navy"
+              : "border-transparent text-gray-600 hover:text-navy"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <CheckCircle size={18} />
+            Payment History ({allPayments.length})
           </div>
         </button>
       </div>
@@ -706,6 +811,331 @@ const AdminPayments = () => {
             </div>
           )}
         </Card>
+      )}
+
+      {activeTab === "subscriptions" && (
+        <Card>
+          {students.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">👥</div>
+              <h3 className="text-xl font-semibold text-navy mb-2">
+                No Active Students
+              </h3>
+              <p className="text-gray-600">
+                Students will appear here after demo conversion
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Student
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Type
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Status
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Parent Email
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((student) => (
+                    <tr
+                      key={student._id}
+                      className="border-b border-gray-100 hover:bg-gray-50"
+                    >
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium text-navy">
+                            {student.studentName}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {student.studentAge} years • Level {student.level}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            student.studentType === "1-1"
+                              ? "bg-purple-100 text-purple-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          {student.studentType === "1-1"
+                            ? "One-on-One"
+                            : "Batch"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            student.status === "ACTIVE"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {student.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-600">
+                        {student.parentEmail}
+                      </td>
+                      <td className="py-3 px-4">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() =>
+                            handleCreateSubscriptionPayment(student)
+                          }
+                        >
+                          <CreditCard size={14} className="mr-1" />
+                          Generate Order
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {activeTab === "history" && (
+        <Card>
+          {allPayments.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📊</div>
+              <h3 className="text-xl font-semibold text-navy mb-2">
+                No Payment History
+              </h3>
+              <p className="text-gray-600">
+                Payment transactions will appear here
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Date
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Student
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Payment For
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Order ID
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Amount
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allPayments.map((payment) => (
+                    <tr
+                      key={payment._id}
+                      className="border-b border-gray-100 hover:bg-gray-50"
+                    >
+                      <td className="py-3 px-4 text-sm text-gray-600">
+                        {format(
+                          new Date(payment.createdAt),
+                          "MMM dd, yyyy HH:mm",
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <p className="font-medium text-navy">
+                          {payment.studentId?.studentName || "N/A"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {payment.studentId?.parentEmail}
+                        </p>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            payment.paymentFor === "DEMO"
+                              ? "bg-blue-100 text-blue-800"
+                              : payment.paymentFor === "SUBSCRIPTION"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {payment.paymentFor}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                          {payment.razorpayOrderId}
+                        </code>
+                      </td>
+                      <td className="py-3 px-4 text-sm font-semibold text-navy">
+                        ₹{(payment.amount / 100).toLocaleString("en-IN")}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            payment.status === "SUCCESS"
+                              ? "bg-green-100 text-green-800"
+                              : payment.status === "PENDING"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {payment.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {isSubscriptionModalOpen && selectedStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-navy">
+                Generate Subscription Payment
+              </h2>
+              <button
+                onClick={() => setIsSubscriptionModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-4 mb-6">
+              <h3 className="font-semibold text-navy mb-2">Student Details</h3>
+              <div className="space-y-1 text-sm">
+                <p>
+                  <span className="text-gray-600">Student:</span>{" "}
+                  <span className="font-medium">
+                    {selectedStudent.studentName}
+                  </span>
+                </p>
+                <p>
+                  <span className="text-gray-600">Type:</span>{" "}
+                  <span className="font-medium">
+                    {selectedStudent.studentType === "1-1"
+                      ? "One-on-One"
+                      : "Batch"}
+                  </span>
+                </p>
+                <p>
+                  <span className="text-gray-600">Email:</span>{" "}
+                  <span className="font-medium">
+                    {selectedStudent.parentEmail}
+                  </span>
+                </p>
+                <p>
+                  <span className="text-gray-600">Status:</span>{" "}
+                  <span className="font-medium">{selectedStudent.status}</span>
+                </p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleGenerateSubscriptionOrder();
+              }}
+              className="space-y-4"
+            >
+              <FormInput
+                label="Payment Amount (₹)"
+                name="amount"
+                type="number"
+                value={subscriptionPaymentData.amount}
+                onChange={(e) =>
+                  setSubscriptionPaymentData({
+                    ...subscriptionPaymentData,
+                    amount: e.target.value,
+                  })
+                }
+                placeholder="2999"
+                error={paymentErrors.amount}
+                required
+              />
+
+              <FormInput
+                label="Notes (Optional)"
+                name="notes"
+                type="text"
+                value={subscriptionPaymentData.notes}
+                onChange={(e) =>
+                  setSubscriptionPaymentData({
+                    ...subscriptionPaymentData,
+                    notes: e.target.value,
+                  })
+                }
+                placeholder="Monthly subscription payment"
+              />
+
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm">
+                <p className="text-green-800 font-medium mb-1">
+                  ℹ️ Payment Process:
+                </p>
+                <ul className="text-green-700 space-y-1 ml-4 list-disc">
+                  <li>Order will be created with Razorpay</li>
+                  <li>Student will receive payment notification</li>
+                  <li>Payment link valid for 1 hour</li>
+                  <li>On success, subscription extends by 1 month</li>
+                </ul>
+              </div>
+
+              {paymentErrors.submit && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-red-800 text-sm flex items-center gap-2">
+                    <AlertCircle size={16} />
+                    {paymentErrors.submit}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsSubscriptionModalOpen(false)}
+                  className="flex-1"
+                  disabled={processing}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={processing}
+                  className="flex-1"
+                >
+                  {processing ? "Generating..." : "Generate Order"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

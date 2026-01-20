@@ -31,6 +31,7 @@ export const login = async (req, res) => {
       });
     }
 
+
     // 3️⃣ Compare password using bcrypt
     const isMatch = await bcrypt.compare(password, user.password);
 

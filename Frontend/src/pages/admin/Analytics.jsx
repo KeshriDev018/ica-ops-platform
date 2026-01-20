@@ -18,90 +18,86 @@ import {
 import studentService from "../../services/studentService";
 import demoService from "../../services/demoService";
 import subscriptionService from "../../services/subscriptionService";
+import coachService from "../../services/coachService";
 
 const AdminAnalytics = () => {
   const [analytics, setAnalytics] = useState({
     totalStudents: 0,
     totalDemos: 0,
     conversionRate: 0,
-    totalRevenue: 0,
+    totalCoaches: 0,
   });
   const [chartData, setChartData] = useState({
-    revenueData: [],
-    studentGrowth: [],
-    demoStatus: [],
-    planDistribution: [],
-    levelDistribution: [],
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Generate dummy data immediately
-    const totalStudents = 45;
-    const totalDemos = 68;
-    const convertedDemos = 32;
-    const conversionRate = (convertedDemos / totalDemos) * 100;
-
-    // Generate revenue data (last 6 months)
-    const revenueData = [
+    revenueData: [
       { month: "Aug", revenue: 125000 },
       { month: "Sep", revenue: 138000 },
       { month: "Oct", revenue: 152000 },
       { month: "Nov", revenue: 168000 },
       { month: "Dec", revenue: 185000 },
       { month: "Jan", revenue: 205000 },
-    ];
-
-    // Student growth (last 6 months)
-    const studentGrowth = [
+    ],
+    studentGrowth: [
       { month: "Aug", students: 18 },
       { month: "Sep", students: 23 },
       { month: "Oct", students: 29 },
       { month: "Nov", students: 35 },
       { month: "Dec", students: 40 },
       { month: "Jan", students: 45 },
-    ];
-
-    // Demo status distribution
-    const demoStatusData = [
+    ],
+    demoStatus: [
       { name: "Booked", value: 15, color: "#3B82F6" },
       { name: "Attended", value: 22, color: "#10B981" },
       { name: "Converted", value: 18, color: "#F59E0B" },
       { name: "Cancelled", value: 8, color: "#EF4444" },
       { name: "Interested", value: 5, color: "#8B5CF6" },
-    ];
-
-    // Plan distribution
-    const planDistribution = [
+    ],
+    planDistribution: [
       { name: "1-on-1 Coaching", value: 28, color: "#FC8A24" },
       { name: "Group Coaching", value: 17, color: "#6B8E23" },
-    ];
-
-    // Level distribution
-    const levelDistribution = [
+    ],
+    levelDistribution: [
       { name: "Beginner", value: 20 },
       { name: "Intermediate", value: 18 },
       { name: "Advanced", value: 7 },
-    ];
+    ],
+  });
+  const [loading, setLoading] = useState(true);
 
-    const totalRevenue = 185000;
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Fetch real data from backend
+        const [students, demos, coaches] = await Promise.all([
+          studentService.getAll(),
+          demoService.getAll(),
+          coachService.getAll(),
+        ]);
 
-    setAnalytics({
-      totalStudents: totalStudents,
-      totalDemos: totalDemos,
-      conversionRate: Math.round(conversionRate),
-      totalRevenue: totalRevenue,
-    });
+        // Calculate real metrics
+        const totalStudents = students.length;
+        const totalDemos = demos.length;
+        const convertedDemos = demos.filter(
+          (d) => d.status === "CONVERTED",
+        ).length;
+        const conversionRate =
+          totalDemos > 0 ? (convertedDemos / totalDemos) * 100 : 0;
+        const totalCoaches = coaches.length;
 
-    setChartData({
-      revenueData,
-      studentGrowth,
-      demoStatus: demoStatusData,
-      planDistribution,
-      levelDistribution,
-    });
+        // Set real analytics data (top 4 stats only)
+        setAnalytics({
+          totalStudents: totalStudents,
+          totalDemos: totalDemos,
+          conversionRate: Math.round(conversionRate),
+          totalCoaches: totalCoaches,
+        });
+      } catch (error) {
+        console.error("Error loading analytics:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setLoading(false);
+    loadData();
   }, []);
 
   if (loading) {
@@ -133,24 +129,30 @@ const AdminAnalytics = () => {
           <div className="text-sm font-medium opacity-90 mb-1">
             Total Students
           </div>
-          <div className="text-4xl font-bold">{analytics.totalStudents}</div>
+          <div className="text-4xl font-bold text-white">
+            {analytics.totalStudents || 0}
+          </div>
         </Card>
         <Card className="bg-orange text-white border-none">
           <div className="text-sm font-medium opacity-90 mb-1">Total Demos</div>
-          <div className="text-4xl font-bold">{analytics.totalDemos}</div>
+          <div className="text-4xl font-bold text-white">
+            {analytics.totalDemos || 0}
+          </div>
         </Card>
         <Card className="bg-olive text-white border-none">
           <div className="text-sm font-medium opacity-90 mb-1">
             Conversion Rate
           </div>
-          <div className="text-4xl font-bold">{analytics.conversionRate}%</div>
+          <div className="text-4xl font-bold text-white">
+            {analytics.conversionRate || 0}%
+          </div>
         </Card>
         <Card className="bg-cream border-2 border-navy">
           <div className="text-sm font-medium text-gray-600 mb-1">
-            Total Revenue
+            Total Coaches
           </div>
           <div className="text-4xl font-bold text-navy">
-            {formatCurrency(analytics.totalRevenue)}
+            {analytics.totalCoaches || 0}
           </div>
         </Card>
       </div>

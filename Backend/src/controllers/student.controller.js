@@ -8,7 +8,10 @@ export const getMyStudent = async (req, res) => {
 
   const student = await Student.findOne({ accountId })
     .populate("assignedCoachId", "email role")
-    .populate("assignedBatchId", "name level timezone status maxStudents")
+    .populate(
+      "assignedBatchId",
+      "name level timezone status maxStudents createdAt studentIds",
+    )
     .populate("accountId", "email role");
 
   if (!student) {

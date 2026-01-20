@@ -11,7 +11,8 @@ const batchService = {
     return response.data;
   },
 
-  getByCoachId: async (coachId) => {
+  // COACH: Get my batches (for logged-in coach)
+  getMyBatches: async () => {
     const response = await api.get("/batch/my-batches");
     return response.data;
   },

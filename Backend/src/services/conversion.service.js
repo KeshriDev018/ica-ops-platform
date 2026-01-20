@@ -1,10 +1,12 @@
 import { Demo } from "../models/demo.model.js";
 import { Student } from "../models/student.model.js";
 import { Subscription } from "../models/subscription.model.js";
+import { Payment } from "../models/payment.model.js";
 
 export const createStudentAndSubscriptionFromDemo = async (
   demoId,
-  paymentDetails
+  paymentDetails,
+  razorpayDetails = {},
 ) => {
   const demo = await Demo.findById(demoId);
 
@@ -28,11 +30,11 @@ export const createStudentAndSubscriptionFromDemo = async (
   const student = await Student.create({
     accountId: demo.accountId,
     studentName: demo.studentName,
-    studentAge:demo.studentAge,
+    studentAge: demo.studentAge,
     parentName: demo.parentName,
     parentEmail: demo.parentEmail,
     timezone: demo.timezone,
-    country:demo.country,
+    country: demo.country,
     studentType: demo.recommendedStudentType,
     level: demo.recommendedLevel,
     assignedCoachId: demo.coachId,
@@ -70,10 +72,24 @@ export const createStudentAndSubscriptionFromDemo = async (
     nextDueAt, // ✅ REQUIRED
   });
 
+  // Create Payment record for demo payment
+  await Payment.create({
+    studentId: student._id,
+    accountId: demo.accountId,
+    subscriptionId: subscription._id,
+    razorpayOrderId: demo.paymentOrderId,
+    razorpayPaymentId: razorpayDetails.razorpay_payment_id,
+    razorpaySignature: razorpayDetails.razorpay_signature,
+    amount: demo.paymentAmount || paymentDetails.amount * 100,
+    currency: "INR",
+    status: "SUCCESS",
+    paymentFor: "DEMO",
+    paymentMethod: razorpayDetails.paymentMethod || "Unknown",
+    notes: `Initial payment for demo conversion - ${student.studentName}`,
+  });
 
   demo.status = "CONVERTED";
   await demo.save();
 
   return { student, subscription };
 };
-

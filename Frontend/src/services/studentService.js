@@ -42,10 +42,12 @@ const studentService = {
   },
 
   reassign: async (id, coachId, batchId) => {
-    const response = await api.patch(`/students/${id}/reassign`, {
-      coachId,
-      batchId,
-    });
+    const body = {};
+    if (coachId) body.assignedCoachId = coachId;
+    if (batchId !== null && batchId !== undefined)
+      body.assignedBatchId = batchId;
+
+    const response = await api.patch(`/students/${id}/reassign`, body);
     return response.data;
   },
 };
