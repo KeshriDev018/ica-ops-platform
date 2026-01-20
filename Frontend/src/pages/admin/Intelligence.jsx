@@ -22,6 +22,7 @@ const AdminIntelligence = () => {
   const [coachEffectiveness, setCoachEffectiveness] = useState([]);
   const [dropoffRisks, setDropoffRisks] = useState([]);
   const [funnelSimulation, setFunnelSimulation] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadOverview();
@@ -29,11 +30,17 @@ const AdminIntelligence = () => {
 
   const loadOverview = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await intelligenceService.getOverview();
       setOverview(data);
     } catch (error) {
       console.error("Error loading intelligence overview:", error);
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to load overview",
+      );
     } finally {
       setLoading(false);
     }
@@ -41,11 +48,17 @@ const AdminIntelligence = () => {
 
   const loadConversionPrediction = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await intelligenceService.getConversionPrediction();
       setConversionData(data);
     } catch (error) {
       console.error("Error loading conversion prediction:", error);
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to load conversion prediction",
+      );
     } finally {
       setLoading(false);
     }
@@ -130,6 +143,23 @@ const AdminIntelligence = () => {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-gray-500">Loading intelligence...</div>
+      </div>
+    );
+  }
+
+  if (error && !overview) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md">
+          <div className="text-center">
+            <AlertTriangle size={48} className="mx-auto text-red-500 mb-4" />
+            <h3 className="text-lg font-bold text-navy mb-2">
+              Error Loading Intelligence
+            </h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={loadOverview}>Try Again</Button>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -299,7 +329,15 @@ const AdminIntelligence = () => {
           ) : conversionData.length === 0 ? (
             <div className="text-center py-12">
               <TrendingUp size={48} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">No active demos to analyze</p>
+              <p className="text-gray-600 mb-2">No active demos to analyze</p>
+              <p className="text-gray-500 text-sm">
+                Demos must have status: ATTENDED, INTERESTED, or PAYMENT_PENDING
+              </p>
+              {error && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">

@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import useAuthStore from "../../store/authStore";
 import batchService from "../../services/batchService";
+import studentService from "../../services/studentService";
 import classService from "../../services/classService";
 import { format, isToday, isFuture, parse } from "date-fns";
 
@@ -40,18 +41,18 @@ const CoachDashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Get coach's batches and classes from backend
-        const [coachBatches, coachClasses] = await Promise.all([
+        // Get coach's batches, students, and classes from backend
+        const [coachBatches, coachStudents, coachClasses] = await Promise.all([
           batchService.getMyBatches(),
+          studentService.getCoachStudents(),
           classService.getMyClasses(),
         ]);
 
         setBatches(coachBatches);
+        setStudents(coachStudents);
 
-        // Calculate total students from batches
-        const totalStudents = coachBatches.reduce((sum, batch) => {
-          return sum + (batch.studentIds?.length || 0);
-        }, 0);
+        // Calculate total students - count all students assigned to this coach
+        const totalStudents = coachStudents.length;
 
         // Filter today's classes
         const todayClasses = coachClasses.filter((classItem) => {

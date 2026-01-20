@@ -1,8 +1,12 @@
-import { Outlet } from 'react-router-dom'
-import Sidebar from './Sidebar'
-import Topbar from './Topbar'
+import { Outlet, useLocation } from "react-router-dom";
+import Sidebar from "./Sidebar";
+import Topbar from "./Topbar";
+import FloatingAssistant from "../chat/FloatingAssistant";
 
 const Layout = () => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
   return (
     <div className="flex min-h-screen bg-cream">
       <Sidebar />
@@ -12,8 +16,9 @@ const Layout = () => {
           <Outlet />
         </main>
       </div>
+      {isAdminRoute && <FloatingAssistant />}
     </div>
-  )
-}
+  );
+};
 
-export default Layout
+export default Layout;

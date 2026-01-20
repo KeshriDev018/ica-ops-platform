@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import api from "../../lib/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Button from "../../components/common/Button";
 import Card from "../../components/common/Card";
 import FormInput from "../../components/forms/FormInput";
@@ -83,21 +83,48 @@ const BookDemo = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-cream py-16 px-6 relative">
-      <FloatingChessPieces />
+    <div
+      className="min-h-screen py-16 px-6 relative"
+      style={{
+        backgroundImage: "url(/Chess/Background.jpg)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* Dark overlay for better readability */}
+      <div className="absolute inset-0 bg-black/50"></div>
+      {/* Back to Home button - top-left corner */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link to="/">
+          <button className="flex items-center gap-2 text-white hover:text-orange transition-colors">
+            <span className="text-xl">←</span>
+            <span className="font-semibold">Back to Home</span>
+          </button>
+        </Link>
+      </div>
+      {/* Back to Login button - top-right corner */}
+      <div className="absolute top-6 right-6 z-20">
+        <Link to="/login">
+          <button className="flex items-center gap-2 text-white hover:text-orange transition-colors">
+            <span className="font-semibold">Back to Login</span>
+            <span className="text-xl">→</span>
+          </button>
+        </Link>
+      </div>
       <div className="container mx-auto max-w-2xl relative z-10">
-        <Card>
+        <Card className="bg-white/10 backdrop-blur-md border border-white/20">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-secondary font-bold text-navy mb-2">
+            <h1 className="text-4xl font-secondary font-bold text-white mb-2">
               Book a Free Demo
             </h1>
-            <p className="text-gray-600">
+            <p className="text-white/90">
               Experience our coaching methodology firsthand
             </p>
           </div>
 
           {errors.root && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            <div className="bg-red-500/20 border border-red-400 text-white px-4 py-3 rounded-lg mb-6">
               {errors.root.message}
             </div>
           )}
@@ -108,6 +135,8 @@ const BookDemo = () => {
               label="Student Name"
               placeholder="Enter student's name"
               error={errors.studentName}
+              labelClassName="text-white"
+              className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
               {...register("studentName")}
             />
 
@@ -116,6 +145,8 @@ const BookDemo = () => {
               label="Parent Name"
               placeholder="Enter parent's name"
               error={errors.parentName}
+              labelClassName="text-white"
+              className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
               {...register("parentName")}
             />
 
@@ -125,6 +156,8 @@ const BookDemo = () => {
               type="email"
               placeholder="parent@example.com"
               error={errors.parentEmail}
+              labelClassName="text-white"
+              className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
               {...register("parentEmail")}
             />
 
@@ -134,6 +167,8 @@ const BookDemo = () => {
               type="number"
               placeholder="Enter student's age"
               error={errors.studentAge}
+              labelClassName="text-white"
+              className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
               {...register("studentAge", { valueAsNumber: true })}
             />
 
@@ -142,6 +177,8 @@ const BookDemo = () => {
               label="Country"
               options={countries}
               error={errors.country}
+              labelClassName="text-white"
+              className="bg-white/10 border-white/20 text-white"
               {...register("country")}
             />
 
@@ -150,6 +187,8 @@ const BookDemo = () => {
               label="Timezone"
               options={timezones}
               error={errors.timezone}
+              labelClassName="text-white"
+              className="bg-white/10 border-white/20 text-white"
               {...register("timezone")}
             />
 
@@ -160,6 +199,8 @@ const BookDemo = () => {
                 type="date"
                 min={new Date().toISOString().split("T")[0]}
                 error={errors.preferred_date}
+                labelClassName="text-white"
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                 {...register("preferred_date")}
               />
 
@@ -168,6 +209,8 @@ const BookDemo = () => {
                 label="Preferred Time"
                 type="time"
                 error={errors.preferred_time}
+                labelClassName="text-white"
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                 {...register("preferred_time")}
               />
             </div>
@@ -176,7 +219,7 @@ const BookDemo = () => {
               type="submit"
               variant="primary"
               size="lg"
-              className="w-full"
+              className="w-full bg-orange hover:bg-orange/90"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Booking..." : "Book Free Demo"}

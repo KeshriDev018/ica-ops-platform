@@ -139,7 +139,10 @@ const CustomerPayments = () => {
   }
 
   const formatCurrency = (amount) => {
-    const amountInRupees = Math.round(amount);
+    // If amount is already in rupees (less than 10000), don't divide
+    // If amount is in paise (large number like 299900), divide by 100
+    const amountInRupees =
+      amount > 10000 ? Math.round(amount / 100) : Math.round(amount);
     return `₹${amountInRupees.toLocaleString("en-IN")}`;
   };
   const nextDueDate = new Date(2026, 1, 20); // Feb 20, 2026
@@ -175,7 +178,9 @@ const CustomerPayments = () => {
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           <div>
             <p className="text-sm text-white/80 mb-1">Monthly Amount</p>
-            <p className="text-3xl font-bold">{formatCurrency(2999)}</p>
+            <p className="text-3xl font-bold">
+              {formatCurrency(student.studentType === "1-1" ? 2999 : 1499)}
+            </p>
           </div>
           <div>
             <p className="text-sm text-white/80 mb-1">Level</p>
@@ -245,9 +250,7 @@ const CustomerPayments = () => {
                       {payment.paymentFor || payment.plan}
                     </td>
                     <td className="py-3 px-4 text-sm font-medium text-navy">
-                      {formatCurrency(
-                        payment.amount ? payment.amount / 100 : payment.amount,
-                      )}
+                      {formatCurrency(payment.amount || 0)}
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-600 font-mono">
                       {payment.razorpayPaymentId || payment.paymentId}

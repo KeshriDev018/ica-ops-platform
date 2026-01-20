@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { ExternalLink } from "lucide-react";
 import Card from "../../components/common/Card";
+import Button from "../../components/common/Button";
 import classService from "../../services/classService";
 
 const CustomerClasses = () => {
@@ -54,7 +56,7 @@ const CustomerClasses = () => {
                 key={classItem._id}
                 className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-navy transition-colors"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="font-semibold text-navy mb-2">
                       1-on-1 Chess Class
@@ -78,10 +80,22 @@ const CustomerClasses = () => {
                       </p>
                     </div>
                   </div>
-                  <div>
+                  <div className="flex flex-col items-end gap-2">
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       Active
                     </span>
+                    {classItem.meetLink && (
+                      <Button
+                        onClick={() =>
+                          window.open(classItem.meetLink, "_blank")
+                        }
+                        variant="primary"
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <ExternalLink size={16} />
+                        Join Class
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -102,7 +116,7 @@ const CustomerClasses = () => {
                 key={classItem._id}
                 className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-navy transition-colors"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="font-semibold text-navy mb-2">
                       {classItem.batchId?.name || "Batch Class"}
@@ -130,10 +144,22 @@ const CustomerClasses = () => {
                       </p>
                     </div>
                   </div>
-                  <div>
+                  <div className="flex flex-col items-end gap-2">
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                       Batch
                     </span>
+                    {classItem.meetLink && (
+                      <Button
+                        onClick={() =>
+                          window.open(classItem.meetLink, "_blank")
+                        }
+                        variant="primary"
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <ExternalLink size={16} />
+                        Join Class
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
