@@ -29,6 +29,7 @@ const Sidebar = () => {
       case "COACH":
         return [
           { path: "/coach/dashboard", label: "Dashboard", icon: "📊" },
+          { path: "/coach/demos", label: "Demos", icon: "📅" },
           { path: "/coach/batches", label: "Batches", icon: "📚" },
           { path: "/coach/classes", label: "Classes", icon: "🎓" },
           { path: "/coach/students", label: "Students", icon: "👥" },

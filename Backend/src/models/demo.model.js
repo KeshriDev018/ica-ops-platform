@@ -54,6 +54,20 @@ const demoSchema = new mongoose.Schema(
       required: true,
     },
 
+    studentInterest: {
+      type: String,
+      enum: ["INTERESTED", "NOT_INTERESTED", "PENDING"],
+      default: "PENDING",
+      index: true,
+    },
+
+    coachAttendance: {
+      type: String,
+      enum: ["ATTENDED", "ABSENT", "NOT_MARKED"],
+      default: "NOT_MARKED",
+      index: true,
+    },
+
     coachId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Account",

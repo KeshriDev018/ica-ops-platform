@@ -93,6 +93,46 @@ const AdminDemos = () => {
         header: "Date",
         cell: (info) => new Date(info.getValue()).toLocaleDateString(),
       }),
+      // Add studentInterest column
+      columnHelper.accessor("studentInterest", {
+        header: "Student Interest",
+        cell: (info) => {
+          const val = info.getValue();
+          return (
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                val === "INTERESTED"
+                  ? "bg-green-100 text-green-800"
+                  : val === "NOT_INTERESTED"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {val || "PENDING"}
+            </span>
+          );
+        },
+      }),
+      // Add coachAttendance column
+      columnHelper.accessor("coachAttendance", {
+        header: "Coach Attendance",
+        cell: (info) => {
+          const val = info.getValue();
+          return (
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                val === "ATTENDED"
+                  ? "bg-green-100 text-green-800"
+                  : val === "ABSENT"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {val || "NOT_MARKED"}
+            </span>
+          );
+        },
+      }),
       columnHelper.accessor("status", {
         header: "Status",
         cell: (info) => {

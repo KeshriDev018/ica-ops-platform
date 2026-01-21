@@ -21,11 +21,20 @@ export const createPaymentOrder = async (req, res) => {
       });
     }
 
+    // Only allow students to create order for their own demo
     const demo = await Demo.findById(demoId);
     if (!demo || demo.status !== "INTERESTED") {
       return res.status(400).json({
         message: "Demo not eligible for payment",
       });
+    }
+
+    // Optionally, check that req.user.accountId === demo.accountId
+    if (
+      req.user.role === "CUSTOMER" &&
+      req.user.accountId.toString() !== demo.accountId.toString()
+    ) {
+      return res.status(403).json({ message: "Unauthorized" });
     }
 
     const order = await createRazorpayOrder({

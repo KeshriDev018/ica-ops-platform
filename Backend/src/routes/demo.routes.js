@@ -1,3 +1,5 @@
+// Customer: mark demo interest
+
 import express from "express";
 import {
   createDemo,
@@ -6,6 +8,9 @@ import {
   scheduleDemo,
   markDemoAttendance,
   submitDemoOutcome,
+  getCoachDemos,
+  coachMarkAttendance,
+  markStudentInterest,
 } from "../controllers/demo.controller.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -36,5 +41,23 @@ router.patch(
   allowRoles("ADMIN"),
   submitDemoOutcome,
 );
+
+// Coach: get own demos
+router.get(
+  "/coach/my-demos",
+  authMiddleware,
+  allowRoles("COACH"),
+  getCoachDemos,
+);
+
+// Coach: mark attendance
+router.patch(
+  "/:id/coach-attendance",
+  authMiddleware,
+  allowRoles("COACH"),
+  coachMarkAttendance,
+);
+
+router.patch("/:id/interest", markStudentInterest);
 
 export default router;

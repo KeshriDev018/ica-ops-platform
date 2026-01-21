@@ -15,6 +15,33 @@ const AccessDemoAccount = () => {
   const [meetingLink, setMeetingLink] = useState(null);
   const [processing, setProcessing] = useState(false);
 
+  // Student marks their interest in the demo
+  const [interestStatus, setInterestStatus] = useState(
+    demoData?.studentInterest || "PENDING",
+  );
+  const [interestLoading, setInterestLoading] = useState(false);
+
+  const handleMarkInterest = async (interest) => {
+    setInterestLoading(true);
+    try {
+      const response = await fetch(`/api/demos/${demoData._id}/interest`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interest }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to update interest");
+      }
+      setInterestStatus(interest);
+      alert("Your interest has been updated.");
+    } catch (error) {
+      alert("Failed to update interest: " + error.message);
+    } finally {
+      setInterestLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Check if user has demo access
     if (!hasDemoAccess()) {
@@ -59,24 +86,43 @@ const AccessDemoAccount = () => {
   };
 
   const handlePayNow = async () => {
-    if (!demoData?.paymentOrderId) {
-      alert("No payment order found. Please contact support.");
-      return;
-    }
-
     setProcessing(true);
     try {
+      // If no payment order exists, create one first
+      let paymentOrderId = demoData.paymentOrderId;
+      let paymentAmount = demoData.paymentAmount;
+      if (!paymentOrderId) {
+        // Use recommended plan or default amount
+        const amount = demoData.recommendedStudentType === "1-1" ? 2999 : 1499;
+        // Use the public demo endpoint for order creation
+        const response = await fetch("/api/payments/create-demo-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: amount * 100,
+            demoId: demoData._id,
+          }),
+        });
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.message || "Failed to create payment order");
+        }
+        const order = await response.json();
+        paymentOrderId = order.orderId;
+        paymentAmount = order.amount;
+        // Optionally, reload demoData from backend to reflect new order
+      }
+
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
         throw new Error("Failed to load Razorpay SDK");
       }
 
-      // Get order details
       const orderData = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: demoData.paymentAmount,
+        amount: paymentAmount,
         currency: "INR",
-        orderId: demoData.paymentOrderId,
+        orderId: paymentOrderId,
       };
 
       const options = {
@@ -245,6 +291,43 @@ const AccessDemoAccount = () => {
                   <p className="text-sm text-white/80 mb-1">Country</p>
                   <p className="text-lg font-semibold">{demoData.country}</p>
                 </div>
+                {/* Student Interest Section */}
+                <div>
+                  <p className="text-sm text-white/80 mb-1">Your Interest</p>
+                  <div className="flex gap-2 items-center">
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                        interestStatus === "INTERESTED"
+                          ? "bg-green-200 text-green-900"
+                          : interestStatus === "NOT_INTERESTED"
+                            ? "bg-red-200 text-red-900"
+                            : "bg-gray-200 text-gray-900"
+                      }`}
+                    >
+                      {interestStatus}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={
+                        interestLoading || interestStatus === "INTERESTED"
+                      }
+                      onClick={() => handleMarkInterest("INTERESTED")}
+                    >
+                      Mark Interested
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={
+                        interestLoading || interestStatus === "NOT_INTERESTED"
+                      }
+                      onClick={() => handleMarkInterest("NOT_INTERESTED")}
+                    >
+                      Not Interested
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
             <div>
@@ -350,7 +433,7 @@ const AccessDemoAccount = () => {
           </div>
 
           {/* Show Pay Now button if order exists and not paid */}
-          {demoData.paymentOrderId && demoData.status === "PAYMENT_PENDING" && (
+          {demoData.status !== "CONVERTED" && (
             <div className="mb-4 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border-2 border-orange">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div>
@@ -361,7 +444,9 @@ const AccessDemoAccount = () => {
                     Amount: ₹
                     {demoData.paymentAmount
                       ? (demoData.paymentAmount / 100).toLocaleString("en-IN")
-                      : "N/A"}
+                      : demoData.recommendedStudentType === "1-1"
+                        ? "2,999"
+                        : "1,499"}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     Secure payment powered by Razorpay • Account activated
@@ -379,14 +464,6 @@ const AccessDemoAccount = () => {
                 </Button>
               </div>
             </div>
-          )}
-
-          {demoData.status !== "CONVERTED" && !demoData.paymentOrderId && (
-            <p className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              💡 <strong>Tip:</strong> Make payment now to receive your password
-              setup email immediately and get instant access to your learning
-              dashboard!
-            </p>
           )}
         </Card>
 

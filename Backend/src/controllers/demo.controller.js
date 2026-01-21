@@ -193,3 +193,116 @@ export const submitDemoOutcome = async (req, res) => {
   await demo.save();
   res.json(demo);
 };
+
+
+/**
+ * COACH
+ * Get all demos assigned to logged-in coach
+ */
+export const getCoachDemos = async (req, res) => {
+  try {
+    const coachId = req.user._id;
+
+     const demos = await Demo.find({
+       coachId,
+       status: "BOOKED", // ✅ only booked demos
+     }).sort({ scheduledStart: 1 });
+
+    res.json(demos);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch coach demos" });
+  }
+};
+
+/**
+ * COACH
+ * Mark demo attendance (coach only)
+ * NOTE: Does NOT change demo.status
+ */
+export const coachMarkAttendance = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { attendance } = req.body;
+
+    if (!["ATTENDED", "ABSENT"].includes(attendance)) {
+      return res.status(400).json({
+        message: "Attendance must be ATTENDED or ABSENT",
+      });
+    }
+
+    // 1️⃣ Fetch demo FIRST
+    const demo = await Demo.findOne({
+      _id: id,
+      coachId: req.user._id,
+    });
+
+    if (!demo) {
+      return res.status(404).json({
+        message: "Demo not found or not assigned to this coach",
+      });
+    }
+
+    // 2️⃣ Prevent re-marking attendance
+    if (demo.coachAttendance !== "NOT_MARKED") {
+      return res.status(400).json({
+        message: "Attendance already marked",
+      });
+    }
+
+    // 3️⃣ Update attendance (no status sync)
+    demo.coachAttendance = attendance;
+
+    await demo.save();
+
+    res.status(200).json({
+      message: "Attendance marked successfully",
+      demo,
+    });
+  } catch (error) {
+    console.error("Coach attendance error:", error);
+    res.status(500).json({
+      message: "Failed to mark attendance",
+    });
+  }
+};
+
+
+
+/**
+ * CUSTOMER (Demo user)
+ * Mark demo interest without login
+ */
+export const markStudentInterest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { interest } = req.body;
+
+    if (!["INTERESTED", "NOT_INTERESTED"].includes(interest)) {
+      return res.status(400).json({
+        message: "Invalid interest value",
+      });
+    }
+
+    const demo = await Demo.findById(id);
+
+    if (!demo) {
+      return res.status(404).json({
+        message: "Demo not found",
+      });
+    }
+
+    demo.studentInterest = interest;
+    await demo.save();
+
+    res.status(200).json({
+      message: "Interest updated successfully",
+      demo,
+    });
+  } catch (error) {
+    console.error("Mark interest error:", error);
+    res.status(500).json({
+      message: "Failed to update interest",
+    });
+  }
+};
+

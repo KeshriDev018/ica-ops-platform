@@ -32,6 +32,7 @@ import Payment from "./pages/customer/Payment";
 
 // Coach pages
 import CoachDashboard from "./pages/coach/Dashboard";
+import CoachDemos from "./pages/coach/Demos";
 import CoachBatches from "./pages/coach/Batches";
 import CoachClasses from "./pages/coach/Classes";
 import CoachStudents from "./pages/coach/Students";
@@ -131,6 +132,7 @@ const Router = () => {
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<CoachDashboard />} />
+          <Route path="demos" element={<CoachDemos />} />
           <Route path="batches" element={<CoachBatches />} />
           <Route path="classes" element={<CoachClasses />} />
           <Route path="students" element={<CoachStudents />} />

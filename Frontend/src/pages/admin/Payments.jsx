@@ -622,100 +622,17 @@ const AdminPayments = () => {
 
       {activeTab === "interested" && (
         <Card>
-          {interestedDemos.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">✅</div>
-              <h3 className="text-xl font-semibold text-navy mb-2">
-                No Interested Students
-              </h3>
-              <p className="text-gray-600">
-                All interested demos have payment orders generated
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Student
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Parent
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Contact
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Recommended
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Level
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {interestedDemos.map((demo) => (
-                    <tr
-                      key={demo._id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium text-navy">
-                            {demo.studentName}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {demo.studentAge} years
-                          </p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-600">
-                        {demo.parentName}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="text-sm">
-                          <p className="text-gray-600">{demo.parentEmail}</p>
-                          <p className="text-gray-500 text-xs">
-                            {demo.parentPhone}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                            demo.recommendedStudentType === "1-1"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
-                          {demo.recommendedStudentType === "1-1"
-                            ? "1-on-1"
-                            : "Group"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-600">
-                        {demo.recommendedLevel}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleCreatePaymentOrder(demo)}
-                        >
-                          <CreditCard size={14} className="mr-1" />
-                          Generate Order
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">✅</div>
+            <h3 className="text-xl font-semibold text-navy mb-2">
+              No manual payment order generation required
+            </h3>
+            <p className="text-gray-600">
+              Students will now generate payment orders themselves when clicking
+              'Pay Now'. You will see students here until they pay and are
+              converted automatically.
+            </p>
+          </div>
         </Card>
       )}
 
