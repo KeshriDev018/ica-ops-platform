@@ -37,7 +37,7 @@ const AdminChat = () => {
         // Load contacts first
         const contactsData = await chatService.getAvailableContacts();
         setContacts(contactsData);
-        
+
         // Load conversations (this updates the conversations state in useChat)
         await loadConversations();
       } catch (error) {
@@ -54,12 +54,23 @@ const AdminChat = () => {
   useEffect(() => {
     const map = new Map();
     conversations?.forEach((conv) => {
-      if (conv.conversationType === "DIRECT" && conv.participants.length === 2) {
-        const otherParticipant = conv.participants.find(
-          (p) => p.accountId._id !== user.accountId
-        );
+      if (
+        conv.conversationType === "DIRECT" &&
+        conv.participants.length === 2
+      ) {
+        // Find the other participant (not the current user)
+        const otherParticipant = conv.participants.find((p) => {
+          // accountId can be string or object
+          const id =
+            typeof p.accountId === "string" ? p.accountId : p.accountId?._id;
+          return id !== user.accountId;
+        });
         if (otherParticipant) {
-          map.set(otherParticipant.accountId._id, conv._id);
+          const id =
+            typeof otherParticipant.accountId === "string"
+              ? otherParticipant.accountId
+              : otherParticipant.accountId?._id;
+          map.set(id, conv._id);
         }
       }
     });
@@ -69,14 +80,14 @@ const AdminChat = () => {
   const getUnreadCount = (contactId) => {
     const convId = conversationMap.get(contactId);
     if (!convId) return 0;
-    const conversation = conversations.find(c => c._id === convId);
+    const conversation = conversations.find((c) => c._id === convId);
     return conversation?.unreadCount || 0;
   };
 
   const getLastMessage = (contactId) => {
     const convId = conversationMap.get(contactId);
     if (!convId) return null;
-    const conversation = conversations.find(c => c._id === convId);
+    const conversation = conversations.find((c) => c._id === convId);
     return conversation?.lastMessage;
   };
 
@@ -99,24 +110,31 @@ const AdminChat = () => {
 
   const handleSelectContact = async (contact) => {
     try {
+      console.log("[DEBUG] Selected contact:", contact);
+      console.log("[DEBUG] Current user:", user);
       // Check if conversation already exists
       let convId = conversationMap.get(contact.accountId);
 
       if (!convId) {
-        // Create new conversation - include current user (admin) and the contact
-        const conversation = await createConversation("DIRECT", [
+        const participants = [
           { accountId: user.accountId, role: user.role },
           { accountId: contact.accountId, role: contact.role },
-        ]);
+        ];
+        console.log("[DEBUG] Creating conversation with:", participants);
+        // Create new conversation - include current user (admin) and the contact
+        const conversation = await createConversation("DIRECT", participants);
+        console.log("[DEBUG] Conversation created:", conversation);
         convId = conversation._id;
 
         // Update map
-        setConversationMap(new Map(conversationMap.set(contact.accountId, convId)));
+        setConversationMap(
+          new Map(conversationMap.set(contact.accountId, convId)),
+        );
       }
 
       setActiveConversationId(convId);
     } catch (error) {
-      console.error("Error selecting contact:", error);
+      console.error("[DEBUG] Error selecting contact:", error);
       alert("Failed to open conversation. Please try again.");
     }
   };
@@ -126,12 +144,24 @@ const AdminChat = () => {
   };
 
   const typingUsers = getTypingUsers();
-  const students = contacts.filter((c) => c.role === "CUSTOMER");
+  // For parents, show both parent and student name
+  const students = contacts
+    .filter((c) => c.role === "CUSTOMER")
+    .map((c) => ({
+      ...c,
+      displayName:
+        c.name && c.studentName
+          ? `${c.name} (${c.studentName})`
+          : c.name || c.studentName || "Parent",
+    }));
   const coaches = contacts.filter((c) => c.role === "COACH");
   const displayList = activeTab === "students" ? students : coaches;
 
   const activeContact = activeConversationId
-    ? contacts.find((c) => conversationMap.get(c.accountId) === activeConversationId)
+    ? contacts.find((c) => {
+        // c.accountId is always string, but conversationMap keys may be string or object _id
+        return conversationMap.get(c.accountId) === activeConversationId;
+      })
     : null;
 
   const participants = activeContact
@@ -208,7 +238,8 @@ const AdminChat = () => {
               ) : (
                 displayList.map((contact) => {
                   const isActive =
-                    conversationMap.get(contact.accountId) === activeConversationId;
+                    conversationMap.get(contact.accountId) ===
+                    activeConversationId;
                   const isOnline = isUserOnline(contact.accountId);
                   const unreadCount = getUnreadCount(contact.accountId);
                   const lastMsg = getLastMessage(contact.accountId);
@@ -237,7 +268,9 @@ const AdminChat = () => {
                                   : "bg-orange"
                             }`}
                           >
-                            {contact.name?.charAt(0).toUpperCase()}
+                            {(contact.displayName || contact.name)
+                              ?.charAt(0)
+                              .toUpperCase()}
                           </div>
                           {isOnline && (
                             <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
@@ -248,7 +281,7 @@ const AdminChat = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <p className="font-medium truncate">
-                              {contact.name || "No Name"}
+                              {contact.displayName || contact.name || "No Name"}
                             </p>
                             {unreadCount > 0 && (
                               <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full ml-2">
@@ -301,7 +334,14 @@ const AdminChat = () => {
                       {activeContact.name?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="font-semibold">{activeContact.name}</h3>
+                      <h3 className="font-semibold">
+                        Parent: {activeContact.name}
+                        {activeContact.studentName && (
+                          <span className="ml-4">
+                            | Student: {activeContact.studentName}
+                          </span>
+                        )}
+                      </h3>
                       <p className="text-sm text-white/80">
                         {isUserOnline(activeContact.accountId) ? (
                           <span>🟢 Online</span>

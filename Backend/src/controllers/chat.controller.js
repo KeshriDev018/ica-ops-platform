@@ -28,7 +28,7 @@ export const getUserConversations = async (req, res) => {
           ...conv.toObject(),
           unreadCount,
         };
-      })
+      }),
     );
 
     res.json(conversationsWithUnread);
@@ -46,7 +46,7 @@ export const createConversation = async (req, res) => {
     console.log("[CONTROLLER] createConversation called");
     console.log("[CONTROLLER] Request body:", req.body);
     console.log("[CONTROLLER] Current user:", req.user);
-    
+
     const { conversationType, participants, batchId } = req.body;
 
     // Check if conversation already exists
@@ -116,9 +116,9 @@ export const getConversationMessages = async (req, res) => {
     await Promise.all(
       messages.map((msg) =>
         Message.markAsRead(msg._id, userId).catch((err) =>
-          console.error("Mark as read error:", err)
-        )
-      )
+          console.error("Mark as read error:", err),
+        ),
+      ),
     );
 
     res.json(messages.reverse());
@@ -268,10 +268,13 @@ export const markMessagesAsRead = async (req, res) => {
     });
 
     await Promise.all(
-      unreadMessages.map((msg) => Message.markAsRead(msg._id, userId))
+      unreadMessages.map((msg) => Message.markAsRead(msg._id, userId)),
     );
 
-    res.json({ message: "Messages marked as read", count: unreadMessages.length });
+    res.json({
+      message: "Messages marked as read",
+      count: unreadMessages.length,
+    });
   } catch (error) {
     console.error("Mark as read error:", error);
     res.status(500).json({ message: "Failed to mark messages as read" });
@@ -301,6 +304,7 @@ export const getAvailableContacts = async (req, res) => {
         ...students.map((s) => ({
           accountId: s.accountId._id,
           name: s.parentName,
+          studentName: s.studentName, // Add student name for UI
           role: "CUSTOMER",
           type: "parent",
         })),
@@ -361,7 +365,7 @@ export const getBatchGroupChats = async (req, res) => {
     } else if (userRole === "CUSTOMER") {
       // Customer can access their assigned batch
       const student = await Student.findOne({ accountId: userId }).populate(
-        "assignedBatchId"
+        "assignedBatchId",
       );
       if (student && student.assignedBatchId) {
         batches = [student.assignedBatchId];
