@@ -1,7 +1,14 @@
 import { useState, useRef } from 'react'
 import Button from '../common/Button'
 
-const MessageInput = ({ onSend, onFileUpload, allowFiles = false, disabled = false }) => {
+const MessageInput = ({ 
+  onSend, 
+  onFileUpload, 
+  onTyping,
+  onStopTyping,
+  allowFiles = false, 
+  disabled = false 
+}) => {
   const [inputMessage, setInputMessage] = useState('')
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef(null)
@@ -12,18 +19,38 @@ const MessageInput = ({ onSend, onFileUpload, allowFiles = false, disabled = fal
 
     onSend(inputMessage.trim())
     setInputMessage('')
+    onStopTyping?.()
+  }
+
+  const handleInputChange = (e) => {
+    setInputMessage(e.target.value)
+    onTyping?.()
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit(e)
+    }
   }
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0]
     if (!file || !allowFiles) return
 
+    // Validate file size
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size cannot exceed 10MB')
+      e.target.value = ''
+      return
+    }
+
     setIsUploading(true)
     try {
-      await onFileUpload(file)
+      await onFileUpload?.(file)
     } catch (error) {
       console.error('File upload error:', error)
-      alert('Failed to upload file. Please try again.')
+      alert(error.message || 'Failed to upload file. Please try again.')
     } finally {
       setIsUploading(false)
       e.target.value = '' // Reset file input
@@ -41,7 +68,7 @@ const MessageInput = ({ onSend, onFileUpload, allowFiles = false, disabled = fal
               onChange={handleFileChange}
               className="hidden"
               disabled={disabled || isUploading}
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.txt"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar"
             />
             <span className="text-2xl">📎</span>
             <span className="sr-only">Upload file</span>
@@ -52,14 +79,15 @@ const MessageInput = ({ onSend, onFileUpload, allowFiles = false, disabled = fal
           <input
             type="text"
             value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             placeholder={allowFiles ? "Type your message or upload a file..." : "Type your message..."}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
             disabled={disabled || isUploading}
           />
           {allowFiles && (
             <p className="text-xs text-gray-500 mt-1">
-              Supported: PDF, DOC, Images, TXT (Max 10MB)
+              Supported: Images, PDF, Documents, Archives (Max 10MB)
             </p>
           )}
         </div>

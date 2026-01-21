@@ -44,6 +44,7 @@ import assistantRoutes from "./src/routes/assistant.routes.js";
 import coachRoutes from "./src/routes/coach.routes.js";
 import batchRoutes from "./src/routes/batch.routes.js";
 import classRoutes from "./src/routes/class.routes.js";
+import chatRoutes from "./src/routes/chat.routes.js";
 
 app.use("/api/classes", classRoutes);
 app.use("/api/auth", authRoutes);
@@ -56,6 +57,7 @@ app.use("/api/assistant", assistantRoutes);
 app.use("/api/intelligence", intelligenceRoutes);
 app.use("/api/coach", coachRoutes);
 app.use("/api/batch", batchRoutes);
+app.use("/api/chat", chatRoutes);
 
 
 export { app };

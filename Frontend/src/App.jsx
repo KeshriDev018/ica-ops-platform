@@ -1,7 +1,12 @@
 import Router from './router'
+import { ChatProvider } from './contexts/ChatContext'
 
 function App() {
-  return <Router />
+  return (
+    <ChatProvider>
+      <Router />
+    </ChatProvider>
+  )
 }
 
 export default App

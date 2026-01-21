@@ -27,10 +27,10 @@ const MessageList = ({ messages, currentUserEmail, participants = {} }) => {
     <div className="h-full overflow-y-auto p-6 space-y-1 bg-gray-50">
       {messages.map((message) => (
         <MessageItem
-          key={message.message_id}
+          key={message._id || message.message_id}
           message={message}
           currentUserEmail={currentUserEmail}
-          senderName={participants[message.sender_email]?.name}
+          senderName={message.senderName || participants[message.sender_email]?.name}
         />
       ))}
       <div ref={messagesEndRef} />

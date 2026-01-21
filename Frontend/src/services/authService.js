@@ -8,20 +8,20 @@ const authService = {
     try {
       const response = await api.post("/auth/login", { email, password });
       
-      const { accessToken, role } = response.data;
+      const { accessToken, accountId, email: userEmail, role } = response.data;
       
       // Store in Redux
       store.dispatch(setAccessToken(accessToken));
-      store.dispatch(setUser({ email, role }));
+      store.dispatch(setUser({ accountId, email: userEmail, role }));
       
       // Store in localStorage as backup
       localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("user", JSON.stringify({ email, role }));
+      localStorage.setItem("user", JSON.stringify({ accountId, email: userEmail, role }));
       
       // Return format expected by Login.jsx
       return { 
         token: accessToken,
-        user: { email, role }
+        user: { accountId, email: userEmail, role }
       };
     } catch (error) {
       throw new Error(

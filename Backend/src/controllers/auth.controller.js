@@ -53,6 +53,8 @@ export const login = async (req, res) => {
     // 6️⃣ Send response
     res.json({
       accessToken,
+      accountId: user._id.toString(),
+      email: user.email,
       role: user.role,
     });
   } catch (error) {
