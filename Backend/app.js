@@ -13,7 +13,7 @@ app.use(
   cors({
     origin: allowedOrigins,
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json({ limit: "16kb" }));
@@ -32,7 +32,6 @@ app.get("/health", (req, res) => {
   });
 });
 
-
 import demoRoutes from "./src/routes/demo.routes.js";
 import paymentRoutes from "./src/routes/payment.routes.js";
 import studentRoutes from "./src/routes/student.routes.js";
@@ -45,6 +44,7 @@ import coachRoutes from "./src/routes/coach.routes.js";
 import batchRoutes from "./src/routes/batch.routes.js";
 import classRoutes from "./src/routes/class.routes.js";
 import chatRoutes from "./src/routes/chat.routes.js";
+import coachPayoutroutes from "./src/routes/coachPayout.routes.js";
 
 app.use("/api/classes", classRoutes);
 app.use("/api/auth", authRoutes);
@@ -58,6 +58,6 @@ app.use("/api/intelligence", intelligenceRoutes);
 app.use("/api/coach", coachRoutes);
 app.use("/api/batch", batchRoutes);
 app.use("/api/chat", chatRoutes);
-
+app.use("/api/coachPayout", coachPayoutroutes);
 
 export { app };

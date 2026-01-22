@@ -39,6 +39,8 @@ import CoachStudents from "./pages/coach/Students";
 import CoachCalendar from "./pages/coach/Calendar";
 import CoachChat from "./pages/coach/Chat";
 import CoachBatchChat from "./pages/coach/BatchChat";
+import CoachProfile from "./pages/coach/Profile";
+import CoachPayouts from "./pages/coach/Payouts";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -51,6 +53,7 @@ import AdminPayments from "./pages/admin/Payments";
 import AdminAnalytics from "./pages/admin/Analytics";
 import AdminIntelligence from "./pages/admin/Intelligence";
 import AdminChat from "./pages/admin/Chat";
+import AdminCoachPayouts from "./pages/admin/CoachPayouts";
 
 const Router = () => {
   return (
@@ -132,6 +135,8 @@ const Router = () => {
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<CoachDashboard />} />
+          <Route path="profile" element={<CoachProfile />} />
+          <Route path="payouts" element={<CoachPayouts />} />
           <Route path="demos" element={<CoachDemos />} />
           <Route path="batches" element={<CoachBatches />} />
           <Route path="classes" element={<CoachClasses />} />
@@ -155,6 +160,7 @@ const Router = () => {
           <Route path="students" element={<AdminStudents />} />
           <Route path="demos" element={<AdminDemos />} />
           <Route path="coaches" element={<AdminCoaches />} />
+          <Route path="coach-payouts" element={<AdminCoachPayouts />} />
           <Route path="batches" element={<AdminBatches />} />
           <Route path="subscriptions" element={<AdminSubscriptions />} />
           <Route path="payments" element={<AdminPayments />} />

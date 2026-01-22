@@ -19,6 +19,7 @@ const Sidebar = () => {
           { path: "/admin/students", label: "Students", icon: "👥" },
           { path: "/admin/demos", label: "Demos", icon: "📅" },
           { path: "/admin/coaches", label: "Coaches", icon: "🎓" },
+          { path: "/admin/coach-payouts", label: "Coach Payouts", icon: "💵" },
           { path: "/admin/batches", label: "Batches", icon: "📚" },
           { path: "/admin/subscriptions", label: "Subscriptions", icon: "💰" },
           { path: "/admin/payments", label: "Payments", icon: "💳" },
@@ -29,11 +30,13 @@ const Sidebar = () => {
       case "COACH":
         return [
           { path: "/coach/dashboard", label: "Dashboard", icon: "📊" },
+          { path: "/coach/profile", label: "Profile", icon: "👤" },
           { path: "/coach/demos", label: "Demos", icon: "📅" },
           { path: "/coach/batches", label: "Batches", icon: "📚" },
           { path: "/coach/classes", label: "Classes", icon: "🎓" },
           { path: "/coach/students", label: "Students", icon: "👥" },
           { path: "/coach/calendar", label: "Calendar", icon: "📅" },
+          { path: "/coach/payouts", label: "Payouts", icon: "💵" },
           { path: "/coach/chat", label: "Messages", icon: "💬" },
         ];
       case "CUSTOMER":

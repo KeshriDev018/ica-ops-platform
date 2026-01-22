@@ -301,13 +301,15 @@ export const getAvailableContacts = async (req, res) => {
       ]);
 
       contacts = [
-        ...students.map((s) => ({
-          accountId: s.accountId._id,
-          name: s.parentName,
-          studentName: s.studentName, // Add student name for UI
-          role: "CUSTOMER",
-          type: "parent",
-        })),
+        ...students
+          .filter((s) => s.accountId) // Filter out students without accountId
+          .map((s) => ({
+            accountId: s.accountId._id,
+            name: s.parentName || "Unknown Parent",
+            studentName: s.studentName || "Unknown Student", // Add student name for UI
+            role: "CUSTOMER",
+            type: "parent",
+          })),
         ...coaches.map((c) => ({
           accountId: c._id,
           name: c.email.split("@")[0],

@@ -66,9 +66,13 @@ api.interceptors.response.use(
 
       try {
         // Refresh token (sent via HTTP-only cookie)
-        const res = await axios.get("/api/auth/refresh", {
-          withCredentials: true,
-        });
+        const res = await axios.post(
+          "/api/auth/refresh",
+          {},
+          {
+            withCredentials: true,
+          },
+        );
 
         const newAccessToken = res.data.accessToken;
 

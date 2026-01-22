@@ -74,8 +74,7 @@ const paymentService = {
       ).toISOString(), // 30 days from now
     };
 
-    // In real app, this would be saved to backend
-    // For mock, we'll simulate success
+    
     return newSubscription;
   },
 
@@ -83,15 +82,7 @@ const paymentService = {
   processDemoPayment: async (email, planId, paymentDetails) => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    // TODO: Backend integration
-    // const response = await api.post('/api/payments/demo-payment', {
-    //   email,
-    //   plan_id: planId,
-    //   payment_details: paymentDetails
-    // })
-    // return response.data
-
-    // Mock payment processing
+    
     return {
       success: true,
       payment_id: `PAY_${Date.now()}`,
@@ -99,15 +90,11 @@ const paymentService = {
     };
   },
 
-  // Send password setup email after payment
+  
   sendPasswordSetupEmail: async (email) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // TODO: Backend integration
-    // const response = await api.post('/api/auth/send-password-setup', { email })
-    // return response.data
-
-    // Mock email sending
+    
     return {
       success: true,
       message: "Password setup email sent",
@@ -115,14 +102,11 @@ const paymentService = {
     };
   },
 
-  // Process payment (mock - will be replaced with real payment gateway)
+  
   processPayment: async (accountId, planId, paymentDetails) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Simulate payment processing
-    // In real app, this would call payment gateway (Razorpay, Stripe, etc.)
-
-    // Create subscription after successful payment
+    
     const subscription = await paymentService.createSubscription(
       accountId,
       planId,

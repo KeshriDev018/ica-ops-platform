@@ -10,35 +10,40 @@ import {
  * ADMIN: View all subscriptions
  */
 export const getAllSubscriptions = async (req, res) => {
-  const subscriptions = await Subscription.find().populate(
-    "accountId",
-    "role email",
-  );
+  try {
+    const subscriptions = await Subscription.find().populate(
+      "accountId",
+      "role email",
+    );
 
-  // Enrich with student data
-  const enrichedSubscriptions = await Promise.all(
-    subscriptions.map(async (sub) => {
-      const student = await Student.findOne({ accountId: sub.accountId._id });
+    // Enrich with student data
+    const enrichedSubscriptions = await Promise.all(
+      subscriptions.map(async (sub) => {
+        const student = await Student.findOne({ accountId: sub.accountId?._id });
 
-      return {
-        _id: sub._id,
-        accountId: sub.accountId,
-        planId: sub.planId,
-        amount: sub.amount,
-        billingCycle: sub.billingCycle,
-        status: sub.status,
-        startedAt: sub.startedAt,
-        nextDueAt: sub.nextDueAt,
-        // Student details
-        studentName: student?.studentName || "Unknown",
-        studentEmail: student?.parentEmail || sub.accountId?.email || "N/A",
-        studentLevel: student?.level || "N/A",
-        studentType: student?.studentType || "N/A",
-      };
-    }),
-  );
+        return {
+          _id: sub._id,
+          accountId: sub.accountId,
+          planId: sub.planId,
+          amount: sub.amount,
+          billingCycle: sub.billingCycle,
+          status: sub.status,
+          startedAt: sub.startedAt,
+          nextDueAt: sub.nextDueAt,
+          // Student details
+          studentName: student?.studentName || "Unknown",
+          studentEmail: student?.parentEmail || sub.accountId?.email || "N/A",
+          studentLevel: student?.level || "N/A",
+          studentType: student?.studentType || "N/A",
+        };
+      }),
+    );
 
-  res.json(enrichedSubscriptions);
+    res.json(enrichedSubscriptions);
+  } catch (error) {
+    console.error("Error fetching subscriptions:", error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
 /**

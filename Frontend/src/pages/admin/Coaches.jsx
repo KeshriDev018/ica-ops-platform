@@ -150,13 +150,13 @@ const AdminCoaches = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {coaches.map((coach) => (
             <Card key={coach._id} hover>
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-navy rounded-full flex items-center justify-center text-white font-bold text-lg">
-                  {coach.email?.charAt(0).toUpperCase()}
+                  {(coach.fullName || coach.email)?.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-navy">
-                    {coach.name || "Unnamed Coach"}
+                    {coach.fullName || coach.name || "Unnamed Coach"}
                   </h3>
                   <p className="text-sm text-gray-600">{coach.email}</p>
                 </div>
@@ -167,6 +167,65 @@ const AdminCoaches = () => {
                 >
                   <Trash2 size={18} />
                 </button>
+              </div>
+
+              {/* Coach Details */}
+              <div className="space-y-2 text-sm border-t pt-3">
+                {coach.country && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Country:</span>
+                    <span className="font-medium">{coach.country}</span>
+                  </div>
+                )}
+                {coach.timezone && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Timezone:</span>
+                    <span className="font-medium">{coach.timezone}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Status:</span>
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-medium ${coach.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}
+                  >
+                    {coach.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Payout:</span>
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-medium ${coach.payoutVerified ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
+                  >
+                    {coach.payoutVerified ? "Verified" : "Pending"}
+                  </span>
+                </div>
+                {coach.payoutMethod && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Method:</span>
+                    <span className="font-medium">{coach.payoutMethod}</span>
+                  </div>
+                )}
+                {(coach.payoutPerClass > 0 || coach.payoutPerBatch > 0) && (
+                  <div className="border-t pt-2 mt-2">
+                    <div className="text-xs text-gray-500 mb-1">Rates:</div>
+                    {coach.payoutPerClass > 0 && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-600">Per Class:</span>
+                        <span className="font-medium">
+                          ₹{coach.payoutPerClass}
+                        </span>
+                      </div>
+                    )}
+                    {coach.payoutPerBatch > 0 && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-600">Per Batch:</span>
+                        <span className="font-medium">
+                          ₹{coach.payoutPerBatch}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </Card>
           ))}

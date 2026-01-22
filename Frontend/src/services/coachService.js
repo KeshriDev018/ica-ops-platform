@@ -30,6 +30,33 @@ const coachService = {
     const response = await api.get(`/coach/${coachId}/students`);
     return response.data;
   },
+
+  // COACH: Get own profile
+  getMyProfile: async () => {
+    const response = await api.get("/coach/me/profile");
+    return response.data;
+  },
+
+  // COACH: Update basic profile
+  updateMyProfile: async (profileData) => {
+    const response = await api.patch("/coach/me/profile", profileData);
+    return response.data;
+  },
+
+  // COACH: Update payout details
+  updateMyPayoutDetails: async (payoutData) => {
+    const response = await api.patch("/coach/me/payout-details", payoutData);
+    return response.data;
+  },
+
+  // ADMIN: Update coach payout rates
+  updatePayoutRates: async (coachAccountId, ratesData) => {
+    const response = await api.patch(
+      `/coach/${coachAccountId}/payout-rates`,
+      ratesData,
+    );
+    return response.data;
+  },
 };
 
 export default coachService;
