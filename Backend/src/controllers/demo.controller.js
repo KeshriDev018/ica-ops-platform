@@ -49,15 +49,25 @@ export const createDemo = async (req, res) => {
 export const getAllDemos = async (req, res) => {
   try {
     const demos = await Demo.find()
-      .populate("coachId", "email")
-      .populate("adminId", "email")
+      .populate({
+        path: "coachId",
+        select: "email",
+        strictPopulate: false,
+      })
+      .populate({
+        path: "adminId",
+        select: "email",
+        strictPopulate: false,
+      })
       .sort({ createdAt: -1 });
 
     res.status(200).json(demos);
   } catch (error) {
     console.error("Get all demos error:", error);
+    console.error("Error stack:", error.stack);
     res.status(500).json({
       message: "Failed to fetch demos",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };

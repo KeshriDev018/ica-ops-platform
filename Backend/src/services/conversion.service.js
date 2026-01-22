@@ -27,13 +27,14 @@ export const createStudentAndSubscriptionFromDemo = async (
     throw new Error("Student already exists for this account");
   }
 
+  // Create student from demo - preserve timezone for class scheduling
   const student = await Student.create({
     accountId: demo.accountId,
     studentName: demo.studentName,
     studentAge: demo.studentAge,
     parentName: demo.parentName,
     parentEmail: demo.parentEmail,
-    timezone: demo.timezone,
+    timezone: demo.timezone, // ✅ Preserved for timezone-aware class display
     country: demo.country,
     studentType: demo.recommendedStudentType,
     level: demo.recommendedLevel,

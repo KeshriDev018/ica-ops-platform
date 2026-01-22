@@ -8,6 +8,7 @@ import {
   verifySubscriptionPayment,
   getMyPaymentHistory,
   getAllPayments,
+  getMySubscription,
 } from "../controllers/subscription.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
@@ -63,6 +64,14 @@ router.get(
   authMiddleware,
   allowRoles("CUSTOMER"),
   getMyPaymentHistory,
+);
+
+// CUSTOMER: Get my subscription
+router.get(
+  "/my-subscription",
+  authMiddleware,
+  allowRoles("CUSTOMER"),
+  getMySubscription,
 );
 
 export default router;

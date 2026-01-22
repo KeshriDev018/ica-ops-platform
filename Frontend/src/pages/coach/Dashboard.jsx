@@ -18,6 +18,7 @@ import batchService from "../../services/batchService";
 import studentService from "../../services/studentService";
 import classService from "../../services/classService";
 import { format, isToday, isFuture, parse } from "date-fns";
+import { getTimezoneAbbreviation } from "../../utils/timezoneConstants";
 
 const CoachDashboard = () => {
   const { user } = useAuthStore();
@@ -101,6 +102,7 @@ const CoachDashboard = () => {
 
         const nextClass = upcomingTodayClasses[0];
         const nextClassTime = nextClass ? nextClass.startTime : null;
+        const nextClassTimezone = nextClass ? getTimezoneAbbreviation(nextClass.coachTimezone) : null;
 
         setMetrics({
           totalStudents,
@@ -109,6 +111,7 @@ const CoachDashboard = () => {
           oneOnOneBatches: coachClasses.filter((c) => c.student).length, // Classes with individual students
           classesToday: todayClasses.length,
           nextClassTime,
+          nextClassTimezone,
         });
 
         // Dummy chart data
@@ -202,7 +205,7 @@ const CoachDashboard = () => {
           </div>
           <div className="text-sm text-gray-600">
             {metrics.nextClassTime
-              ? `Next at ${metrics.nextClassTime}`
+              ? `Next at ${metrics.nextClassTime}${metrics.nextClassTimezone ? ` ${metrics.nextClassTimezone}` : ""}`
               : "No upcoming classes"}
           </div>
         </Card>

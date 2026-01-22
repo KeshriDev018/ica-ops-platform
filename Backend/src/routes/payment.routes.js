@@ -4,11 +4,28 @@ import { createRazorpayOrder } from "../services/payment.service.js";
 import {
   createPaymentOrder,
   verifyPayment,
+  createSubscriptionRenewalOrder,
+  verifySubscriptionRenewal,
 } from "../controllers/payment.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
 
 const router = express.Router();
+
+// Subscription renewal endpoints (protected - student can pay anytime)
+router.post(
+  "/create-renewal-order",
+  authMiddleware,
+  allowRoles("CUSTOMER"),
+  createSubscriptionRenewalOrder
+);
+
+router.post(
+  "/verify-renewal",
+  authMiddleware,
+  allowRoles("CUSTOMER"),
+  verifySubscriptionRenewal
+);
 
 // Public endpoint for demo users to create payment order (no auth)
 router.post("/create-demo-order", async (req, res) => {

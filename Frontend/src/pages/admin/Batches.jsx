@@ -7,6 +7,7 @@ import coachService from "../../services/coachService";
 import studentService from "../../services/studentService";
 import FormInput from "../../components/forms/FormInput";
 import FormSelect from "../../components/forms/FormSelect";
+import { TIMEZONE_OPTIONS } from "../../utils/timezoneConstants";
 
 const AdminBatches = () => {
   const [batches, setBatches] = useState([]);
@@ -23,7 +24,7 @@ const AdminBatches = () => {
     name: "",
     coachId: "",
     level: "",
-    timezone: "",
+    timezone: "Asia/Kolkata", // Default timezone
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -80,7 +81,7 @@ const AdminBatches = () => {
       await batchService.create(formData);
       loadData();
       setIsCreateModalOpen(false);
-      setFormData({ name: "", coachId: "", level: "", timezone: "" });
+      setFormData({ name: "", coachId: "", level: "", timezone: "Asia/Kolkata" });
     } catch (error) {
       console.error("Error creating batch:", error);
       setFormErrors({ submit: error.response?.data?.message || error.message });
@@ -294,14 +295,14 @@ const AdminBatches = () => {
                 required
               />
 
-              <FormInput
+              <FormSelect
                 label="Timezone"
                 name="timezone"
                 value={formData.timezone}
                 onChange={(e) =>
                   setFormData({ ...formData, timezone: e.target.value })
                 }
-                placeholder="e.g., America/New_York, Asia/Kolkata"
+                options={TIMEZONE_OPTIONS}
                 error={formErrors.timezone}
                 required
               />
@@ -316,7 +317,7 @@ const AdminBatches = () => {
                       name: "",
                       coachId: "",
                       level: "",
-                      timezone: "",
+                      timezone: "Asia/Kolkata",
                     });
                     setFormErrors({});
                   }}

@@ -5,6 +5,8 @@ import useAuthStore from "../../store/authStore";
 import classService from "../../services/classService";
 import batchService from "../../services/batchService";
 import studentService from "../../services/studentService";
+import { TIMEZONE_OPTIONS } from "../../utils/timezoneConstants";
+import { getTimezoneAbbreviation } from "../../utils/timezoneConstants";
 
 const CoachClasses = () => {
   const { user } = useAuthStore();
@@ -22,6 +24,7 @@ const CoachClasses = () => {
     weekdays: [],
     startTime: "",
     durationMinutes: 60,
+    coachTimezone: "Asia/Kolkata",
     meetLink: "",
   });
 
@@ -64,6 +67,7 @@ const CoachClasses = () => {
       weekdays: [],
       startTime: "",
       durationMinutes: 60,
+      coachTimezone: "Asia/Kolkata", // Default timezone
       meetLink: "",
     });
     setShowCreateModal(true);
@@ -78,6 +82,7 @@ const CoachClasses = () => {
       weekdays: [],
       startTime: "",
       durationMinutes: 60,
+      coachTimezone: "Asia/Kolkata",
       meetLink: "",
     });
   };
@@ -139,6 +144,7 @@ const CoachClasses = () => {
         weekdays: formData.weekdays,
         startTime: formData.startTime,
         durationMinutes: parseInt(formData.durationMinutes),
+        coachTimezone: formData.coachTimezone,
         meetLink: formData.meetLink,
       };
 
@@ -249,6 +255,11 @@ const CoachClasses = () => {
                 <p>
                   <span className="font-medium">Time:</span>{" "}
                   {classItem.startTime} ({classItem.durationMinutes} min)
+                  {classItem.coachTimezone && (
+                    <span className="ml-2 text-xs font-semibold text-blue-600">
+                      {getTimezoneAbbreviation(classItem.coachTimezone)}
+                    </span>
+                  )}
                 </p>
                 <p>
                   <span className="font-medium">Days:</span>{" "}
@@ -340,6 +351,11 @@ const CoachClasses = () => {
                   <p className="text-sm text-gray-600 mb-1">Start Time</p>
                   <p className="font-medium text-navy">
                     {selectedClass.startTime}
+                    {selectedClass.coachTimezone && (
+                      <span className="ml-2 text-sm text-blue-600 font-semibold">
+                        {getTimezoneAbbreviation(selectedClass.coachTimezone)}
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">
@@ -349,6 +365,18 @@ const CoachClasses = () => {
                   </p>
                 </div>
               </div>
+
+              {selectedClass.coachTimezone && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">Timezone:</span> {selectedClass.coachTimezone}
+                    <span className="ml-2 text-xs text-blue-600">({getTimezoneAbbreviation(selectedClass.coachTimezone)})</span>
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Students will see this class time converted to their local timezone.
+                  </p>
+                </div>
+              )}
 
               <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600 mb-2">Weekdays</p>
@@ -506,6 +534,28 @@ const CoachClasses = () => {
                       </p>
                     )}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Your Timezone *
+                </label>
+                <select
+                  name="coachTimezone"
+                  value={formData.coachTimezone}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy"
+                >
+                  {TIMEZONE_OPTIONS.map((tz) => (
+                    <option key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Select the timezone you're scheduling in. Students will see times converted to their timezone.
+                </p>
               </div>
 
               <div>

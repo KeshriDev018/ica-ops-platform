@@ -73,6 +73,24 @@ const subscriptionService = {
     const response = await api.patch(`/subscriptions/${id}/resume`);
     return response.data;
   },
+
+  // Customer: Get my subscription
+  getMySubscription: async () => {
+    const response = await api.get("/subscriptions/my-subscription");
+    return response.data;
+  },
+
+  // Customer: Create renewal order (Pay Anytime)
+  createRenewalOrder: async () => {
+    const response = await api.post("/payments/create-renewal-order");
+    return response.data;
+  },
+
+  // Customer: Verify renewal payment
+  verifyRenewal: async (paymentData) => {
+    const response = await api.post("/payments/verify-renewal", paymentData);
+    return response.data;
+  },
 };
 
 export default subscriptionService;

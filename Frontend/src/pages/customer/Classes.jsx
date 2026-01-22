@@ -3,24 +3,53 @@ import { ExternalLink } from "lucide-react";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import classService from "../../services/classService";
+import studentService from "../../services/studentService";
+import { convertClassTime, getTimezoneConversionMessage } from "../../utils/timezoneHelpers";
 
 const CustomerClasses = () => {
   const [classes, setClasses] = useState([]);
+  const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadClasses = async () => {
+    const loadData = async () => {
       try {
-        const myClasses = await classService.getMyStudentClasses();
-        setClasses(myClasses);
+        const [myClasses, myStudent] = await Promise.all([
+          classService.getMyStudentClasses(),
+          studentService.getMyStudent(),
+        ]);
+        
+        // Convert class times to student's timezone
+        const convertedClasses = myClasses.map((classItem) => {
+          if (!classItem.coachTimezone || !myStudent.timezone) {
+            return classItem;
+          }
+          
+          const converted = convertClassTime(
+            classItem.startTime,
+            classItem.coachTimezone,
+            myStudent.timezone,
+            classItem.duration
+          );
+          
+          return {
+            ...classItem,
+            convertedTime: converted,
+            displayStartTime: converted.startTime,
+            displayEndTime: converted.endTime,
+          };
+        });
+        
+        setClasses(convertedClasses);
+        setStudent(myStudent);
       } catch (error) {
-        console.error("Error loading classes:", error);
+        console.error("Error loading data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadClasses();
+    loadData();
   }, []);
 
   if (loading) {
@@ -72,12 +101,27 @@ const CustomerClasses = () => {
                       </p>
                       <p>
                         <span className="font-medium">Time:</span>{" "}
-                        {classItem.startTime} - {classItem.endTime}
+                        {classItem.displayStartTime || classItem.startTime} - {classItem.displayEndTime || classItem.endTime}
+                        {classItem.convertedTime?.timezoneAbbr && (
+                          <span className="ml-1 text-xs font-semibold text-blue-600">
+                            {classItem.convertedTime.timezoneAbbr}
+                          </span>
+                        )}
+                        {classItem.convertedTime?.isDifferentDay && (
+                          <span className="ml-2 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded">
+                            {classItem.convertedTime.dayOffset === 1 ? "Next Day" : "Prev Day"}
+                          </span>
+                        )}
                       </p>
                       <p>
                         <span className="font-medium">Duration:</span>{" "}
                         {classItem.duration} minutes
                       </p>
+                      {classItem.convertedTime?.isDifferentDay && (
+                        <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-800">
+                          {getTimezoneConversionMessage(classItem.convertedTime)}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -136,12 +180,27 @@ const CustomerClasses = () => {
                       </p>
                       <p>
                         <span className="font-medium">Time:</span>{" "}
-                        {classItem.startTime} - {classItem.endTime}
+                        {classItem.displayStartTime || classItem.startTime} - {classItem.displayEndTime || classItem.endTime}
+                        {classItem.convertedTime?.timezoneAbbr && (
+                          <span className="ml-1 text-xs font-semibold text-blue-600">
+                            {classItem.convertedTime.timezoneAbbr}
+                          </span>
+                        )}
+                        {classItem.convertedTime?.isDifferentDay && (
+                          <span className="ml-2 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded">
+                            {classItem.convertedTime.dayOffset === 1 ? "Next Day" : "Prev Day"}
+                          </span>
+                        )}
                       </p>
                       <p>
                         <span className="font-medium">Duration:</span>{" "}
                         {classItem.duration} minutes
                       </p>
+                      {classItem.convertedTime?.isDifferentDay && (
+                        <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-800">
+                          {getTimezoneConversionMessage(classItem.convertedTime)}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">

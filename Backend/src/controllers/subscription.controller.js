@@ -311,3 +311,42 @@ export const getAllPayments = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+/**
+ * ================================
+ * CUSTOMER: Get My Subscription
+ * ================================
+ */
+export const getMySubscription = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    console.log("🔍 Finding subscription for accountId:", userId);
+    
+    // Find student by account ID
+    const student = await Student.findOne({ accountId: userId });
+    if (!student) {
+      console.log("❌ Student not found for accountId:", userId);
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    console.log("✅ Student found:", student.studentName);
+
+    // Find active subscription
+    const subscription = await Subscription.findOne({ 
+      accountId: userId,
+      status: { $in: ["ACTIVE", "PAST_DUE", "SUSPENDED"] }
+    });
+    
+    if (!subscription) {
+      console.log("❌ No subscription found for accountId:", userId);
+      return res.status(404).json({ message: "No subscription found" });
+    }
+
+    console.log("✅ Subscription found, nextDueAt:", subscription.nextDueAt);
+    res.json(subscription);
+  } catch (error) {
+    console.error("❌ Get my subscription error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

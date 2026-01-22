@@ -11,6 +11,7 @@ import {
 import { enUS } from "date-fns/locale";
 import Card from "../../components/common/Card";
 import classService from "../../services/classService";
+import { getTimezoneAbbreviation } from "../../utils/timezoneConstants";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 // Initialize date-fns localizer
@@ -92,7 +93,7 @@ const CoachCalendar = () => {
 
           allEvents.push({
             id: `${classItem._id}-${eventDate.toISOString()}`,
-            title: classItem.title,
+            title: `${classItem.title} ${getTimezoneAbbreviation(classItem.coachTimezone) ? `(${getTimezoneAbbreviation(classItem.coachTimezone)})` : ""}`,
             start: startDateTime,
             end: endDateTime,
             resource: {
@@ -100,6 +101,8 @@ const CoachCalendar = () => {
               meetLink: classItem.meetLink,
               batch: classItem.batchId,
               student: classItem.studentId,
+              timezone: classItem.coachTimezone,
+              timezoneAbbr: getTimezoneAbbreviation(classItem.coachTimezone),
             },
           });
         });

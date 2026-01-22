@@ -7,6 +7,7 @@ import { format } from "date-fns";
 
 const CustomerPayments = () => {
   const [student, setStudent] = useState(null);
+  const [subscription, setSubscription] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [paymentHistory, setPaymentHistory] = useState([]);
@@ -17,6 +18,16 @@ const CustomerPayments = () => {
         const myStudent = await studentService.getMyStudent();
         console.log("💳 Student loaded for payments:", myStudent);
         setStudent(myStudent);
+
+        // Load subscription data
+        try {
+          const subscriptionData = await subscriptionService.getMySubscription();
+          console.log("💳 Subscription loaded:", subscriptionData);
+          setSubscription(subscriptionData);
+        } catch (subError) {
+          console.warn("⚠️ No subscription found:", subError);
+          // Continue without subscription
+        }
 
         // Load payment history from backend
         const payments = await subscriptionService.getMyPaymentHistory();
@@ -43,8 +54,8 @@ const CustomerPayments = () => {
   };
 
   const handlePayNow = async () => {
-    if (!student) {
-      alert("Student information not loaded. Please try again.");
+    if (!student || !subscription) {
+      alert("Information not loaded. Please refresh the page.");
       return;
     }
 
@@ -55,32 +66,38 @@ const CustomerPayments = () => {
         throw new Error("Failed to load Razorpay SDK");
       }
 
-      // For demo: using test amount and order
-      const testOrderId = "order_" + Math.random().toString(36).substr(2, 9);
-      const amount = 299900; // ₹2,999 in paise
+      // Create REAL renewal order from backend
+      console.log("🔄 Creating renewal order...");
+      const orderData = await subscriptionService.createRenewalOrder();
+      console.log("✅ Renewal order created:", orderData);
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_dummy",
-        amount: amount,
-        currency: "INR",
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        order_id: orderData.orderId,
         name: "ICA Chess Academy",
-        description: `Monthly Subscription - ${student.studentType === "1-1" ? "1-on-1" : "Group"} Coaching`,
-        order_id: testOrderId,
+        description: `Monthly Subscription Renewal - ${student.studentType === "1-1" ? "1-on-1" : "Group"} Coaching`,
         prefill: {
           name: student.parentName,
           email: student.parentEmail,
-          contact: "9999999999",
+          contact: student.parentPhone || "9999999999",
         },
         theme: {
           color: "#1e3a8a",
         },
         handler: async function (response) {
-          await handlePaymentSuccess(response);
+          await handlePaymentSuccess({
+            ...response,
+            subscriptionId: orderData.subscriptionId,
+            studentId: orderData.studentId,
+            amount: orderData.amount,
+          });
         },
         modal: {
           ondismiss: function () {
             setProcessing(false);
-            alert("Payment cancelled. You can try again anytime.");
+            alert("Payment cancelled. You can pay anytime.");
           },
         },
       };
@@ -88,7 +105,7 @@ const CustomerPayments = () => {
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {
-      console.error("Payment initiation error:", error);
+      console.error("❌ Payment initiation error:", error);
       alert("Failed to open payment gateway: " + error.message);
       setProcessing(false);
     }
@@ -97,15 +114,26 @@ const CustomerPayments = () => {
   const handlePaymentSuccess = async (response) => {
     try {
       setProcessing(true);
-      console.log("Payment successful:", response);
+      console.log("✅ Payment successful:", response);
 
-      // In real implementation, verify payment with backend
-      // await paymentService.verifyPayment(response);
+      // Verify payment with backend
+      console.log("🔍 Verifying payment...");
+      const result = await subscriptionService.verifyRenewal({
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+        subscriptionId: response.subscriptionId,
+        studentId: response.studentId,
+        amount: response.amount,
+      });
 
-      alert("Payment successful! Your subscription has been activated.");
-      setProcessing(false);
+      console.log("✅ Payment verified:", result);
+      alert(`Payment successful! Your subscription has been extended by 30 days.\nNew due date: ${new Date(result.nextDueAt).toLocaleDateString()}`);
+      
+      // Reload page to show updated payment history and next due date
+      window.location.reload();
     } catch (error) {
-      console.error("Payment verification error:", error);
+      console.error("❌ Payment verification error:", error);
       alert(
         "Payment completed but verification failed. Please contact support.",
       );
@@ -145,7 +173,11 @@ const CustomerPayments = () => {
       amount > 10000 ? Math.round(amount / 100) : Math.round(amount);
     return `₹${amountInRupees.toLocaleString("en-IN")}`;
   };
-  const nextDueDate = new Date(2026, 1, 20); // Feb 20, 2026
+  
+  // Use real subscription date if available, fallback to Feb 20, 2026
+  const nextDueDate = subscription?.nextDueAt 
+    ? new Date(subscription.nextDueAt) 
+    : new Date(2026, 1, 20);
 
   return (
     <div className="space-y-6">
@@ -237,7 +269,7 @@ const CustomerPayments = () => {
               <tbody>
                 {paymentHistory.map((payment) => (
                   <tr
-                    key={payment.id}
+                    key={payment._id || payment.id}
                     className="border-b border-gray-100 hover:bg-gray-50"
                   >
                     <td className="py-3 px-4 text-sm text-gray-900">

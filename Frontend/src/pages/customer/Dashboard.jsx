@@ -18,6 +18,7 @@ import useAuthStore from "../../store/authStore";
 import studentService from "../../services/studentService";
 import classService from "../../services/classService";
 import { format } from "date-fns";
+import { convertClassTime } from "../../utils/timezoneHelpers";
 
 const CustomerDashboard = () => {
   const { user } = useAuthStore();
@@ -100,6 +101,20 @@ const CustomerDashboard = () => {
 
         const nextClass = upcomingToday[0];
 
+        // Convert next class time to student timezone if available
+        let displayNextClassTime = nextClass?.startTime || null;
+        let nextClassTimezone = null;
+        if (nextClass && nextClass.coachTimezone && myStudent.timezone) {
+          const converted = convertClassTime(
+            nextClass.startTime,
+            nextClass.coachTimezone,
+            myStudent.timezone,
+            nextClass.duration || 60
+          );
+          displayNextClassTime = converted.formattedTime;
+          nextClassTimezone = converted.timezoneAbbr;
+        }
+
         setMetrics({
           level: myStudent.level || "Beginner",
           studentType: myStudent.studentType === "1-1" ? "1-on-1" : "Group",
@@ -107,12 +122,32 @@ const CustomerDashboard = () => {
           coachName: myStudent.assignedCoachId?.email || "Not assigned",
           batchName: myStudent.assignedBatchId?.name || "Not assigned",
           nextClassDate: nextClass ? "Today" : "No classes today",
-          nextClassTime: nextClass?.startTime || null,
+          nextClassTime: displayNextClassTime,
+          nextClassTimezone: nextClassTimezone,
           totalClasses: myClasses.length,
         });
 
-        // Set first 5 upcoming classes
-        setUpcomingClasses(myClasses.slice(0, 5));
+        // Convert all upcoming class times
+        const convertedUpcomingClasses = myClasses.slice(0, 5).map((classItem) => {
+          if (!classItem.coachTimezone || !myStudent.timezone) {
+            return classItem;
+          }
+          
+          const converted = convertClassTime(
+            classItem.startTime,
+            classItem.coachTimezone,
+            myStudent.timezone,
+            classItem.duration
+          );
+          
+          return {
+            ...classItem,
+            displayTime: converted.formattedTime,
+            convertedTime: converted,
+          };
+        });
+
+        setUpcomingClasses(convertedUpcomingClasses);
       } catch (error) {
         console.error("Error loading student dashboard:", error);
       } finally {
@@ -373,8 +408,12 @@ const CustomerDashboard = () => {
                       : "1-on-1 Class"}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {classItem.weekdays.join(", ")} • {classItem.startTime} -{" "}
-                    {classItem.endTime}
+                    {classItem.weekdays.join(", ")} • {classItem.displayTime || `${classItem.startTime} - ${classItem.endTime}`}
+                    {classItem.convertedTime?.isDifferentDay && (
+                      <span className="ml-2 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded">
+                        {classItem.convertedTime.dayOffset === 1 ? "Next Day" : "Prev Day"}
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     Coach: {classItem.coachId?.email || "N/A"}

@@ -1,5 +1,7 @@
 import { Student } from "../models/student.model.js";
 import { ClassSession } from "../models/class.model.js";
+import { Batch } from "../models/batch.model.js";
+import { isValidTimezone } from "../utils/constants.js";
 
 /**
  * ================================
@@ -18,6 +20,7 @@ export const createClass = async (req, res) => {
       weekdays,
       startTime,
       durationMinutes,
+      coachTimezone,
       meetLink,
     } = req.body;
 
@@ -28,13 +31,21 @@ export const createClass = async (req, res) => {
       weekdays,
       startTime,
       durationMinutes,
+      coachTimezone,
       meetLink,
     });
 
     // Basic validation
-    if (!title || !weekdays || !startTime || !durationMinutes || !meetLink) {
+    if (!title || !weekdays || !startTime || !durationMinutes || !coachTimezone || !meetLink) {
       return res.status(400).json({
-        message: "Missing required fields",
+        message: "Missing required fields (title, weekdays, startTime, durationMinutes, coachTimezone, meetLink)",
+      });
+    }
+
+    // Validate timezone
+    if (!isValidTimezone(coachTimezone)) {
+      return res.status(400).json({
+        message: "Invalid timezone. Please select a valid timezone from the list.",
       });
     }
 
@@ -66,6 +77,7 @@ export const createClass = async (req, res) => {
       weekdays,
       startTime,
       durationMinutes,
+      coachTimezone,
       meetLink,
     });
 
@@ -117,6 +129,7 @@ export const getCoachClasses = async (req, res) => {
         startTime: cls.startTime,
         endTime: endTime,
         duration: cls.durationMinutes,
+        coachTimezone: cls.coachTimezone,
         meetLink: cls.meetLink,
         isActive: cls.isActive,
         createdAt: cls.createdAt,
@@ -218,6 +231,7 @@ export const getStudentClasses = async (req, res) => {
         startTime: cls.startTime,
         endTime: endTime,
         duration: cls.durationMinutes,
+        coachTimezone: cls.coachTimezone,
         meetLink: cls.meetLink,
         isActive: cls.isActive,
         createdAt: cls.createdAt,

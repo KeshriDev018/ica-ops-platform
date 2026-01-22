@@ -44,6 +44,12 @@ const classSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Timezone in which the class is scheduled
+    coachTimezone: {
+      type: String,
+      required: true, // e.g., "Asia/Kolkata", "America/New_York"
+    },
+
     meetLink: {
       type: String,
       required: true,

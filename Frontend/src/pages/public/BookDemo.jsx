@@ -9,6 +9,7 @@ import FormSelect from "../../components/forms/FormSelect";
 import FloatingChessPieces from "../../components/common/FloatingChessPieces";
 import { bookDemoSchema } from "../../utils/validationSchemas";
 import demoService from "../../services/demoService";
+import { TIMEZONE_OPTIONS } from "../../utils/timezoneConstants";
 
 const BookDemo = () => {
   const navigate = useNavigate();
@@ -64,13 +65,6 @@ const BookDemo = () => {
       });
     }
   };
-
-  const timezones = [
-    { value: "Asia/Kolkata", label: "Asia/Kolkata (IST)" },
-    { value: "Asia/Dubai", label: "Asia/Dubai (GST)" },
-    { value: "America/New_York", label: "America/New_York (EST)" },
-    { value: "Europe/London", label: "Europe/London (GMT)" },
-  ];
 
   const countries = [
     { value: "India", label: "India" },
@@ -185,7 +179,7 @@ const BookDemo = () => {
             <FormSelect
               id="timezone"
               label="Timezone"
-              options={timezones}
+              options={TIMEZONE_OPTIONS}
               error={errors.timezone}
               labelClassName="text-white"
               className="bg-white/10 border-white/20 text-white"
