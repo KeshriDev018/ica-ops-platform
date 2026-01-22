@@ -36,16 +36,25 @@ export const createClass = async (req, res) => {
     });
 
     // Basic validation
-    if (!title || !weekdays || !startTime || !durationMinutes || !coachTimezone || !meetLink) {
+    if (
+      !title ||
+      !weekdays ||
+      !startTime ||
+      !durationMinutes ||
+      !coachTimezone ||
+      !meetLink
+    ) {
       return res.status(400).json({
-        message: "Missing required fields (title, weekdays, startTime, durationMinutes, coachTimezone, meetLink)",
+        message:
+          "Missing required fields (title, weekdays, startTime, durationMinutes, coachTimezone, meetLink)",
       });
     }
 
     // Validate timezone
     if (!isValidTimezone(coachTimezone)) {
       return res.status(400).json({
-        message: "Invalid timezone. Please select a valid timezone from the list.",
+        message:
+          "Invalid timezone. Please select a valid timezone from the list.",
       });
     }
 
@@ -277,5 +286,182 @@ export const deactivateClass = async (req, res) => {
     res.json({ message: "Class deactivated successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * COACH: Upload class material
+ */
+export const uploadClassMaterial = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { title, description, fileType, linkUrl } = req.body;
+
+    const allowedTypes = ["PDF", "IMAGE", "VIDEO", "DOC", "LINK"];
+    if (!allowedTypes.includes(fileType)) {
+      return res.status(400).json({
+        message: "Invalid fileType",
+      });
+    }
+
+    // For LINK type, linkUrl is required; for others, file is required
+    if (fileType === "LINK") {
+      if (!linkUrl) {
+        return res.status(400).json({
+          message: "Link URL is required for LINK type",
+        });
+      }
+    } else {
+      if (!req.file) {
+        return res.status(400).json({
+          message: "File is required",
+        });
+      }
+    }
+
+    const classSession = await ClassSession.findById(classId);
+
+    if (!classSession) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+
+    // ensure coach owns the class
+    if (classSession.coach.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not allowed" });
+    }
+
+    const materialData = {
+      title,
+      description,
+      fileType,
+      uploadedBy: req.user._id,
+    };
+
+    // For LINK type, use the provided URL; for file uploads, use Cloudinary data
+    if (fileType === "LINK") {
+      materialData.fileUrl = linkUrl;
+      materialData.filePublicId = `link-${Date.now()}`; // dummy ID for links
+    } else {
+      materialData.fileUrl = req.file.path; // Cloudinary secure_url
+      materialData.filePublicId = req.file.filename; // Cloudinary public_id
+    }
+
+    classSession.materials.push(materialData);
+
+    await classSession.save();
+
+    res.status(201).json({
+      message: "Material uploaded successfully",
+    });
+  } catch (error) {
+    console.error("Upload class material error:", error);
+    res.status(500).json({
+      message: "Failed to upload material",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * COACH: Get all class materials for their classes
+ */
+export const getCoachClassMaterials = async (req, res) => {
+  try {
+    const coachId = req.user._id;
+
+    const classes = await ClassSession.find({ coach: coachId, isActive: true })
+      .populate("batch", "name level")
+      .populate("student", "studentName parentName")
+      .select("title materials batch student weekdays startTime")
+      .sort({ createdAt: -1 });
+
+    // Flatten materials with class context
+    const materialsWithContext = [];
+    classes.forEach((classSession) => {
+      classSession.materials.forEach((material) => {
+        if (material.isVisible) {
+          materialsWithContext.push({
+            _id: material._id,
+            classId: classSession._id,
+            className: classSession.title,
+            classType: classSession.batch ? "Batch" : "1-on-1",
+            batchName: classSession.batch?.name || null,
+            studentName: classSession.student?.studentName || null,
+            title: material.title,
+            description: material.description,
+            fileUrl: material.fileUrl,
+            fileType: material.fileType,
+            uploadedAt: material.uploadedAt,
+          });
+        }
+      });
+    });
+
+    res.json(materialsWithContext);
+  } catch (error) {
+    console.error("Get coach class materials error:", error);
+    res.status(500).json({
+      message: "Failed to fetch class materials",
+    });
+  }
+};
+
+/**
+ * CUSTOMER: Get all class materials for their enrolled classes
+ */
+export const getStudentClassMaterials = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Find student record for this customer account
+    const student = await Student.findOne({ accountId: userId });
+
+    if (!student) {
+      return res.status(404).json({ message: "Student profile not found" });
+    }
+
+    // Find all classes where this student is enrolled (either via batch or direct)
+    const classes = await ClassSession.find({
+      $or: [
+        { student: student._id },
+        { batch: { $in: student.batches || [] } },
+      ],
+      isActive: true,
+    })
+      .populate("coach", "email")
+      .populate("batch", "name level")
+      .select("title materials coach batch weekdays startTime meetLink")
+      .sort({ createdAt: -1 });
+
+    // Flatten materials with class context
+    const materialsWithContext = [];
+    classes.forEach((classSession) => {
+      classSession.materials.forEach((material) => {
+        if (material.isVisible) {
+          materialsWithContext.push({
+            _id: material._id,
+            classId: classSession._id,
+            className: classSession.title,
+            classType: classSession.batch ? "Batch" : "1-on-1",
+            batchName: classSession.batch?.name || null,
+            coachEmail: classSession.coach?.email || "Unknown",
+            title: material.title,
+            description: material.description,
+            fileUrl: material.fileUrl,
+            fileType: material.fileType,
+            uploadedAt: material.uploadedAt,
+            meetLink: classSession.meetLink,
+            schedule: `${classSession.weekdays.join(", ")} at ${classSession.startTime}`,
+          });
+        }
+      });
+    });
+
+    res.json(materialsWithContext);
+  } catch (error) {
+    console.error("Get student class materials error:", error);
+    res.status(500).json({
+      message: "Failed to fetch class materials",
+    });
   }
 };

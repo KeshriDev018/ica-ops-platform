@@ -29,6 +29,7 @@ import CustomerProfile from "./pages/customer/Profile";
 import PaymentCheck from "./pages/customer/PaymentCheck";
 import SubscriptionSelection from "./pages/customer/SubscriptionSelection";
 import Payment from "./pages/customer/Payment";
+import CustomerMaterials from "./pages/customer/Materials";
 
 // Coach pages
 import CoachDashboard from "./pages/coach/Dashboard";
@@ -41,6 +42,7 @@ import CoachChat from "./pages/coach/Chat";
 import CoachBatchChat from "./pages/coach/BatchChat";
 import CoachProfile from "./pages/coach/Profile";
 import CoachPayouts from "./pages/coach/Payouts";
+import CoachMaterials from "./pages/coach/Materials";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -121,6 +123,7 @@ const Router = () => {
           <Route path="schedule" element={<CustomerSchedule />} />
           <Route path="batch-chat" element={<CustomerBatchChat />} />
           <Route path="payments" element={<CustomerPayments />} />
+          <Route path="materials" element={<CustomerMaterials />} />
           <Route path="profile" element={<CustomerProfile />} />
         </Route>
 
@@ -144,6 +147,7 @@ const Router = () => {
           <Route path="calendar" element={<CoachCalendar />} />
           <Route path="chat" element={<CoachChat />} />
           <Route path="batch-chat" element={<CoachBatchChat />} />
+          <Route path="materials" element={<CoachMaterials />} />
         </Route>
 
         {/* Admin Routes */}

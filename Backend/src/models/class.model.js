@@ -59,6 +59,53 @@ const classSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    materials: [
+      {
+        title: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+
+        description: {
+          type: String,
+          trim: true,
+        },
+
+        fileUrl: {
+          type: String, // Cloudinary URL
+          required: true,
+        },
+
+        filePublicId: {
+          type: String, // Cloudinary public_id (for delete/update)
+          required: true,
+        },
+
+        fileType: {
+          type: String,
+          enum: ["PDF", "IMAGE", "VIDEO", "DOC", "LINK"],
+          required: true,
+        },
+
+        uploadedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Account", // coach
+          required: true,
+        },
+
+        isVisible: {
+          type: Boolean,
+          default: true, // coach can hide material
+        },
+
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: true },
 );

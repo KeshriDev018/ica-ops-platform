@@ -37,6 +37,7 @@ const Sidebar = () => {
           { path: "/coach/students", label: "Students", icon: "👥" },
           { path: "/coach/calendar", label: "Calendar", icon: "📅" },
           { path: "/coach/payouts", label: "Payouts", icon: "💵" },
+          { path: "/coach/materials", label: "Materials", icon: "📄" },
           { path: "/coach/chat", label: "Messages", icon: "💬" },
         ];
       case "CUSTOMER":
@@ -47,6 +48,7 @@ const Sidebar = () => {
           { path: "/customer/batch", label: "My Batch", icon: "👥" },
           { path: "/customer/schedule", label: "Schedule", icon: "📅" },
           { path: "/customer/batch-chat", label: "Batch Chat", icon: "💬" },
+          { path: "/customer/materials", label: "Materials", icon: "📄" },
           { path: "/customer/payments", label: "Payments", icon: "💳" },
           { path: "/customer/profile", label: "Profile", icon: "👤" },
         ];

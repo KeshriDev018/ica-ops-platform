@@ -4,10 +4,14 @@ import {
   getCoachClasses,
   getStudentClasses,
   deactivateClass,
+  uploadClassMaterial,
+  getCoachClassMaterials,
+  getStudentClassMaterials,
 } from "../controllers/class.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
+import upload from "../middlewares/multer.middleware.js";
 
 const router = express.Router();
 
@@ -39,6 +43,37 @@ router.patch(
   authMiddleware,
   allowRoles("COACH"),
   deactivateClass,
+);
+
+/**
+ * COACH: Upload class material
+ */
+router.post(
+  "/:classId/materials",
+  authMiddleware,
+  allowRoles("COACH"),
+  upload.single("file"), // multer + cloudinary
+  uploadClassMaterial,
+);
+
+/**
+ * COACH: Get all my class materials
+ */
+router.get(
+  "/coach/materials",
+  authMiddleware,
+  allowRoles("COACH"),
+  getCoachClassMaterials,
+);
+
+/**
+ * CUSTOMER: Get all my class materials
+ */
+router.get(
+  "/student/materials",
+  authMiddleware,
+  allowRoles("CUSTOMER"),
+  getStudentClassMaterials,
 );
 
 export default router;
