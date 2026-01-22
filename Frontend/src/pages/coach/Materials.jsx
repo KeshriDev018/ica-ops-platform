@@ -86,9 +86,47 @@ export default function CoachMaterials() {
         alert("Please enter a link URL");
         return;
       }
+      // Validate URL format
+      try {
+        new URL(uploadForm.linkUrl);
+      } catch (err) {
+        alert("Please enter a valid URL (e.g., https://example.com)");
+        return;
+      }
     } else {
       if (!uploadForm.file) {
         alert("Please select a file");
+        return;
+      }
+
+      // Validate file size (50MB max)
+      const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+      if (uploadForm.file.size > maxSize) {
+        alert(`File size exceeds 50MB limit. Your file is ${(uploadForm.file.size / 1024 / 1024).toFixed(2)}MB`);
+        return;
+      }
+
+      // Validate file type
+      const allowedExtensions = /\.(pdf|jpe?g|png|docx?|pptx?|mp4)$/i;
+      if (!allowedExtensions.test(uploadForm.file.name)) {
+        alert("Invalid file type. Allowed: PDF, JPG, PNG, DOC, DOCX, PPT, PPTX, MP4");
+        return;
+      }
+
+      // Validate MIME type
+      const allowedMimeTypes = [
+        'application/pdf',
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'video/mp4',
+      ];
+      if (!allowedMimeTypes.includes(uploadForm.file.type)) {
+        alert(`Invalid file format: ${uploadForm.file.type}. Please upload PDF, JPG, PNG, DOC, DOCX, PPT, PPTX, or MP4 files.`);
         return;
       }
     }
@@ -123,10 +161,18 @@ export default function CoachMaterials() {
       loadData();
     } catch (error) {
       console.error("Error uploading material:", error);
-      alert(
-        "Failed to upload material: " +
-          (error.response?.data?.message || error.message),
-      );
+      
+      // Display specific error message from backend
+      let errorMsg = "Failed to upload material";
+      if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+      
+      alert(errorMsg);
     } finally {
       setUploadLoading(false);
     }

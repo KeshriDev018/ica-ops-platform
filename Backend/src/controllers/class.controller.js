@@ -342,8 +342,9 @@ export const uploadClassMaterial = async (req, res) => {
       materialData.fileUrl = linkUrl;
       materialData.filePublicId = `link-${Date.now()}`; // dummy ID for links
     } else {
-      materialData.fileUrl = req.file.path; // Cloudinary secure_url
-      materialData.filePublicId = req.file.filename; // Cloudinary public_id
+      // Cloudinary returns secure_url and public_id (not path/filename)
+      materialData.fileUrl = req.file.secure_url || req.file.path;
+      materialData.filePublicId = req.file.public_id || req.file.filename;
     }
 
     classSession.materials.push(materialData);
@@ -355,8 +356,30 @@ export const uploadClassMaterial = async (req, res) => {
     });
   } catch (error) {
     console.error("Upload class material error:", error);
-    res.status(500).json({
-      message: "Failed to upload material",
+    console.error("Error stack:", error.stack);
+    console.error("Request file:", req.file);
+    console.error("Request body:", req.body);
+    
+    // Return specific error messages
+    let errorMessage = "Failed to upload material";
+    let statusCode = 500;
+
+    if (error.message?.includes('Invalid file type')) {
+      errorMessage = error.message;
+      statusCode = 400;
+    } else if (error.message?.includes('File too large')) {
+      errorMessage = "File size exceeds 50MB limit";
+      statusCode = 400;
+    } else if (error.name === 'ValidationError') {
+      errorMessage = "Validation error: " + error.message;
+      statusCode = 400;
+    } else if (!req.file && req.body.fileType !== 'LINK') {
+      errorMessage = "File upload failed. Please try again or check file format.";
+      statusCode = 400;
+    }
+    
+    res.status(statusCode).json({
+      message: errorMessage,
       error: error.message,
     });
   }
