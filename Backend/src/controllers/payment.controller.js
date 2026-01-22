@@ -111,7 +111,18 @@ export const verifyPayment = async (req, res) => {
     await account.save();
 
     const link = `${process.env.FRONTEND_URL}/set-password?token=${rawToken}`;
-    await sendSetPasswordEmail(account.email, link, "CUSTOMER");
+
+    // Non-blocking email send
+    sendSetPasswordEmail(account.email, link, "CUSTOMER")
+      .then(() => {
+        console.log(`✅ Customer onboarding email sent to ${account.email}`);
+      })
+      .catch((error) => {
+        console.error(
+          `⚠️ Failed to send customer onboarding email to ${account.email}:`,
+          error.message,
+        );
+      });
 
     res.json({
       message: "Payment verified, student created, onboarding started",
@@ -128,30 +139,33 @@ export const verifyPayment = async (req, res) => {
 export const createSubscriptionRenewalOrder = async (req, res) => {
   try {
     const userId = req.user._id;
-    
+
     console.log("🔄 Creating renewal order for accountId:", userId);
-    
+
     // Find student by account ID
     const student = await Student.findOne({ accountId: userId });
     if (!student) {
       console.log("❌ Student not found for accountId:", userId);
       return res.status(404).json({ message: "Student not found" });
     }
-    
+
     console.log("✅ Student found:", student.studentName);
 
     // Find active subscription (student can pay anytime)
-    const subscription = await Subscription.findOne({ 
+    const subscription = await Subscription.findOne({
       accountId: userId,
-      status: { $in: ["ACTIVE", "PAST_DUE", "SUSPENDED"] }
+      status: { $in: ["ACTIVE", "PAST_DUE", "SUSPENDED"] },
     });
-    
+
     if (!subscription) {
       console.log("❌ No subscription found for accountId:", userId);
       return res.status(404).json({ message: "No active subscription found" });
     }
 
-    console.log("✅ Subscription found, current nextDueAt:", subscription.nextDueAt);
+    console.log(
+      "✅ Subscription found, current nextDueAt:",
+      subscription.nextDueAt,
+    );
 
     // Determine amount based on student type (in paise)
     const amount = student.studentType === "1-1" ? 299900 : 149900;
@@ -161,7 +175,7 @@ export const createSubscriptionRenewalOrder = async (req, res) => {
     const shortSubId = subscription._id.toString().slice(-8);
     const timestamp = Date.now().toString().slice(-10);
     const receiptId = `rnw_${shortSubId}_${timestamp}`; // Max 26 chars
-    
+
     const order = await createRazorpayOrder({
       amount,
       receiptId,
@@ -251,11 +265,11 @@ export const verifySubscriptionRenewal = async (req, res) => {
     const currentDueDate = new Date(subscription.nextDueAt);
     const newDueDate = new Date(currentDueDate);
     newDueDate.setDate(newDueDate.getDate() + 30);
-    
+
     console.log("📅 Extending subscription:");
     console.log("   Current nextDueAt:", currentDueDate);
     console.log("   New nextDueAt:", newDueDate);
-    
+
     subscription.nextDueAt = newDueDate;
     subscription.status = "ACTIVE"; // Reactivate if was suspended
     await subscription.save();

@@ -112,12 +112,22 @@ export const createCoach = async (req, res) => {
     coach.setPasswordExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
     await coach.save();
 
-    // 4️⃣ Send onboarding email
+    // 4️⃣ Send onboarding email (non-blocking - don't await)
     const link = `${process.env.FRONTEND_URL}/set-password?token=${rawToken}`;
-    await sendSetPasswordEmail(coach.email, link, "COACH");
+    sendSetPasswordEmail(coach.email, link, "COACH")
+      .then(() => {
+        console.log(`✅ Coach invitation email sent to ${coach.email}`);
+      })
+      .catch((error) => {
+        console.error(
+          `⚠️ Failed to send invitation email to ${coach.email}:`,
+          error.message,
+        );
+        // Email failure doesn't prevent coach creation
+      });
 
     res.status(201).json({
-      message: "Coach account created and onboarding email sent",
+      message: "Coach account created. Invitation email is being sent.",
       coachId: coach._id,
     });
   } catch (error) {

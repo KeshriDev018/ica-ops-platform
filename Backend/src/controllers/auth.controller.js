@@ -6,7 +6,6 @@ import crypto from "crypto";
 import { generateSetPasswordToken } from "../utils/passToken.util.js";
 import { sendSetPasswordEmail } from "../utils/email.util.js";
 
-
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -30,7 +29,6 @@ export const login = async (req, res) => {
         message: "Please set your password first",
       });
     }
-
 
     // 3️⃣ Compare password using bcrypt
     const isMatch = await bcrypt.compare(password, user.password);
@@ -63,10 +61,6 @@ export const login = async (req, res) => {
   }
 };
 
-
-
-
-
 export const refreshAccessToken = async (req, res) => {
   const token = req.cookies.refreshToken;
 
@@ -90,7 +84,6 @@ export const refreshAccessToken = async (req, res) => {
   }
 };
 
-
 export const logout = async (req, res) => {
   res.clearCookie("refreshToken", {
     httpOnly: true,
@@ -100,9 +93,6 @@ export const logout = async (req, res) => {
 
   res.json({ message: "Logged out successfully" });
 };
-
-
-
 
 export const setPassword = async (req, res) => {
   const { token, password } = req.body;
@@ -131,23 +121,39 @@ export const setPassword = async (req, res) => {
 };
 
 export const resendSetPasswordLink = async (req, res) => {
-  const { email } = req.body;
+  try {
+    const { email } = req.body;
 
-  const account = await Account.findOne({ email });
-  if (!account || account.password) {
-    return res.status(400).json({
-      message: "Account not eligible",
-    });
+    const account = await Account.findOne({ email });
+    if (!account || account.password) {
+      return res.status(400).json({
+        message: "Account not eligible",
+      });
+    }
+
+    const { rawToken, hashedToken } = generateSetPasswordToken();
+
+    account.setPasswordToken = hashedToken;
+    account.setPasswordExpiresAt = Date.now() + 15 * 60 * 1000;
+    await account.save();
+
+    const link = `${process.env.FRONTEND_URL}/set-password?token=${rawToken}`;
+
+    // Non-blocking email send
+    sendSetPasswordEmail(account.email, link, account.role)
+      .then(() => {
+        console.log(`✅ Password reset link resent to ${account.email}`);
+      })
+      .catch((error) => {
+        console.error(
+          `⚠️ Failed to resend password link to ${account.email}:`,
+          error.message,
+        );
+      });
+
+    res.json({ message: "Password setup link resent" });
+  } catch (error) {
+    console.error("Resend password link error:", error);
+    res.status(500).json({ message: error.message });
   }
-
-  const { rawToken, hashedToken } = generateSetPasswordToken();
-
-  account.setPasswordToken = hashedToken;
-  account.setPasswordExpiresAt = Date.now() + 15 * 60 * 1000;
-  await account.save();
-
-  const link = `${process.env.FRONTEND_URL}/set-password?token=${rawToken}`;
-  sendSetPasswordEmail(account.email, link,"ROLE");
-
-  res.json({ message: "Password setup link resent" });
 };

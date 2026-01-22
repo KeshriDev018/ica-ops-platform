@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 
 // Create reusable transporter (connection pooling)
 const createTransporter = () => {
-  return nodemailer.createTransport({
+  const config = {
     host: process.env.EMAIL_HOST || "smtp.gmail.com",
     port: Number(process.env.EMAIL_PORT) || 587,
     secure: false, // use STARTTLS
@@ -11,7 +11,7 @@ const createTransporter = () => {
       pass: process.env.EMAIL_PASS,
     },
     tls: {
-      rejectUnauthorized: false, // Accept self-signed certificates (some hosts need this)
+      rejectUnauthorized: false, // Accept self-signed certificates
     },
     connectionTimeout: 10000, // 10 seconds
     greetingTimeout: 10000, // 10 seconds
@@ -19,7 +19,16 @@ const createTransporter = () => {
     pool: true, // Use connection pooling
     maxConnections: 5,
     maxMessages: 10,
+  };
+
+  console.log("📧 Email transporter config:", {
+    host: config.host,
+    port: config.port,
+    user: config.auth.user,
+    hasPassword: !!config.auth.pass,
   });
+
+  return nodemailer.createTransport(config);
 };
 
 let transporter;
