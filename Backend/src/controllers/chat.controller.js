@@ -3,6 +3,7 @@ import { Message } from "../models/message.model.js";
 import { Account } from "../models/account.model.js";
 import { Student } from "../models/student.model.js";
 import { Batch } from "../models/batch.model.js";
+import { CoachProfile } from "../models/coach.model.js";
 
 /**
  * Get all conversations for the authenticated user
@@ -293,12 +294,21 @@ export const getAvailableContacts = async (req, res) => {
 
     if (userRole === "ADMIN") {
       // Admin can chat with anyone
-      const [students, coaches] = await Promise.all([
+      const [students, coaches, coachProfiles] = await Promise.all([
         Student.find({ status: "ACTIVE" })
           .populate("accountId", "email role")
           .select("studentName parentName accountId"),
         Account.find({ role: "COACH" }).select("email role"),
+        CoachProfile.find().populate("accountId", "email role").select("fullName accountId"),
       ]);
+
+      // Create a map of accountId to coach profile
+      const coachProfileMap = new Map();
+      coachProfiles.forEach((profile) => {
+        if (profile.accountId) {
+          coachProfileMap.set(profile.accountId._id.toString(), profile);
+        }
+      });
 
       contacts = [
         ...students
@@ -310,12 +320,15 @@ export const getAvailableContacts = async (req, res) => {
             role: "CUSTOMER",
             type: "parent",
           })),
-        ...coaches.map((c) => ({
-          accountId: c._id,
-          name: c.email.split("@")[0],
-          role: "COACH",
-          type: "coach",
-        })),
+        ...coaches.map((c) => {
+          const profile = coachProfileMap.get(c._id.toString());
+          return {
+            accountId: c._id,
+            name: profile?.fullName || c.email.split("@")[0],
+            role: "COACH",
+            type: "coach",
+          };
+        }),
       ];
     } else if (userRole === "COACH") {
       // Coach can only chat with Admin
