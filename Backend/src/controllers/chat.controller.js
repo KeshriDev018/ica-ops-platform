@@ -299,7 +299,9 @@ export const getAvailableContacts = async (req, res) => {
           .populate("accountId", "email role")
           .select("studentName parentName accountId"),
         Account.find({ role: "COACH" }).select("email role"),
-        CoachProfile.find().populate("accountId", "email role").select("fullName accountId"),
+        CoachProfile.find()
+          .populate("accountId", "email role")
+          .select("fullName accountId"),
       ]);
 
       // Create a map of accountId to coach profile

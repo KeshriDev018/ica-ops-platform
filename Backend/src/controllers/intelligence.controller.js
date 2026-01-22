@@ -91,12 +91,10 @@ export const getDemoConversionPrediction = async (req, res) => {
     res.json(results);
   } catch (error) {
     console.error("Error in getDemoConversionPrediction:", error);
-    res
-      .status(500)
-      .json({
-        message: "Failed to get conversion prediction",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Failed to get conversion prediction",
+      error: error.message,
+    });
   }
 };
 
@@ -242,30 +240,35 @@ export const getCoachEffectiveness = async (req, res) => {
     ];
 
     const data = await Demo.aggregate(pipeline);
-    
+
     // Populate coach names and emails
     const enrichedData = await Promise.all(
       data.map(async (item) => {
-        const coachAccount = await Account.findById(item.coachId).select("email");
-        const coachProfile = await CoachProfile.findOne({ accountId: item.coachId }).select("fullName");
-        
+        const coachAccount = await Account.findById(item.coachId).select(
+          "email",
+        );
+        const coachProfile = await CoachProfile.findOne({
+          accountId: item.coachId,
+        }).select("fullName");
+
         return {
           ...item,
-          coachName: coachProfile?.fullName || coachAccount?.email?.split("@")[0] || "Unknown Coach",
+          coachName:
+            coachProfile?.fullName ||
+            coachAccount?.email?.split("@")[0] ||
+            "Unknown Coach",
           coachEmail: coachAccount?.email || "N/A",
         };
-      })
+      }),
     );
-    
+
     res.json(enrichedData);
   } catch (error) {
     console.error("Error in getCoachEffectiveness:", error);
-    res
-      .status(500)
-      .json({
-        message: "Failed to get coach effectiveness data",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Failed to get coach effectiveness data",
+      error: error.message,
+    });
   }
 };
 
@@ -710,11 +713,9 @@ export const getIntelligenceOverview = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getIntelligenceOverview:", error);
-    res
-      .status(500)
-      .json({
-        message: "Failed to get intelligence overview",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Failed to get intelligence overview",
+      error: error.message,
+    });
   }
 };

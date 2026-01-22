@@ -19,7 +19,9 @@ export const getAllSubscriptions = async (req, res) => {
     // Enrich with student data
     const enrichedSubscriptions = await Promise.all(
       subscriptions.map(async (sub) => {
-        const student = await Student.findOne({ accountId: sub.accountId?._id });
+        const student = await Student.findOne({
+          accountId: sub.accountId?._id,
+        });
 
         return {
           _id: sub._id,
@@ -325,9 +327,9 @@ export const getAllPayments = async (req, res) => {
 export const getMySubscription = async (req, res) => {
   try {
     const userId = req.user._id;
-    
+
     console.log("🔍 Finding subscription for accountId:", userId);
-    
+
     // Find student by account ID
     const student = await Student.findOne({ accountId: userId });
     if (!student) {
@@ -338,11 +340,11 @@ export const getMySubscription = async (req, res) => {
     console.log("✅ Student found:", student.studentName);
 
     // Find active subscription
-    const subscription = await Subscription.findOne({ 
+    const subscription = await Subscription.findOne({
       accountId: userId,
-      status: { $in: ["ACTIVE", "PAST_DUE", "SUSPENDED"] }
+      status: { $in: ["ACTIVE", "PAST_DUE", "SUSPENDED"] },
     });
-    
+
     if (!subscription) {
       console.log("❌ No subscription found for accountId:", userId);
       return res.status(404).json({ message: "No subscription found" });
