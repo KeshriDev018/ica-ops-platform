@@ -88,19 +88,12 @@ const AccessDemoAccount = () => {
         // Use recommended plan or default amount
         const amount = demoData.recommendedStudentType === "1-1" ? 2999 : 1499;
         // Use the public demo endpoint for order creation
-        const response = await fetch("/api/payments/create-demo-order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amount: amount * 100,
-            demoId: demoData._id,
-          }),
+        const response = await api.post("/payments/create-demo-order", {
+          amount: amount * 100,
+          demoId: demoData._id,
         });
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          throw new Error(err.message || "Failed to create payment order");
-        }
-        const order = await response.json();
+        
+        const order = response.data;
         paymentOrderId = order.orderId;
         paymentAmount = order.amount;
         // Optionally, reload demoData from backend to reflect new order
