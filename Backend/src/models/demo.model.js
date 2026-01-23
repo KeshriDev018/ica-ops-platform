@@ -114,6 +114,36 @@ const demoSchema = new mongoose.Schema(
       default: "BOOKED",
     },
 
+    preferredClassType: {
+      type: String,
+      enum: ["1-1", "GROUP"],
+      default: null,
+    },
+
+    studentLevel: {
+      type: String,
+      enum: ["BEGINNER", "INTERMEDIATE", "ADVANCED"],
+      default: null,
+    },
+
+    // Selected subscription plan details
+    selectedPlanId: {
+      type: String,
+      enum: ["1-1", "group"],
+      default: null,
+    },
+
+    selectedPlanAmount: {
+      type: Number,
+      default: null,
+    },
+
+    selectedBillingCycle: {
+      type: String,
+      enum: ["MONTHLY", "QUARTERLY", "YEARLY"],
+      default: "MONTHLY",
+    },
+
     recommendedStudentType: {
       type: String,
       enum: ["1-1", "group"],

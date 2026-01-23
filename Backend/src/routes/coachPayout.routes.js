@@ -4,6 +4,7 @@ import {
   payCoach,
   getMyPayoutHistory,
   getCoachPayoutHistoryById,
+  getNextUnpaidPeriod,
 } from "../controllers/coachPayout.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -52,6 +53,16 @@ router.get(
   authMiddleware,
   allowRoles("ADMIN"),
   getCoachPayoutHistoryById,
+);
+
+/**
+ * ADMIN: Get next unpaid period for a coach
+ */
+router.get(
+  "/admin/coach/:coachAccountId/next-period",
+  authMiddleware,
+  allowRoles("ADMIN"),
+  getNextUnpaidPeriod,
 );
 
 export default router;

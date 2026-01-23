@@ -29,8 +29,7 @@ export const bookDemoSchema = z.object({
 
   studentAge: z
     .number({ invalid_type_error: "Student age must be a number" })
-    .min(5, "Student must be at least 5 years old")
-    .max(18, "Student must be under 18 years old"),
+    .positive("Student age must be a positive number"),
 
   timezone: z.string().min(1, "Timezone is required"),
 

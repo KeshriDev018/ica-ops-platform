@@ -23,6 +23,14 @@ const coachPayoutService = {
     return response.data;
   },
 
+  // ADMIN: Get next unpaid period for a coach
+  getNextUnpaidPeriod: async (coachAccountId) => {
+    const response = await api.get(
+      `/coachPayout/admin/coach/${coachAccountId}/next-period`,
+    );
+    return response.data;
+  },
+
   // COACH: Get own payout history
   getMyPayoutHistory: async () => {
     const response = await api.get("/coachPayout/my/payouts");

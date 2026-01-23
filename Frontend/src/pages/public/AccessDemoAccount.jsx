@@ -2,23 +2,48 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
+import CurrencyConverter from "../../components/common/CurrencyConverter";
 import useDemoStore from "../../store/demoStore";
 import paymentService from "../../services/paymentService";
 import { format } from "date-fns";
 import api from "../../lib/api";
+import PreferenceMismatchModal from "../../components/demo/PreferenceMismatchModal";
 const AccessDemoAccount = () => {
   const navigate = useNavigate();
-  const { demoData, demoEmail, hasDemoAccess } = useDemoStore();
+  const { demoData, demoEmail, hasDemoAccess, updateDemoPreferences, updateDemoInterest } = useDemoStore();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [meetingLink, setMeetingLink] = useState(null);
   const [processing, setProcessing] = useState(false);
+  
+  // Selected plan for payment
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  
+  // Mismatch modal state
+  const [showMismatchModal, setShowMismatchModal] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState(null);
 
   // Student marks their interest in the demo
   const [interestStatus, setInterestStatus] = useState(
     demoData?.studentInterest || "PENDING",
   );
   const [interestLoading, setInterestLoading] = useState(false);
+
+  // Student preferences
+  const [preferences, setPreferences] = useState({
+    classType: demoData?.preferredClassType || null,
+    level: demoData?.studentLevel || null,
+  });
+  const [preferencesLoading, setPreferencesLoading] = useState(false);
+  // Check if preferences are already saved in database
+  const [preferencesSaved, setPreferencesSaved] = useState(
+    !!(demoData?.preferredClassType && demoData?.studentLevel)
+  );
+  
+  // Determine if preferences should be locked (already saved or converted)
+  const preferencesLocked = preferencesSaved || demoData?.status === "CONVERTED";
+  // Determine if interest is locked (already marked or converted)
+  const interestLocked = interestStatus !== "PENDING" || demoData?.status === "CONVERTED";
 
   const handleMarkInterest = async (interest) => {
     setInterestLoading(true);
@@ -27,11 +52,37 @@ const AccessDemoAccount = () => {
         interest,
       });
       setInterestStatus(interest);
+      // Update store to persist the change
+      updateDemoInterest(interest);
       alert("Your interest has been updated.");
     } catch (error) {
       alert("Failed to update interest: " + error.message);
     } finally {
       setInterestLoading(false);
+    }
+  };
+
+  const handleSavePreferences = async () => {
+    if (!preferences.classType || !preferences.level) {
+      alert("Please select both coaching type and your level.");
+      return;
+    }
+
+    setPreferencesLoading(true);
+    try {
+      await api.patch(`/demos/${demoData._id}/preferences`, {
+        preferredClassType: preferences.classType,
+        studentLevel: preferences.level,
+      });
+      // Mark as permanently saved
+      setPreferencesSaved(true);
+      // Update store to persist the change
+      updateDemoPreferences(preferences);
+      alert("Preferences saved successfully! You can view them but cannot change them now.");
+    } catch (error) {
+      alert("Failed to save preferences: " + error.message);
+    } finally {
+      setPreferencesLoading(false);
     }
   };
 
@@ -45,9 +96,38 @@ const AccessDemoAccount = () => {
 
     const loadData = async () => {
       try {
-        // Load subscription plans
-        const availablePlans = await paymentService.getPlans();
-        setPlans(availablePlans);
+        // Set INR plans
+        const inrPlans = [
+          {
+            plan_id: "1-1",
+            name: "Personalized 1-on-1 Coaching",
+            price: 2999,
+            billing_cycle: "monthly",
+            features: [
+              "8 personalized sessions per month",
+              "Customized learning plan",
+              "Dedicated coach assignment",
+              "Flexible scheduling",
+              "Progress tracking & reports",
+              "Tournament preparation",
+            ],
+          },
+          {
+            plan_id: "group",
+            name: "Engaging Group Coaching",
+            price: 1499,
+            billing_cycle: "monthly",
+            features: [
+              "12 group sessions per month",
+              "Small batches (max 6 students)",
+              "Age & skill-based grouping",
+              "Interactive learning environment",
+              "Peer learning & practice games",
+              "Monthly tournaments",
+            ],
+          },
+        ];
+        setPlans(inrPlans);
 
         // Get demo meeting link if available
         if (demoData?._id && demoData?.meetingLink) {
@@ -63,9 +143,43 @@ const AccessDemoAccount = () => {
     loadData();
   }, [demoData, demoEmail, hasDemoAccess, navigate]);
 
-  const handlePlanSelect = (planId) => {
-    // Navigate to demo payment with selected plan
-    navigate(`/demo-payment?plan=${planId}`);
+  const handlePlanSelect = (plan) => {
+    // Check if there's a preference mismatch
+    const preferredType = demoData?.preferredClassType;
+    const selectedType = plan.plan_id;
+    
+    // Normalize types for comparison
+    const normalizedPreferred = preferredType?.toUpperCase();
+    const normalizedSelected = selectedType === "1-1" ? "1-1" : "GROUP";
+    
+    // If preferences exist and don't match
+    if (preferredType && normalizedPreferred !== normalizedSelected) {
+      setPendingPlan(plan);
+      setShowMismatchModal(true);
+      return;
+    }
+    
+    // No mismatch, select plan directly
+    setSelectedPlan(plan);
+  };
+
+  const handleConfirmMismatch = () => {
+    // User confirmed they want to continue with mismatched plan
+    setSelectedPlan(pendingPlan);
+    setShowMismatchModal(false);
+    setPendingPlan(null);
+  };
+
+  const handleChangePreference = () => {
+    // Close modal and scroll to preferences section
+    setShowMismatchModal(false);
+    setPendingPlan(null);
+    
+    // Scroll to preferences section
+    const preferencesSection = document.getElementById("preferences-section");
+    if (preferencesSection) {
+      preferencesSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   const loadRazorpayScript = () => {
@@ -79,27 +193,22 @@ const AccessDemoAccount = () => {
   };
 
   const handlePayNow = async () => {
+    if (!selectedPlan) {
+      alert("Please select a plan first");
+      return;
+    }
+    
     setProcessing(true);
     try {
-      // If no payment order exists, create one first
-      let paymentOrderId = demoData.paymentOrderId;
-      let paymentAmount = demoData.paymentAmount;
+      // Create payment order with selected plan details
+      const response = await api.post("/payments/create-demo-order", {
+        amount: Math.round(selectedPlan.price * 100), // Convert to paise
+        demoId: demoData._id,
+        planId: selectedPlan.plan_id,
+        billingCycle: "MONTHLY",
+      });
       
-      if (!paymentOrderId) {
-        // Use recommended plan or default amount
-        const amount = demoData.recommendedStudentType === "1-1" ? 2999 : 1499;
-        
-        // Create payment order using centralized API instance
-        const response = await api.post("/payments/create-demo-order", {
-          amount: amount * 100,
-          demoId: demoData._id,
-        });
-        
-        const order = response.data;
-        paymentOrderId = order.orderId;
-        paymentAmount = order.amount;
-        // Optionally, reload demoData from backend to reflect new order
-      }
+      const order = response.data;
 
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
@@ -108,9 +217,9 @@ const AccessDemoAccount = () => {
 
       const orderData = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: paymentAmount,
+        amount: order.amount,
         currency: "INR",
-        orderId: paymentOrderId,
+        orderId: order.orderId,
       };
 
       const options = {
@@ -118,7 +227,7 @@ const AccessDemoAccount = () => {
         amount: orderData.amount,
         currency: orderData.currency,
         name: "ICA Chess Academy",
-        description: `Payment for ${demoData.studentName}`,
+        description: `${selectedPlan.name} - Payment for ${demoData.studentName}`,
         order_id: orderData.orderId,
         prefill: {
           name: demoData.parentName,
@@ -298,23 +407,114 @@ const AccessDemoAccount = () => {
                       size="sm"
                       variant="outline"
                       disabled={
-                        interestLoading || interestStatus === "INTERESTED"
+                        interestLoading || interestLocked || interestStatus === "INTERESTED"
                       }
                       onClick={() => handleMarkInterest("INTERESTED")}
                     >
-                      Mark Interested
+                      {interestStatus === "INTERESTED" ? "✓ Marked" : "Mark Interested"}
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       disabled={
-                        interestLoading || interestStatus === "NOT_INTERESTED"
+                        interestLoading || interestLocked || interestStatus === "NOT_INTERESTED"
                       }
                       onClick={() => handleMarkInterest("NOT_INTERESTED")}
                     >
-                      Not Interested
+                      {interestStatus === "NOT_INTERESTED" ? "✓ Marked" : "Not Interested"}
                     </Button>
                   </div>
+                </div>
+
+                {/* Student Preferences */}
+                <div className={`mt-6 p-4 rounded-lg border ${
+                  preferencesLocked
+                    ? "bg-white/5 border-white/10 opacity-70" 
+                    : "bg-white/5 border-white/10"
+                }`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Your Preferences</h3>
+                    {preferencesLocked && (
+                      <span className="text-xs text-green-400 bg-green-500/20 px-2 py-1 rounded">✓ Saved</span>
+                    )}
+                  </div>
+                  
+                  {/* Coaching Type Selection */}
+                  <div className="mb-4">
+                    <label className="block text-sm text-white/80 mb-2">
+                      Preferred Coaching Type *
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        disabled={preferencesLocked}
+                        onClick={() => !preferencesLocked && setPreferences({ ...preferences, classType: "1-1" })}
+                        className={`p-3 rounded-lg border-2 transition-all text-left ${
+                          preferences.classType === "1-1"
+                            ? "border-orange bg-orange/10"
+                            : "border-white/20 hover:border-white/40"
+                        } ${preferencesLocked ? "cursor-not-allowed" : "cursor-pointer"}`}
+                      >
+                        <div className="font-semibold">1-on-1 Coaching</div>
+                        <div className="text-xs text-white/70 mt-1">Personalized attention</div>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={preferencesLocked}
+                        onClick={() => !preferencesLocked && setPreferences({ ...preferences, classType: "GROUP" })}
+                        className={`p-3 rounded-lg border-2 transition-all text-left ${
+                          preferences.classType === "GROUP"
+                            ? "border-orange bg-orange/10"
+                            : "border-white/20 hover:border-white/40"
+                        } ${preferencesLocked ? "cursor-not-allowed" : "cursor-pointer"}`}
+                      >
+                        <div className="font-semibold">Group Coaching</div>
+                        <div className="text-xs text-white/70 mt-1">Learn with peers</div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Level Selection */}
+                  <div className="mb-4">
+                    <label className="block text-sm text-white/80 mb-2">
+                      Your Chess Level *
+                    </label>
+                    <select
+                      value={preferences.level || ""}
+                      disabled={preferencesLocked}
+                      onChange={(e) => !preferencesLocked && setPreferences({ ...preferences, level: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-orange disabled:cursor-not-allowed disabled:opacity-80"
+                    >
+                      <option value="" disabled>Select your level</option>
+                      <option value="BEGINNER">Beginner</option>
+                      <option value="INTERMEDIATE">Intermediate</option>
+                      <option value="ADVANCED">Advanced</option>
+                    </select>
+                  </div>
+
+                  {/* Save Button or Status Message */}
+                  {!preferencesLocked ? (
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={handleSavePreferences}
+                      disabled={preferencesLoading || !preferences.classType || !preferences.level}
+                      className="w-full"
+                    >
+                      {preferencesLoading ? "Saving..." : "Save Preferences"}
+                    </Button>
+                  ) : (
+                    <div className="text-center py-2">
+                      <p className="text-green-400 text-sm">
+                        ✓ Your preferences have been saved and locked.
+                      </p>
+                      <p className="text-white/50 text-xs mt-1">
+                        {demoData?.status === "CONVERTED" 
+                          ? "Preferences cannot be changed after conversion."
+                          : "You can view your preferences but cannot change them."}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -420,25 +620,22 @@ const AccessDemoAccount = () => {
             </span>
           </div>
 
-          {/* Show Pay Now button if order exists and not paid */}
-          {demoData.status !== "CONVERTED" && (
+          {/* Show Pay Now button only if status is INTERESTED */}
+          {demoData.status === "INTERESTED" && demoData.status !== "CONVERTED" && selectedPlan && (
             <div className="mb-4 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border-2 border-orange">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div>
                   <p className="font-semibold text-navy mb-1">
-                    💳 Payment Order Ready
+                    ✓ Plan Selected - Ready to Pay
                   </p>
                   <p className="text-sm text-gray-600">
-                    Amount: ₹
-                    {demoData.paymentAmount
-                      ? (demoData.paymentAmount / 100).toLocaleString("en-IN")
-                      : demoData.recommendedStudentType === "1-1"
-                        ? "2,999"
-                        : "1,499"}
+                    {selectedPlan.name}
+                  </p>
+                  <p className="text-sm font-semibold text-navy mt-1">
+                    Amount: ₹{selectedPlan.price.toLocaleString("en-IN")}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Secure payment powered by Razorpay • Account activated
-                    instantly
+                    Secure payment • No hidden charges
                   </p>
                 </div>
                 <Button
@@ -453,10 +650,38 @@ const AccessDemoAccount = () => {
               </div>
             </div>
           )}
+
+          {/* Show message when admin verification is pending */}
+          {demoData.status !== "INTERESTED" && demoData.status !== "CONVERTED" && (
+            <div className="mb-4 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-300">
+              <div className="text-center">
+                <div className="text-4xl mb-3">🕒</div>
+                <h3 className="text-xl font-semibold text-navy mb-2">
+                  Application Under Review
+                </h3>
+                <p className="text-gray-700 mb-3">
+                  Thank you for your interest! Our admissions team is currently reviewing your demo session and profile.
+                </p>
+                <p className="text-gray-600 text-sm">
+                  Once verified, you'll be able to select a plan and proceed with payment to begin your chess journey with us. We'll notify you via email once the review is complete.
+                </p>
+                <div className="mt-4 p-3 bg-white/60 rounded-lg">
+                  <p className="text-sm text-gray-600">
+                    <span className="font-semibold">Status:</span> Pending Admin Verification
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </Card>
 
-        {/* Subscription Plans */}
+        {/* Currency Converter */}
         {demoData.status !== "CONVERTED" && (
+          <CurrencyConverter amount={selectedPlan?.price || 2999} />
+        )}
+
+        {/* Subscription Plans */}
+        {demoData.status === "INTERESTED" && demoData.status !== "CONVERTED" && (
           <>
             <div className="text-center">
               <h2 className="text-3xl font-secondary font-bold text-navy mb-2">
@@ -468,47 +693,73 @@ const AccessDemoAccount = () => {
             </div>
 
             <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              {plans.map((plan) => (
-                <Card
-                  key={plan.plan_id}
-                  className="hover:shadow-lg transition-all cursor-pointer border-2 border-gray-200 hover:border-orange"
-                >
-                  <div className="text-center mb-6">
-                    <h3 className="text-2xl font-secondary font-bold text-navy mb-2">
-                      {plan.name}
-                    </h3>
-                    <div className="text-4xl font-bold text-navy mb-1">
-                      {formatCurrency(plan.price)}
-                      <span className="text-lg font-normal text-gray-600">
-                        /month
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500 capitalize">
-                      {plan.billing_cycle} billing
-                    </p>
-                  </div>
-
-                  <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="text-olive mr-2 font-bold text-lg flex-shrink-0">
-                          ✓
-                        </span>
-                        <span className="text-gray-700">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    onClick={() => handlePlanSelect(plan.plan_id)}
-                    className="w-full"
+              {plans.map((plan) => {
+                const isSelected = selectedPlan?.plan_id === plan.plan_id;
+                const isRecommended = demoData?.preferredClassType?.toLowerCase() === plan.plan_id;
+                
+                return (
+                  <Card
+                    key={plan.plan_id}
+                    className={`hover:shadow-lg transition-all cursor-pointer border-2 ${
+                      isSelected
+                        ? "border-orange bg-orange-50"
+                        : isRecommended
+                          ? "border-green-400 bg-green-50"
+                          : "border-gray-200 hover:border-orange"
+                    }`}
                   >
-                    Select & Pay {formatCurrency(plan.price)}
-                  </Button>
-                </Card>
-              ))}
+                    {isRecommended && (
+                      <div className="mb-3">
+                        <span className="inline-block bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                          ✓ RECOMMENDED FOR YOU
+                        </span>
+                      </div>
+                    )}
+                    {isSelected && (
+                      <div className="mb-3">
+                        <span className="inline-block bg-orange text-white text-xs font-bold px-3 py-1 rounded-full">
+                          ✓ SELECTED
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div className="text-center mb-6">
+                      <h3 className="text-2xl font-secondary font-bold text-navy mb-2">
+                        {plan.name}
+                      </h3>
+                      <div className="text-4xl font-bold text-navy mb-1">
+                        ₹{plan.price.toLocaleString("en-IN")}
+                        <span className="text-lg font-normal text-gray-600">
+                          /month
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 capitalize">
+                        Monthly billing • No hidden fees
+                      </p>
+                    </div>
+
+                    <ul className="space-y-3 mb-6">
+                      {plan.features.map((feature, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="text-olive mr-2 font-bold text-lg flex-shrink-0">
+                            ✓
+                          </span>
+                          <span className="text-gray-700">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button
+                      variant={isSelected ? "primary" : isRecommended ? "primary" : "outline"}
+                      size="lg"
+                      onClick={() => handlePlanSelect(plan)}
+                      className="w-full"
+                    >
+                      {isSelected ? "✓ Selected" : `Select ₹${plan.price.toLocaleString("en-IN")}`}
+                    </Button>
+                  </Card>
+                );
+              })}
             </div>
           </>
         )}
@@ -552,6 +803,17 @@ const AccessDemoAccount = () => {
           </Button>
         </div>
       </div>
+
+      {/* Preference Mismatch Modal */}
+      <PreferenceMismatchModal
+        isOpen={showMismatchModal}
+        onClose={() => setShowMismatchModal(false)}
+        onConfirm={handleConfirmMismatch}
+        onChangePreference={handleChangePreference}
+        preferredType={demoData?.preferredClassType}
+        selectedType={pendingPlan?.plan_id}
+        selectedPlan={pendingPlan}
+      />
     </div>
   );
 };

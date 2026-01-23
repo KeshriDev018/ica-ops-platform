@@ -185,18 +185,6 @@ export default function StudentMaterials() {
                   <Download className="w-4 h-4" />
                   Download
                 </a>
-
-                {material.meetLink && (
-                  <a
-                    href={material.meetLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full text-sm"
-                  >
-                    <LinkIcon className="w-4 h-4" />
-                    Join Class
-                  </a>
-                )}
               </div>
             </div>
           ))}

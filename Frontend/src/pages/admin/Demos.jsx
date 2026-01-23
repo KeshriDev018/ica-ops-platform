@@ -73,9 +73,47 @@ const AdminDemos = () => {
     () => [
       columnHelper.accessor("studentName", {
         header: "Student",
-        cell: (info) => (
-          <span className="font-medium text-navy">{info.getValue()}</span>
-        ),
+        cell: (info) => {
+          const demo = info.row.original;
+          return (
+            <div>
+              <div className="font-medium text-navy">{info.getValue()}</div>
+              <details className="mt-1 text-xs">
+                <summary className="cursor-pointer text-gray-500 hover:text-gray-700 select-none">
+                  View Preferences
+                </summary>
+                <div className="mt-2 pl-2 space-y-1 border-l-2 border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Interest:</span>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        demo.studentInterest === "INTERESTED"
+                          ? "bg-green-100 text-green-800"
+                          : demo.studentInterest === "NOT_INTERESTED"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {demo.studentInterest || "PENDING"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Class Type:</span>
+                    <span className="font-medium text-gray-700">
+                      {demo.preferredClassType || "Not Selected"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Level:</span>
+                    <span className="font-medium text-gray-700">
+                      {demo.studentLevel || "Not Selected"}
+                    </span>
+                  </div>
+                </div>
+              </details>
+            </div>
+          );
+        },
       }),
       columnHelper.accessor("parentName", {
         header: "Parent",

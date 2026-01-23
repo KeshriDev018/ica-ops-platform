@@ -593,19 +593,6 @@ const AdminPayments = () => {
           </div>
         </button>
         <button
-          onClick={() => setActiveTab("subscriptions")}
-          className={`px-6 py-3 font-medium transition-colors border-b-2 ${
-            activeTab === "subscriptions"
-              ? "border-navy text-navy"
-              : "border-transparent text-gray-600 hover:text-navy"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <CreditCard size={18} />
-            Subscription Payments ({students.length})
-          </div>
-        </button>
-        <button
           onClick={() => setActiveTab("history")}
           className={`px-6 py-3 font-medium transition-colors border-b-2 ${
             activeTab === "history"
@@ -719,104 +706,6 @@ const AdminPayments = () => {
                         >
                           <CheckCircle size={14} className="mr-1" />
                           Verify Payment
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
-      )}
-
-      {activeTab === "subscriptions" && (
-        <Card>
-          {students.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">👥</div>
-              <h3 className="text-xl font-semibold text-navy mb-2">
-                No Active Students
-              </h3>
-              <p className="text-gray-600">
-                Students will appear here after demo conversion
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Student
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Type
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Status
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Parent Email
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.map((student) => (
-                    <tr
-                      key={student._id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium text-navy">
-                            {student.studentName}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {student.studentAge} years • Level {student.level}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            student.studentType === "1-1"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
-                          {student.studentType === "1-1"
-                            ? "One-on-One"
-                            : "Batch"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            student.status === "ACTIVE"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {student.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-600">
-                        {student.parentEmail}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() =>
-                            handleCreateSubscriptionPayment(student)
-                          }
-                        >
-                          <CreditCard size={14} className="mr-1" />
-                          Generate Order
                         </Button>
                       </td>
                     </tr>

@@ -66,8 +66,8 @@ export const createStudentAndSubscriptionFromDemo = async (
   const subscription = await Subscription.create({
     accountId: demo.accountId,
     planId: demo.recommendedStudentType,
-    amount: paymentDetails.amount,
-    billingCycle: paymentDetails.billingCycle,
+    amount: demo.selectedPlanAmount || (demo.paymentAmount / 100) || paymentDetails.amount,
+    billingCycle: demo.selectedBillingCycle || paymentDetails.billingCycle,
     status: "ACTIVE",
     startedAt,
     nextDueAt, // ✅ REQUIRED

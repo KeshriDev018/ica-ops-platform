@@ -99,7 +99,7 @@ export default function CoachPayouts() {
 
     try {
       await coachPayoutService.verifyCoachPayout(coachId);
-      alert("Payout verified successfully!");
+      alert("Payout verified successfully! Coach can now receive payments.");
       loadCoaches();
       if (
         selectedCoach?.accountId === coach.accountId ||
@@ -113,9 +113,12 @@ export default function CoachPayouts() {
       }
     } catch (err) {
       console.error("Error verifying payout:", err);
+      const errorMessage = err.response?.data?.message || err.message || "Failed to verify payout";
+      const errorDetail = err.response?.data?.error || "";
       alert(
-        "Failed to verify payout: " +
-          (err.response?.data?.message || err.message),
+        "Failed to verify payout:\n" +
+          errorMessage +
+          (errorDetail ? "\n\nDetails: " + errorDetail : "")
       );
     }
   };
@@ -145,19 +148,38 @@ export default function CoachPayouts() {
     }
   };
 
-  const handleOpenPayModal = (coach) => {
+  const handleOpenPayModal = async (coach) => {
     setSelectedCoach(coach);
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    try {
+      // Fetch next unpaid period from backend
+      const nextPeriod = await coachPayoutService.getNextUnpaidPeriod(
+        coach.accountId || coach._id
+      );
+      
+      setPayForm({
+        payoutPeriod: nextPeriod.payoutPeriod,
+        periodStart: nextPeriod.periodStart,
+        periodEnd: nextPeriod.periodEnd,
+        classesCount: 0,
+        batchesCount: 0,
+      });
+    } catch (err) {
+      console.error("Error fetching next period:", err);
+      // Fallback to current month if API fails
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    setPayForm({
-      payoutPeriod: format(now, "MMMM yyyy"),
-      periodStart: format(firstDay, "yyyy-MM-dd"),
-      periodEnd: format(lastDay, "yyyy-MM-dd"),
-      classesCount: 0,
-      batchesCount: 0,
-    });
+      setPayForm({
+        payoutPeriod: format(now, "MMMM yyyy"),
+        periodStart: format(firstDay, "yyyy-MM-dd"),
+        periodEnd: format(lastDay, "yyyy-MM-dd"),
+        classesCount: 0,
+        batchesCount: 0,
+      });
+    }
+    
     setShowPayModal(true);
   };
 
@@ -178,7 +200,7 @@ export default function CoachPayouts() {
       return;
     }
 
-    if (!confirm(`Pay ${selectedCoach.fullName} ₹${amount}?`)) {
+    if (!confirm(`Pay ${selectedCoach.fullName} ₹${amount}?\n\nThis will initiate a real Razorpay payout.`)) {
       return;
     }
 
@@ -197,8 +219,19 @@ export default function CoachPayouts() {
         },
       };
 
-      await coachPayoutService.payCoach(payoutData);
-      alert("Payment processed successfully!");
+      const response = await coachPayoutService.payCoach(payoutData);
+      
+      // Show success message with payout details
+      const razorpayPayout = response.razorpayPayout;
+      let successMessage = `Payment processed successfully!\n\n`;
+      successMessage += `Amount: ₹${amount}\n`;
+      successMessage += `Razorpay Payout ID: ${razorpayPayout.id}\n`;
+      successMessage += `Status: ${razorpayPayout.status}\n`;
+      if (razorpayPayout.utr) {
+        successMessage += `UTR: ${razorpayPayout.utr}`;
+      }
+      
+      alert(successMessage);
       setShowPayModal(false);
 
       // Reload payout history if modal is open
@@ -208,9 +241,16 @@ export default function CoachPayouts() {
       }
     } catch (err) {
       console.error("Error paying coach:", err);
+      const errorMessage = err.response?.data?.message || err.message || "Failed to process payment";
+      const errorDetail = err.response?.data?.error || "";
       alert(
-        "Failed to process payment: " +
-          (err.response?.data?.message || err.message),
+        "Failed to process payment:\n" +
+          errorMessage +
+          (errorDetail ? "\n\nDetails: " + errorDetail : "") +
+          "\n\nPlease check:\n" +
+          "1. Razorpay account has sufficient balance\n" +
+          "2. Coach payout details are verified\n" +
+          "3. Razorpay credentials are configured correctly"
       );
     }
   };

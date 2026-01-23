@@ -137,7 +137,11 @@ const AdminSubscription = () => {
     });
   };
 
-  const formatCurrency = (amount) => `₹${amount.toLocaleString("en-IN")}`;
+  const formatCurrency = (amount) => {
+    // Amount is stored in rupees (from selectedPlanAmount field)
+    const rupees = amount || 0;
+    return `₹${rupees.toLocaleString("en-IN")}`;
+  };
 
   const stats = {
     total: subscriptions.length,

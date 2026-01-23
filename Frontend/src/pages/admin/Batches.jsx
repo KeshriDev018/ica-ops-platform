@@ -283,14 +283,19 @@ const AdminBatches = () => {
                 required
               />
 
-              <FormInput
+              <FormSelect
                 label="Level"
                 name="level"
                 value={formData.level}
                 onChange={(e) =>
                   setFormData({ ...formData, level: e.target.value })
                 }
-                placeholder="e.g., Beginner, Intermediate, Advanced"
+                options={[
+                  { value: "Beginner", label: "Beginner" },
+                  { value: "Intermediate", label: "Intermediate" },
+                  { value: "Advanced", label: "Advanced" },
+                ]}
+                placeholder="Select level"
                 error={formErrors.level}
                 required
               />

@@ -49,7 +49,7 @@ const Sidebar = ({ open, onClose }) => {
           { path: "/customer/coach", label: "My Coach", icon: "🎓" },
           { path: "/customer/batch", label: "My Batch", icon: "👥" },
           { path: "/customer/schedule", label: "Schedule", icon: "📅" },
-          { path: "/customer/batch-chat", label: "Batch Chat", icon: "💬" },
+          { path: "/customer/batch-chat", label: "Admin Support", icon: "💬" },
           { path: "/customer/broadcasts", label: "Announcements", icon: "📢" },
           { path: "/customer/materials", label: "Materials", icon: "📄" },
           { path: "/customer/payments", label: "Payments", icon: "💳" },

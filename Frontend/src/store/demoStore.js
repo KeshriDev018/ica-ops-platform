@@ -63,6 +63,33 @@ const useDemoStore = create(
             }
           })
         }
+      },
+      
+      // Update demo preferences after saving
+      updateDemoPreferences: (preferences) => {
+        const { demoData } = get()
+        if (demoData) {
+          set({
+            demoData: {
+              ...demoData,
+              preferredClassType: preferences.classType,
+              studentLevel: preferences.level
+            }
+          })
+        }
+      },
+      
+      // Update demo interest status
+      updateDemoInterest: (interest) => {
+        const { demoData } = get()
+        if (demoData) {
+          set({
+            demoData: {
+              ...demoData,
+              studentInterest: interest
+            }
+          })
+        }
       }
     }),
     {

@@ -316,3 +316,88 @@ export const markStudentInterest = async (req, res) => {
   }
 };
 
+/**
+ * CUSTOMER (Demo user)
+ * Update student preferences (class type & level)
+ */
+export const updateDemoPreferences = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { preferredClassType, studentLevel } = req.body;
+
+    // Validate inputs
+    if (preferredClassType && !["1-1", "GROUP"].includes(preferredClassType)) {
+      return res.status(400).json({
+        message: "Invalid preferred class type. Must be '1-1' or 'GROUP'",
+      });
+    }
+
+    if (studentLevel && !["BEGINNER", "INTERMEDIATE", "ADVANCED"].includes(studentLevel)) {
+      return res.status(400).json({
+        message: "Invalid student level. Must be 'BEGINNER', 'INTERMEDIATE', or 'ADVANCED'",
+      });
+    }
+
+    const demo = await Demo.findById(id);
+
+    if (!demo) {
+      return res.status(404).json({
+        message: "Demo not found",
+      });
+    }
+
+    // Update fields if provided
+    if (preferredClassType) {
+      demo.preferredClassType = preferredClassType;
+    }
+    if (studentLevel) {
+      demo.studentLevel = studentLevel;
+    }
+
+    await demo.save();
+
+    res.status(200).json({
+      message: "Preferences updated successfully",
+      demo,
+    });
+  } catch (error) {
+    console.error("Update preferences error:", error);
+    res.status(500).json({
+      message: "Failed to update preferences",
+    });
+  }
+};
+
+/**
+ * PUBLIC
+ * Get demo by parent email (for demo access page)
+ */
+export const getDemoByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    const demo = await Demo.findOne({ 
+      parentEmail: email.toLowerCase() 
+    })
+    .populate({
+      path: "coachId",
+      select: "email",
+      strictPopulate: false,
+    })
+    .sort({ createdAt: -1 }); // Get most recent demo
+
+    if (!demo) {
+      return res.status(404).json({
+        message: "Demo not found for this email",
+      });
+    }
+
+    res.status(200).json(demo);
+  } catch (error) {
+    console.error("Get demo by email error:", error);
+    res.status(500).json({
+      message: "Failed to fetch demo",
+    });
+  }
+};
+

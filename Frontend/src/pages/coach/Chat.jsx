@@ -156,13 +156,11 @@ const CoachChat = () => {
           </h1>
           <p className="text-gray-600">
             Chat with your students and admin
-            <span className="ml-3 text-sm">
-              {isConnected ? (
+            {isConnected && (
+              <span className="ml-3 text-sm">
                 <span className="text-green-600">🟢 Live</span>
-              ) : (
-                <span className="text-red-600">🔴 Connecting...</span>
-              )}
-            </span>
+              </span>
+            )}
           </p>
         </div>
       </div>

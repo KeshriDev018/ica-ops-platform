@@ -1,5 +1,3 @@
-// Customer: mark demo interest
-
 import express from "express";
 import {
   createDemo,
@@ -11,6 +9,8 @@ import {
   getCoachDemos,
   coachMarkAttendance,
   markStudentInterest,
+  updateDemoPreferences,
+  getDemoByEmail,
 } from "../controllers/demo.controller.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -20,6 +20,11 @@ const router = express.Router();
 router.post("/", createDemo); // public demo booking
 router.get("/", authMiddleware, allowRoles("ADMIN"), getAllDemos); // admin get all demos
 router.post("/verify", verifyDemoByEmail); // public demo verification by email
+
+// Public routes for demo access page (no auth required)
+router.patch("/:id/interest", markStudentInterest); // Mark interest (Interested/Not Interested)
+router.patch("/:id/preferences", updateDemoPreferences); // Update coaching type & level
+router.get("/by-email/:email", getDemoByEmail); // Get demo by email
 
 router.patch(
   "/:id/schedule",
@@ -57,7 +62,5 @@ router.patch(
   allowRoles("COACH"),
   coachMarkAttendance,
 );
-
-router.patch("/:id/interest", markStudentInterest);
 
 export default router;
