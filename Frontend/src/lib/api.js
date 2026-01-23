@@ -6,7 +6,7 @@ import { setAccessToken, logout } from "@/redux/authslice";
 // Axios instance
 // =============================
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL, // "/api"
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api",
   withCredentials: true, // required for refresh cookie
 });
 
@@ -67,7 +67,7 @@ api.interceptors.response.use(
       try {
         // Refresh token (sent via HTTP-only cookie)
         const res = await axios.post(
-          "/api/auth/refresh",
+          `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"}/auth/refresh`,
           {},
           {
             withCredentials: true,
