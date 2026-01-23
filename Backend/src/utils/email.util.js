@@ -1,44 +1,22 @@
-import nodemailer from "nodemailer";
+import * as brevo from "@getbrevo/brevo";
 
-// Create reusable transporter (connection pooling)
-const createTransporter = () => {
-  const config = {
-    host: process.env.EMAIL_HOST || "smtp.gmail.com",
-    port: Number(process.env.EMAIL_PORT) || 587,
-    secure: false, // use STARTTLS
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false, // Accept self-signed certificates
-    },
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000, // 10 seconds
-    socketTimeout: 10000, // 10 seconds
-    pool: true, // Use connection pooling
-    maxConnections: 5,
-    maxMessages: 10,
-  };
+// Initialize Brevo API client
+let apiInstance = null;
 
-  console.log("📧 Email transporter config:", {
-    host: config.host,
-    port: config.port,
-    user: config.auth.user,
-    hasPassword: !!config.auth.pass,
-  });
-
-  return nodemailer.createTransport(config);
-};
-
-let transporter;
-
-// Get or create transporter instance
-const getTransporter = () => {
-  if (!transporter) {
-    transporter = createTransporter();
+const getBrevoClient = () => {
+  if (!apiInstance) {
+    apiInstance = new brevo.TransactionalEmailsApi();
+    
+    // Set API key
+    apiInstance.authentications['apiKey'].apiKey = process.env.BREVO_API_KEY;
+    
+    console.log("📧 Brevo email client initialized", {
+      senderEmail: process.env.BREVO_SENDER_EMAIL,
+      senderName: process.env.BREVO_SENDER_NAME,
+      hasApiKey: !!process.env.BREVO_API_KEY,
+    });
   }
-  return transporter;
+  return apiInstance;
 };
 
 export const sendSetPasswordEmail = async (email, link, role) => {
@@ -48,19 +26,21 @@ export const sendSetPasswordEmail = async (email, link, role) => {
 
     console.log(`📤 Attempting to send email to ${email} (${roleLabel})`);
 
-    const mailTransporter = getTransporter();
+    const client = getBrevoClient();
 
-    // Handle EMAIL_FROM - could be just email or "Name <email>" format
-    const emailFrom =
-      process.env.EMAIL_FROM || `"ICA Platform" <${process.env.EMAIL_USER}>`;
-
-    console.log(`📧 Email config - From: ${emailFrom}, To: ${email}`);
-
-    const info = await mailTransporter.sendMail({
-      from: emailFrom,
-      to: email,
-      subject: `Set your password for your ${roleLabel} account`,
-      html: `
+    // Prepare email data
+    const sendSmtpEmail = new brevo.SendSmtpEmail();
+    
+    sendSmtpEmail.sender = {
+      name: process.env.BREVO_SENDER_NAME || "ICA Platform",
+      email: process.env.BREVO_SENDER_EMAIL
+    };
+    
+    sendSmtpEmail.to = [{ email: email }];
+    
+    sendSmtpEmail.subject = `Set your password for your ${roleLabel} account`;
+    
+    sendSmtpEmail.htmlContent = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>Welcome to ICA</h2>
 
@@ -106,34 +86,31 @@ export const sendSetPasswordEmail = async (email, link, role) => {
           — ICA Team
         </p>
       </div>
-    `,
-    });
+    `;
 
-    console.log(`✅ Email sent successfully! MessageId: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+    console.log(`📧 Email config - From: ${sendSmtpEmail.sender.email}, To: ${email}`);
+
+    // Send email via Brevo
+    const data = await client.sendTransacEmail(sendSmtpEmail);
+    
+    console.log(`✅ Email sent successfully via Brevo! MessageId: ${data.messageId}`);
+    return { success: true, messageId: data.messageId };
   } catch (error) {
     console.error(`❌ Failed to send email to ${email}:`, error.message);
-    console.error(`Error code: ${error.code}`);
-    console.error(`Full error:`, error);
-
-    // Log specific error details for debugging on Render
-    if (error.code === "ECONNECTION" || error.code === "ETIMEDOUT") {
-      console.error(
-        "🔴 Connection timeout - Check if SMTP port is accessible from Render",
-      );
-      console.error(
-        "💡 Try using port 465 with secure: true instead of port 587",
-      );
-    } else if (error.code === "EAUTH") {
-      console.error(
-        "🔴 Authentication failed - Check EMAIL_USER and EMAIL_PASS env variables",
-      );
-      console.error(
-        "💡 Make sure you're using Gmail App Password, not regular password",
-      );
-    } else if (error.code === "ESOCKET") {
-      console.error("🔴 Socket error - Network connectivity issue");
-      console.error("💡 Render might be blocking SMTP connections");
+    
+    // Log Brevo-specific error details
+    if (error.response) {
+      console.error(`❌ Brevo API Error: ${error.response.statusCode}`);
+      console.error(`Error details:`, error.response.body);
+      
+      if (error.response.statusCode === 401) {
+        console.error("🔴 Authentication failed - Check BREVO_API_KEY");
+      } else if (error.response.statusCode === 400) {
+        console.error("🔴 Bad request - Check email format or sender verification");
+        console.error("💡 Verify sender email at https://app.brevo.com/settings/sender");
+      }
+    } else {
+      console.error(`Full error:`, error);
     }
 
     throw new Error(`Email sending failed: ${error.message}`);
