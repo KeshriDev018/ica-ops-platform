@@ -1,6 +1,6 @@
 import axios from "axios";
 import store from "@/redux/store";
-import { setAccessToken, logout } from "@/redux/authSlice";
+import { setAccessToken, logout } from "@/redux/authslice";
 
 // =============================
 // Axios instance

@@ -16,6 +16,7 @@ const LandingPage = () => {
   const [openFaq, setOpenFaq] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const sliderImages = [
     "/Chess/1.jpg",
@@ -90,6 +91,7 @@ const LandingPage = () => {
               Indian Chess Academy
             </span>
           </div>
+          {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
             <a
               href="#about"
@@ -123,6 +125,86 @@ const LandingPage = () => {
             </a>
             <Link to="/login">
               <Button variant="secondary" size="sm">
+                Login
+              </Button>
+            </Link>
+          </div>
+          {/* Burger Icon for Mobile */}
+          <button
+            className="md:hidden flex flex-col justify-center items-center w-10 h-10 focus:outline-none"
+            aria-label="Open menu"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+          >
+            <span
+              className={`block w-6 h-0.5 bg-white mb-1 transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-2" : ""}`}
+            ></span>
+            <span
+              className={`block w-6 h-0.5 bg-white mb-1 transition-all duration-300 ${mobileMenuOpen ? "opacity-0" : ""}`}
+            ></span>
+            <span
+              className={`block w-6 h-0.5 bg-white transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-2" : ""}`}
+            ></span>
+          </button>
+        </div>
+        {/* Mobile Menu Overlay */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/60 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          ></div>
+        )}
+        {/* Mobile Menu Drawer */}
+        <div
+          className={`fixed top-0 right-0 z-50 w-64 h-full bg-navy shadow-lg transform transition-transform duration-300 md:hidden ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}
+        >
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+            <span className="text-lg font-secondary font-bold">Menu</span>
+            <button
+              className="text-white text-2xl focus:outline-none"
+              aria-label="Close menu"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              ×
+            </button>
+          </div>
+          <div className="flex flex-col space-y-6 px-6 py-8">
+            <a
+              href="#about"
+              className="hover:text-orange transition-colors text-base"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              About
+            </a>
+            <a
+              href="#programs"
+              className="hover:text-orange transition-colors text-base"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Programs
+            </a>
+            <a
+              href="#coaches"
+              className="hover:text-orange transition-colors text-base"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Coaches
+            </a>
+            <a
+              href="#testimonials"
+              className="hover:text-orange transition-colors text-base"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Testimonials
+            </a>
+            <a
+              href="#faq"
+              className="hover:text-orange transition-colors text-base"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              FAQ
+            </a>
+            <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+              <Button variant="secondary" size="md" className="w-full">
                 Login
               </Button>
             </Link>
