@@ -2,10 +2,15 @@ import { useEffect, useState } from "react";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import studentService from "../../services/studentService";
+import { TIMEZONE_OPTIONS } from "../../utils/timezoneConstants";
 
 const CustomerProfile = () => {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditingTimezone, setIsEditingTimezone] = useState(false);
+  const [selectedTimezone, setSelectedTimezone] = useState("");
+  const [showTimezoneConfirm, setShowTimezoneConfirm] = useState(false);
+  const [savingTimezone, setSavingTimezone] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -22,6 +27,48 @@ const CustomerProfile = () => {
 
     loadData();
   }, []);
+
+  const handleEditTimezone = () => {
+    setSelectedTimezone(student.timezone);
+    setIsEditingTimezone(true);
+  };
+
+  const handleCancelTimezone = () => {
+    setIsEditingTimezone(false);
+    setSelectedTimezone("");
+  };
+
+  const handleTimezoneChange = (e) => {
+    setSelectedTimezone(e.target.value);
+  };
+
+  const handleSaveTimezone = () => {
+    if (selectedTimezone !== student.timezone) {
+      setShowTimezoneConfirm(true);
+    } else {
+      setIsEditingTimezone(false);
+    }
+  };
+
+  const confirmTimezoneChange = async () => {
+    try {
+      setSavingTimezone(true);
+      await studentService.updateMyTimezone(selectedTimezone);
+      setStudent({ ...student, timezone: selectedTimezone });
+      setShowTimezoneConfirm(false);
+      setIsEditingTimezone(false);
+      alert("Timezone updated successfully! Your class schedule times will now display in your new timezone.");
+    } catch (error) {
+      console.error("Error updating timezone:", error);
+      alert(error.response?.data?.message || "Failed to update timezone");
+    } finally {
+      setSavingTimezone(false);
+    }
+  };
+
+  const cancelTimezoneChange = () => {
+    setShowTimezoneConfirm(false);
+  };
 
   if (loading) {
     return (
@@ -148,7 +195,43 @@ const CustomerProfile = () => {
             <label className="block text-sm font-medium text-gray-600 mb-1">
               Timezone
             </label>
-            <p className="text-lg text-navy">{student.timezone}</p>
+            {isEditingTimezone ? (
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedTimezone}
+                  onChange={handleTimezoneChange}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold"
+                >
+                  {TIMEZONE_OPTIONS.map((tz) => (
+                    <option key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  onClick={handleSaveTimezone}
+                  className="px-4 py-2 bg-gold text-white rounded-lg hover:bg-gold-dark"
+                >
+                  Save
+                </Button>
+                <Button
+                  onClick={handleCancelTimezone}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <p className="text-lg text-navy font-semibold">{student.timezone}</p>
+                <Button
+                  onClick={handleEditTimezone}
+                  className="px-4 py-2 bg-gold text-white rounded-lg hover:bg-gold-dark font-medium shadow-sm"
+                >
+                  ✏️ Edit Timezone
+                </Button>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -243,6 +326,48 @@ const CustomerProfile = () => {
             </div>
           </div>
         </Card>
+      )}
+
+      {/* Timezone Change Confirmation Modal */}
+      {showTimezoneConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-secondary font-bold text-navy mb-4">
+              Confirm Timezone Change
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Changing your timezone will affect how class times are displayed
+              in your schedule and calendar. Your coach's classes will remain at
+              the same time, but they will be shown in your new timezone.
+            </p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-yellow-800">
+                <strong>Current:</strong> {student.timezone}
+                <br />
+                <strong>New:</strong> {selectedTimezone}
+              </p>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              Do you want to continue?
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                onClick={cancelTimezoneChange}
+                disabled={savingTimezone}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmTimezoneChange}
+                disabled={savingTimezone}
+                className="px-4 py-2 bg-gold text-white rounded-lg hover:bg-gold-dark disabled:opacity-50"
+              >
+                {savingTimezone ? "Saving..." : "Confirm"}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

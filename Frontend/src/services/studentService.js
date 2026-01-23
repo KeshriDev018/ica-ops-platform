@@ -50,6 +50,11 @@ const studentService = {
     const response = await api.patch(`/students/${id}/reassign`, body);
     return response.data;
   },
+
+  updateMyTimezone: async (timezone) => {
+    const response = await api.patch("/students/me/timezone", { timezone });
+    return response.data;
+  },
 };
 
 export default studentService;

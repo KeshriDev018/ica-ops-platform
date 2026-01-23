@@ -2,8 +2,10 @@ import Razorpay from "razorpay";
 import { Account } from "../models/account.model.js";
 import { CoachProfile } from "../models/coach.model.js";
 import { CoachPayout } from "../models/coachPayout.model.js";
+import { ClassSession } from "../models/class.model.js";
 import { generateSetPasswordToken } from "../utils/passToken.util.js";
 import { sendSetPasswordEmail } from "../utils/email.util.js";
+import { isValidTimezone } from "../utils/constants.js";
 
 /**
  * ADMIN: Get All Coaches
@@ -188,17 +190,65 @@ export const getMyCoachProfile = async (req, res) => {
 };
 
 /**
+ * Helper: Update all classes when coach changes timezone
+ * Updates coachTimezone field for all classes (past and future)
+ */
+const updateClassTimezones = async (coachId, newTimezone) => {
+  try {
+    const result = await ClassSession.updateMany(
+      { coach: coachId }, // Update ALL classes (no isActive filter)
+      { $set: { coachTimezone: newTimezone } }
+    );
+    
+    console.log(`✅ Updated ${result.modifiedCount} classes to timezone ${newTimezone}`);
+    return result.modifiedCount;
+  } catch (error) {
+    console.error("Error updating class timezones:", error);
+    throw error;
+  }
+};
+
+/**
  * COACH: Update basic profile (non-payout fields)
  */
 export const updateCoachProfile = async (req, res) => {
   try {
     const updates = req.body;
 
+    // Validate timezone if provided
+    if (updates.timezone && !isValidTimezone(updates.timezone)) {
+      return res.status(400).json({
+        message: "Invalid timezone. Please select a valid timezone from the list.",
+      });
+    }
+
+    // Get current profile to check if timezone changed
+    const currentProfile = await CoachProfile.findOne({ 
+      accountId: req.user._id 
+    });
+    
+    const timezoneChanged = updates.timezone && 
+                           currentProfile.timezone !== updates.timezone;
+
+    // Update profile
     const profile = await CoachProfile.findOneAndUpdate(
       { accountId: req.user._id },
       updates,
       { new: true },
     );
+
+    // Cascade timezone update to all classes
+    if (timezoneChanged) {
+      const updatedCount = await updateClassTimezones(
+        req.user._id, 
+        updates.timezone
+      );
+      
+      return res.json({
+        ...profile.toObject(),
+        message: `Profile updated. ${updatedCount} class(es) updated to new timezone.`
+      });
+    }
 
     res.json(profile);
   } catch (error) {

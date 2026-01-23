@@ -139,10 +139,6 @@ const AdminChat = () => {
     }
   };
 
-  const handleBroadcast = () => {
-    alert("Broadcast functionality will be implemented in a future update.");
-  };
-
   const typingUsers = getTypingUsers();
   // For parents, show both parent and student name
   const students = contacts
@@ -176,10 +172,10 @@ const AdminChat = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-secondary font-bold text-navy mb-2">
-            Chat & Broadcast
+            Chat
           </h1>
           <p className="text-gray-600">
             Connect with students and coaches
@@ -192,9 +188,6 @@ const AdminChat = () => {
             </span>
           </p>
         </div>
-        <Button variant="primary" size="md" onClick={handleBroadcast}>
-          Broadcast Message
-        </Button>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">

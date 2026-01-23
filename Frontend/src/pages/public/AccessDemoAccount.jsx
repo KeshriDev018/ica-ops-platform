@@ -5,7 +5,7 @@ import Button from "../../components/common/Button";
 import useDemoStore from "../../store/demoStore";
 import paymentService from "../../services/paymentService";
 import { format } from "date-fns";
-
+import api from "../../lib/api";
 const AccessDemoAccount = () => {
   const navigate = useNavigate();
   const { demoData, demoEmail, hasDemoAccess } = useDemoStore();
@@ -23,15 +23,9 @@ const AccessDemoAccount = () => {
   const handleMarkInterest = async (interest) => {
     setInterestLoading(true);
     try {
-      const response = await fetch(`/api/demos/${demoData._id}/interest`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interest }),
+      const response = await api.patch(`/demos/${demoData._id}/interest`, {
+        interest,
       });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to update interest");
-      }
       setInterestStatus(interest);
       alert("Your interest has been updated.");
     } catch (error) {

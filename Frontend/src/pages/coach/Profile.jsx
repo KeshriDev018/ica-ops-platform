@@ -3,6 +3,7 @@ import { Save, AlertCircle } from "lucide-react";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import coachService from "../../services/coachService";
+import { TIMEZONE_OPTIONS } from "../../utils/timezoneConstants";
 
 const CoachProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -10,6 +11,8 @@ const CoachProfile = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [showTimezoneConfirm, setShowTimezoneConfirm] = useState(false);
+  const [pendingTimezone, setPendingTimezone] = useState(null);
 
   // Form states
   const [basicInfo, setBasicInfo] = useState({
@@ -88,7 +91,24 @@ const CoachProfile = () => {
   };
 
   const handleBasicInfoChange = (field, value) => {
+    if (field === "timezone" && profile && profile.timezone !== value) {
+      // Show confirmation for timezone change
+      setPendingTimezone(value);
+      setShowTimezoneConfirm(true);
+      return;
+    }
     setBasicInfo((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const confirmTimezoneChange = () => {
+    setBasicInfo((prev) => ({ ...prev, timezone: pendingTimezone }));
+    setShowTimezoneConfirm(false);
+    setPendingTimezone(null);
+  };
+
+  const cancelTimezoneChange = () => {
+    setShowTimezoneConfirm(false);
+    setPendingTimezone(null);
   };
 
   const handlePayoutChange = (field, value) => {
@@ -109,9 +129,17 @@ const CoachProfile = () => {
       setError(null);
       setSuccess(null);
 
-      await coachService.updateMyProfile(basicInfo);
-      setSuccess("Profile updated successfully!");
-      setTimeout(() => setSuccess(null), 3000);
+      const response = await coachService.updateMyProfile(basicInfo);
+      
+      // Check if message included (timezone update with class count)
+      if (response.message) {
+        setSuccess(response.message);
+      } else {
+        setSuccess("Profile updated successfully!");
+      }
+      
+      setTimeout(() => setSuccess(null), 5000);
+      await loadProfile(); // Reload to get fresh data
     } catch (err) {
       setError("Failed to update profile: " + err.message);
     } finally {
@@ -219,15 +247,24 @@ const CoachProfile = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Timezone *
             </label>
-            <input
-              type="text"
+            <select
               value={basicInfo.timezone}
               onChange={(e) =>
                 handleBasicInfoChange("timezone", e.target.value)
               }
-              placeholder="e.g., Asia/Kolkata"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange focus:border-transparent"
-            />
+              required
+            >
+              <option value="">Select timezone...</option>
+              {TIMEZONE_OPTIONS.map((tz) => (
+                <option key={tz.value} value={tz.value}>
+                  {tz.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              ⚠️ Changing timezone will update ALL your scheduled classes
+            </p>
           </div>
 
           <div>
@@ -431,6 +468,43 @@ const CoachProfile = () => {
             </div>
           </div>
         </Card>
+      )}
+
+      {/* Timezone Change Confirmation Modal */}
+      {showTimezoneConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="max-w-md mx-4">
+            <h3 className="text-xl font-bold text-navy mb-4">
+              ⚠️ Confirm Timezone Change
+            </h3>
+            <p className="text-gray-700 mb-4">
+              Changing your timezone will update{" "}
+              <strong>ALL your scheduled classes</strong> (past and future) to
+              reflect the new timezone.
+            </p>
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to change from{" "}
+              <strong>{profile?.timezone}</strong> to{" "}
+              <strong>{pendingTimezone}</strong>?
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={cancelTimezoneChange}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={confirmTimezoneChange}
+                className="flex-1"
+              >
+                Yes, Update Timezone
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   );

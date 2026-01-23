@@ -43,6 +43,14 @@ export const initializeSocket = (httpServer) => {
     // Join user to their personal room
     socket.join(userId);
 
+    // Join user to role-based broadcast rooms
+    const userRole = socket.user.role;
+    if (userRole === "COACH") {
+      socket.join("coaches-room");
+    } else if (userRole === "CUSTOMER") {
+      socket.join("students-room");
+    }
+
     // Join user to their conversation rooms
     joinUserConversations(socket, userId);
 

@@ -25,7 +25,8 @@ const Sidebar = ({ open, onClose }) => {
           { path: "/admin/payments", label: "Payments", icon: "💳" },
           { path: "/admin/analytics", label: "Analytics", icon: "📈" },
           { path: "/admin/intelligence", label: "Intelligence", icon: "🧠" },
-          { path: "/admin/chat", label: "Chat & Broadcast", icon: "💬" },
+          { path: "/admin/chat", label: "Chat", icon: "💬" },
+          { path: "/admin/broadcasts", label: "Broadcasts", icon: "📢" },
         ];
       case "COACH":
         return [
@@ -39,6 +40,7 @@ const Sidebar = ({ open, onClose }) => {
           { path: "/coach/payouts", label: "Payouts", icon: "💵" },
           { path: "/coach/materials", label: "Materials", icon: "📄" },
           { path: "/coach/chat", label: "Messages", icon: "💬" },
+          { path: "/coach/broadcasts", label: "Announcements", icon: "📢" },
         ];
       case "CUSTOMER":
         return [
@@ -48,6 +50,7 @@ const Sidebar = ({ open, onClose }) => {
           { path: "/customer/batch", label: "My Batch", icon: "👥" },
           { path: "/customer/schedule", label: "Schedule", icon: "📅" },
           { path: "/customer/batch-chat", label: "Batch Chat", icon: "💬" },
+          { path: "/customer/broadcasts", label: "Announcements", icon: "📢" },
           { path: "/customer/materials", label: "Materials", icon: "📄" },
           { path: "/customer/payments", label: "Payments", icon: "💳" },
           { path: "/customer/profile", label: "Profile", icon: "👤" },

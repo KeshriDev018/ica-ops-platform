@@ -5,7 +5,7 @@ import useAuthStore from "../../store/authStore";
 import classService from "../../services/classService";
 import batchService from "../../services/batchService";
 import studentService from "../../services/studentService";
-import { TIMEZONE_OPTIONS } from "../../utils/timezoneConstants";
+import coachService from "../../services/coachService";
 import { getTimezoneAbbreviation } from "../../utils/timezoneConstants";
 
 const CoachClasses = () => {
@@ -13,6 +13,7 @@ const CoachClasses = () => {
   const [classes, setClasses] = useState([]);
   const [batches, setBatches] = useState([]);
   const [students, setStudents] = useState([]);
+  const [coachProfile, setCoachProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -24,7 +25,6 @@ const CoachClasses = () => {
     weekdays: [],
     startTime: "",
     durationMinutes: 60,
-    coachTimezone: "Asia/Kolkata",
     meetLink: "",
   });
 
@@ -34,14 +34,16 @@ const CoachClasses = () => {
 
   const loadData = async () => {
     try {
-      const [coachClasses, coachBatches, coachStudents] = await Promise.all([
+      const [coachClasses, coachBatches, coachStudents, myProfile] = await Promise.all([
         classService.getMyClasses(),
         batchService.getMyBatches(),
         studentService.getCoachStudents(),
+        coachService.getMyProfile(),
       ]);
       setClasses(coachClasses);
       setBatches(coachBatches);
       setStudents(coachStudents);
+      setCoachProfile(myProfile);
     } catch (error) {
       console.error("Error loading classes:", error);
     } finally {
@@ -67,7 +69,6 @@ const CoachClasses = () => {
       weekdays: [],
       startTime: "",
       durationMinutes: 60,
-      coachTimezone: "Asia/Kolkata", // Default timezone
       meetLink: "",
     });
     setShowCreateModal(true);
@@ -82,7 +83,6 @@ const CoachClasses = () => {
       weekdays: [],
       startTime: "",
       durationMinutes: 60,
-      coachTimezone: "Asia/Kolkata",
       meetLink: "",
     });
   };
@@ -126,6 +126,11 @@ const CoachClasses = () => {
     e.preventDefault();
 
     // Validation
+    if (!coachProfile?.timezone) {
+      alert("Please set your timezone in your profile before creating classes.");
+      return;
+    }
+
     if (!formData.batchId && !formData.studentId) {
       alert("Please select either a batch or a student");
       return;
@@ -144,7 +149,7 @@ const CoachClasses = () => {
         weekdays: formData.weekdays,
         startTime: formData.startTime,
         durationMinutes: parseInt(formData.durationMinutes),
-        coachTimezone: formData.coachTimezone,
+        coachTimezone: coachProfile.timezone,
         meetLink: formData.meetLink,
       };
 
@@ -536,25 +541,14 @@ const CoachClasses = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Your Timezone *
-                </label>
-                <select
-                  name="coachTimezone"
-                  value={formData.coachTimezone}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy"
-                >
-                  {TIMEZONE_OPTIONS.map((tz) => (
-                    <option key={tz.value} value={tz.value}>
-                      {tz.label}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Select the timezone you're scheduling in. Students will see times converted to their timezone.
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  📍 Classes will be created in your timezone:{" "}
+                  <strong>{coachProfile?.timezone || "Not set"}</strong>
+                  <br />
+                  <span className="text-xs">
+                    To change your timezone, update it in your profile settings.
+                  </span>
                 </p>
               </div>
 

@@ -30,6 +30,7 @@ import PaymentCheck from "./pages/customer/PaymentCheck";
 import SubscriptionSelection from "./pages/customer/SubscriptionSelection";
 import Payment from "./pages/customer/Payment";
 import CustomerMaterials from "./pages/customer/Materials";
+import StudentBroadcasts from "./pages/customer/StudentBroadcasts";
 
 // Coach pages
 import CoachDashboard from "./pages/coach/Dashboard";
@@ -43,6 +44,7 @@ import CoachBatchChat from "./pages/coach/BatchChat";
 import CoachProfile from "./pages/coach/Profile";
 import CoachPayouts from "./pages/coach/Payouts";
 import CoachMaterials from "./pages/coach/Materials";
+import CoachBroadcasts from "./pages/coach/CoachBroadcasts";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -56,6 +58,7 @@ import AdminAnalytics from "./pages/admin/Analytics";
 import AdminIntelligence from "./pages/admin/Intelligence";
 import AdminChat from "./pages/admin/Chat";
 import AdminCoachPayouts from "./pages/admin/CoachPayouts";
+import AdminBroadcast from "./pages/admin/Broadcast";
 
 const Router = () => {
   return (
@@ -122,6 +125,7 @@ const Router = () => {
           <Route path="batch" element={<CustomerBatch />} />
           <Route path="schedule" element={<CustomerSchedule />} />
           <Route path="batch-chat" element={<CustomerBatchChat />} />
+          <Route path="broadcasts" element={<StudentBroadcasts />} />
           <Route path="payments" element={<CustomerPayments />} />
           <Route path="materials" element={<CustomerMaterials />} />
           <Route path="profile" element={<CustomerProfile />} />
@@ -147,6 +151,7 @@ const Router = () => {
           <Route path="calendar" element={<CoachCalendar />} />
           <Route path="chat" element={<CoachChat />} />
           <Route path="batch-chat" element={<CoachBatchChat />} />
+          <Route path="broadcasts" element={<CoachBroadcasts />} />
           <Route path="materials" element={<CoachMaterials />} />
         </Route>
 
@@ -171,6 +176,7 @@ const Router = () => {
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="intelligence" element={<AdminIntelligence />} />
           <Route path="chat" element={<AdminChat />} />
+          <Route path="broadcasts" element={<AdminBroadcast />} />
         </Route>
 
         {/* Catch all - redirect to home */}

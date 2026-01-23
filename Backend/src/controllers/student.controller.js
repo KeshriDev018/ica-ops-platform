@@ -1,4 +1,5 @@
 import { Student } from "../models/student.model.js";
+import { isValidTimezone } from "../utils/constants.js";
 
 /**
  * CUSTOMER: View own student profile
@@ -138,4 +139,47 @@ export const updateStudentStatus = async (req, res) => {
   await student.save();
 
   res.json(student);
+};
+
+/**
+ * CUSTOMER: Update own timezone
+ */
+export const updateMyTimezone = async (req, res) => {
+  try {
+    const accountId = req.user._id;
+    const { timezone } = req.body;
+    
+    // Validation
+    if (!timezone) {
+      return res.status(400).json({ message: "Timezone is required" });
+    }
+    
+    if (!isValidTimezone(timezone)) {
+      return res.status(400).json({ 
+        message: "Invalid timezone. Please select a valid timezone from the list." 
+      });
+    }
+    
+    // Update student timezone
+    const student = await Student.findOneAndUpdate(
+      { accountId },
+      { timezone },
+      { new: true }
+    )
+      .populate("assignedCoachId", "email role")
+      .populate("assignedBatchId", "name level timezone status maxStudents")
+      .populate("accountId", "email role");
+    
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+    
+    res.json({
+      message: "Timezone updated successfully. Class times will now be displayed in your new timezone.",
+      student
+    });
+  } catch (error) {
+    console.error("Update student timezone error:", error);
+    res.status(500).json({ message: error.message });
+  }
 };

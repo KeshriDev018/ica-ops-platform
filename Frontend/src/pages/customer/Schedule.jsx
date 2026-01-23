@@ -11,6 +11,8 @@ import {
 import { enUS } from "date-fns/locale";
 import Card from "../../components/common/Card";
 import classService from "../../services/classService";
+import studentService from "../../services/studentService";
+import { convertClassTime } from "../../utils/timezoneHelpers";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 // Initialize date-fns localizer
@@ -28,14 +30,41 @@ const localizer = dateFnsLocalizer({
 
 const CustomerSchedule = () => {
   const [classes, setClasses] = useState([]);
+  const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const studentClasses = await classService.getMyStudentClasses();
+        const [studentClasses, myStudent] = await Promise.all([
+          classService.getMyStudentClasses(),
+          studentService.getMyStudent(),
+        ]);
         console.log("📚 Loaded student classes:", studentClasses);
-        setClasses(studentClasses);
+        console.log("👤 Student timezone:", myStudent.timezone);
+        
+        // Convert class times to student's timezone
+        const convertedClasses = studentClasses.map((classItem) => {
+          if (!classItem.coachTimezone || !myStudent.timezone) {
+            return classItem;
+          }
+          
+          const converted = convertClassTime(
+            classItem.startTime,
+            classItem.coachTimezone,
+            myStudent.timezone,
+            classItem.durationMinutes || classItem.duration
+          );
+          
+          return {
+            ...classItem,
+            startTime: converted.startTime, // Use converted time for calendar
+            durationMinutes: classItem.durationMinutes || classItem.duration,
+          };
+        });
+        
+        setClasses(convertedClasses);
+        setStudent(myStudent);
       } catch (error) {
         console.error("Error loading schedule:", error);
       } finally {
@@ -230,6 +259,22 @@ const CustomerSchedule = () => {
           </p>
         </div>
       </div>
+
+      {/* Timezone Info Banner */}
+      {student && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-800">
+            <strong>Your Timezone:</strong> {student.timezone}
+            <br />
+            All class times are displayed in your timezone. You can change your
+            timezone in your{" "}
+            <a href="/customer/profile" className="underline font-medium">
+              profile settings
+            </a>
+            .
+          </p>
+        </div>
+      )}
 
       {/* Legend */}
       <Card>

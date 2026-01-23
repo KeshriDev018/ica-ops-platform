@@ -5,6 +5,7 @@ import {
   getAllStudents,
   updateStudentStatus,
   reassignStudent,
+  updateMyTimezone,
 } from "../controllers/student.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
@@ -12,6 +13,13 @@ import { allowRoles } from "../middlewares/role.middleware.js";
 const router = express.Router();
 
 router.get("/me", authMiddleware, allowRoles("CUSTOMER"), getMyStudent);
+
+router.patch(
+  "/me/timezone",
+  authMiddleware,
+  allowRoles("CUSTOMER"),
+  updateMyTimezone
+);
 
 router.get("/coach", authMiddleware, allowRoles("COACH"), getCoachStudents);
 
