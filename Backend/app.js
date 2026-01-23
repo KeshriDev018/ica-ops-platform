@@ -46,6 +46,7 @@ import classRoutes from "./src/routes/class.routes.js";
 import chatRoutes from "./src/routes/chat.routes.js";
 import coachPayoutroutes from "./src/routes/coachPayout.routes.js";
 
+
 app.use("/api/classes", classRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/demos", demoRoutes);
