@@ -45,7 +45,6 @@ import batchRoutes from "./src/routes/batch.routes.js";
 import classRoutes from "./src/routes/class.routes.js";
 import chatRoutes from "./src/routes/chat.routes.js";
 import coachPayoutroutes from "./src/routes/coachPayout.routes.js";
-import testRoutes from "./src/routes/test.routes.js";
 
 app.use("/api/classes", classRoutes);
 app.use("/api/auth", authRoutes);
@@ -60,6 +59,6 @@ app.use("/api/coach", coachRoutes);
 app.use("/api/batch", batchRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/coachPayout", coachPayoutroutes);
-app.use("/api/test", testRoutes);
+
 
 export { app };
