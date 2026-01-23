@@ -84,10 +84,12 @@ const AccessDemoAccount = () => {
       // If no payment order exists, create one first
       let paymentOrderId = demoData.paymentOrderId;
       let paymentAmount = demoData.paymentAmount;
+      
       if (!paymentOrderId) {
         // Use recommended plan or default amount
         const amount = demoData.recommendedStudentType === "1-1" ? 2999 : 1499;
-        // Use the public demo endpoint for order creation
+        
+        // Create payment order using centralized API instance
         const response = await api.post("/payments/create-demo-order", {
           amount: amount * 100,
           demoId: demoData._id,
