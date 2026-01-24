@@ -13,7 +13,6 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 const AccessDemoAccount = () => {
   const navigate = useNavigate();
   const {
-    demoData,
     demoEmail,
     hasDemoAccess,
     updateDemoPreferences,
@@ -34,22 +33,21 @@ const AccessDemoAccount = () => {
   const [showMismatchModal, setShowMismatchModal] = useState(false);
   const [pendingPlan, setPendingPlan] = useState(null);
 
+  // Demo data local state
+  const [demoData, setDemoData] = useState(null);
+
   // Student marks their interest in the demo
-  const [interestStatus, setInterestStatus] = useState(
-    demoData?.studentInterest || "PENDING",
-  );
+  const [interestStatus, setInterestStatus] = useState("PENDING");
   const [interestLoading, setInterestLoading] = useState(false);
 
   // Student preferences
   const [preferences, setPreferences] = useState({
-    classType: demoData?.preferredClassType || null,
-    level: demoData?.studentLevel || null,
+    classType: null,
+    level: null,
   });
   const [preferencesLoading, setPreferencesLoading] = useState(false);
   // Check if preferences are already saved in database
-  const [preferencesSaved, setPreferencesSaved] = useState(
-    !!(demoData?.preferredClassType && demoData?.studentLevel),
-  );
+  const [preferencesSaved, setPreferencesSaved] = useState(false);
 
   // Determine if preferences should be locked (already saved or converted)
   const preferencesLocked =
@@ -65,8 +63,9 @@ const AccessDemoAccount = () => {
         interest,
       });
       setInterestStatus(interest);
-      // Update store to persist the change
       updateDemoInterest(interest);
+      // Refetch demo data to ensure UI is up-to-date
+      await fetchDemoData();
       alert("Your interest has been updated.");
     } catch (error) {
       alert("Failed to update interest: " + error.message);
@@ -87,10 +86,9 @@ const AccessDemoAccount = () => {
         preferredClassType: preferences.classType,
         studentLevel: preferences.level,
       });
-      // Mark as permanently saved
       setPreferencesSaved(true);
-      // Update store to persist the change
       updateDemoPreferences(preferences);
+      await fetchDemoData();
       alert(
         "Preferences saved successfully! You can view them but cannot change them now.",
       );
@@ -101,66 +99,79 @@ const AccessDemoAccount = () => {
     }
   };
 
+  // Fetch latest demo data from backend
+  const fetchDemoData = async () => {
+    if (!demoEmail) return;
+    try {
+      const response = await api.get(`/demos/by-email/${demoEmail}`);
+      const data = response.data;
+      setDemoData(data);
+      setMeetingLink(data.meetingLink || null);
+      setInterestStatus(data.studentInterest || "PENDING");
+      setPreferences({
+        classType: data.preferredClassType || null,
+        level: data.studentLevel || null,
+      });
+      setPreferencesSaved(!!(data.preferredClassType && data.studentLevel));
+    } catch (error) {
+      setDemoData(null);
+      setMeetingLink(null);
+      setInterestStatus("PENDING");
+      setPreferences({ classType: null, level: null });
+      setPreferencesSaved(false);
+      console.error("Error fetching demo data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Check if user has demo access
     if (!hasDemoAccess()) {
-      // Redirect to demo login if no access
       navigate("/demo-login", { replace: true });
       return;
     }
 
-    const loadData = async () => {
-      try {
-        // Set INR plans
-        const inrPlans = [
-          {
-            plan_id: "1-1",
-            name: "Personalized 1-on-1 Coaching",
-            price: 2999,
-            billing_cycle: "monthly",
-            features: [
-              "8 personalized sessions per month",
-              "Customized learning plan",
-              "Dedicated coach assignment",
-              "Flexible scheduling",
-              "Progress tracking & reports",
-              "Tournament preparation",
-            ],
-          },
-          {
-            plan_id: "group",
-            name: "Engaging Group Coaching",
-            price: 1499,
-            billing_cycle: "monthly",
-            features: [
-              "12 group sessions per month",
-              "Small batches (max 6 students)",
-              "Age & skill-based grouping",
-              "Interactive learning environment",
-              "Peer learning & practice games",
-              "Monthly tournaments",
-            ],
-          },
-        ];
-        setPlans(inrPlans);
+    // Set INR plans
+    setPlans([
+      {
+        plan_id: "1-1",
+        name: "Personalized 1-on-1 Coaching",
+        price: 2999,
+        billing_cycle: "monthly",
+        features: [
+          "8 personalized sessions per month",
+          "Customized learning plan",
+          "Dedicated coach assignment",
+          "Flexible scheduling",
+          "Progress tracking & reports",
+          "Tournament preparation",
+        ],
+      },
+      {
+        plan_id: "group",
+        name: "Engaging Group Coaching",
+        price: 1499,
+        billing_cycle: "monthly",
+        features: [
+          "12 group sessions per month",
+          "Small batches (max 6 students)",
+          "Age & skill-based grouping",
+          "Interactive learning environment",
+          "Peer learning & practice games",
+          "Monthly tournaments",
+        ],
+      },
+    ]);
 
-        // Get demo meeting link if available
-        if (demoData?._id && demoData?.meetingLink) {
-          setMeetingLink(demoData.meetingLink);
-        }
-      } catch (error) {
-        console.error("Error loading demo account data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [demoData, demoEmail, hasDemoAccess, navigate]);
+    // Always fetch latest demo data on mount
+    fetchDemoData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoEmail, hasDemoAccess, navigate]);
 
   const handlePlanSelect = (plan) => {
     // Check if there's a preference mismatch
-    const preferredType = demoData?.preferredClassType;
+    const preferredType = preferences.classType;
     const selectedType = plan.plan_id;
 
     // Normalize types for comparison
@@ -1250,7 +1261,7 @@ const AccessDemoAccount = () => {
         onClose={() => setShowMismatchModal(false)}
         onConfirm={handleConfirmMismatch}
         onChangePreference={handleChangePreference}
-        preferredType={demoData?.preferredClassType}
+        preferredType={preferences.classType}
         selectedType={pendingPlan?.plan_id}
         selectedPlan={pendingPlan}
       />
