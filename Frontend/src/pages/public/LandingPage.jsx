@@ -419,332 +419,196 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Programs Section */}
-      <section
-        id="programs"
-        className="py-16 px-6 lg:px-12 bg-cream relative z-10"
-      >
-        <div className="container mx-auto max-w-5xl">
+      {/* Developers Section */}
+      <section className="py-16 px-6 lg:px-12 bg-cream">
+        <div className="container mx-auto max-w-6xl">
           <h2 className="text-4xl font-secondary font-bold text-navy text-center mb-12">
-            Our Programs
+            Meet the Developers
           </h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* 1-on-1 Coaching */}
-            <GlowPulseCard3D>
-              <Card className="p-0 overflow-hidden border-none">
-                {/* Header Section - Orange background with white text */}
-                <div className="bg-orange text-white p-6">
-                  <h3 className="text-2xl font-primary font-bold mb-2">
-                    1-on-1 Coaching
-                  </h3>
-                  <p className="text-white/90 text-sm mb-4">
-                    Personalized attention for rapid progress
-                  </p>
-                  <div className="text-5xl font-bold">
-                    ₹2,999<span className="text-2xl font-normal">/month</span>
-                  </div>
-                </div>
-                {/* Features Section - White background with dark text */}
-                <div className="bg-white p-6">
-                  <ul className="space-y-3 mb-6 text-gray-800">
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>8 personalized sessions per month</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>Customized learning plan</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>Dedicated coach assignment</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>Flexible scheduling</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>Progress tracking & reports</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>Tournament preparation</span>
-                    </li>
-                  </ul>
-                  <button className="w-full bg-orange text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity shadow-soft">
-                    Start Learning
-                  </button>
-                </div>
-              </Card>
-            </GlowPulseCard3D>
-
-            {/* Group Coaching */}
-            <GlowPulseCard3D>
-              <Card className="p-0 overflow-hidden border-none">
-                {/* Header Section - Olive green background with white text */}
-                <div className="bg-olive text-white p-6">
-                  <h3 className="text-2xl font-primary font-bold mb-2">
-                    Group Coaching
-                  </h3>
-                  <p className="text-white/90 text-sm mb-4">
-                    Learn together, grow together
-                  </p>
-                  <div className="text-5xl font-bold">
-                    ₹1,499<span className="text-2xl font-normal">/month</span>
-                  </div>
-                </div>
-                {/* Features Section - White background with dark text */}
-                <div className="bg-white p-6">
-                  <ul className="space-y-3 mb-6 text-gray-800">
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>12 group sessions per month</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>Small batches (max 6 students)</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>Age & skill-based grouping</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>Interactive learning environment</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>Peer learning & practice games</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-olive mr-2 font-bold text-lg">
-                        ✓
-                      </span>
-                      <span>Monthly tournaments</span>
-                    </li>
-                  </ul>
-                  <button className="w-full bg-olive text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity shadow-soft">
-                    Join Group
-                  </button>
-                </div>
-              </Card>
-            </GlowPulseCard3D>
+          <div className="grid md:grid-cols-4 sm:grid-cols-2 gap-8 mb-8">
+            {/* Ankit Keshri */}
+            <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+              <img
+                src="/Developers/Ankit.jpg"
+                alt="Ankit Keshri"
+                className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-navy/10"
+              />
+              <h3 className="text-xl font-secondary font-bold text-navy mb-1">
+                Ankit Keshri
+              </h3>
+              <p className="text-sm text-gray-500 mb-1">IIIT Dharwad CSE</p>
+              <p className="text-orange mb-2">Lead & Backend Developer</p>
+              <p className="text-gray-700 text-sm mb-2">
+                Team Lead, Node.js, Express, MongoDB
+              </p>
+            </Card>
+            {/* Yogesh Gupta */}
+            <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+              <img
+                src="/Developers/Yogesh.jpeg"
+                alt="Yogesh Gupta"
+                className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-navy/10"
+              />
+              <h3 className="text-xl font-secondary font-bold text-navy mb-1">
+                Yogesh Gupta
+              </h3>
+              <p className="text-sm text-gray-500 mb-1">IIIT Dharwad CSE</p>
+              <p className="text-orange mb-2">Frontend/UI UX</p>
+              <p className="text-gray-700 text-sm mb-2">
+                React, Tailwind CSS, UX Design
+              </p>
+            </Card>
+            {/* Bhumica Jaiswal */}
+            <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+              <img
+                src="/Developers/Bhumica.png"
+                alt="Bhumica Jaiswal"
+                className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-navy/10"
+              />
+              <h3 className="text-xl font-secondary font-bold text-navy mb-1">
+                Bhumica Jaiswal
+              </h3>
+              <p className="text-sm text-gray-500 mb-1">IIIT Dharwad CSE</p>
+              <p className="text-orange mb-2">Frontend/UI UX</p>
+              <p className="text-gray-700 text-sm mb-2">
+                React, UI/UX, Responsive Design
+              </p>
+            </Card>
+            {/* Abhinva Verma */}
+            <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+              <img
+                src="/Developers/Abhinav.jpeg"
+                alt="Abhinva Verma"
+                className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-navy/10"
+              />
+              <h3 className="text-xl font-secondary font-bold text-navy mb-1">
+                Abhinva Verma
+              </h3>
+              <p className="text-sm text-gray-500 mb-1">IIIT Dharwad CSE</p>
+              <p className="text-orange mb-2">AI/ML Expert</p>
+              <p className="text-gray-700 text-sm mb-2">
+                AI Integrations, ML, Automation
+              </p>
+            </Card>
+          </div>
+          <div className="text-center mt-8">
+            <p className="text-lg text-navy font-medium mb-2">
+              If you find any issues, bugs, or want to request a feature,
+              contact our developers team:
+            </p>
+            <p className="text-gray-700 text-base">
+              Email:{" "}
+              <a
+                href="mailto:ankitkeshari550@gmail.com"
+                className="text-orange underline"
+              >
+                ankitkeshari550@gmail.com
+              </a>{" "}
+              &nbsp;|&nbsp; Phone:{" "}
+              <a href="tel:9693594630" className="text-orange underline">
+                9693594630
+              </a>
+            </p>
           </div>
         </div>
       </section>
 
-      {/* How Demo Works */}
-      <section className="py-16 px-6 lg:px-12 bg-cream">
-        <div className="container mx-auto max-w-5xl">
-          <h2 className="text-4xl font-secondary font-bold text-navy text-center mb-4">
-            How Your Free Demo Works
+      {/* Programs Section */}
+      <section id="programs" className="py-16 px-6 lg:px-12 bg-white">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-4xl font-secondary font-bold text-navy text-center mb-12">
+            Our Programs
           </h2>
-          <div className="relative flex flex-col md:flex-row items-center justify-center gap-8 mb-8">
-            {/* Step 1 */}
-            <div className="flex flex-col items-center text-center flex-1 relative">
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center mb-4 text-2xl font-bold text-white relative z-10"
-                style={{ backgroundColor: "#FC8A24" }}
-              >
-                1
+          <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-8 mb-8">
+            {/* Beginner Program */}
+            <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+              <div className="w-16 h-16 bg-orange/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">♙</span>
               </div>
-              <h3 className="text-lg font-secondary font-semibold text-navy mb-2">
-                Book Your Slot
+              <h3 className="text-xl font-secondary font-bold text-navy mb-1">
+                Beginner
               </h3>
-              <p className="text-gray-700 text-sm">
-                Schedule your free demo class at your convenience
+              <p className="text-gray-700 text-sm mb-2">
+                For new learners: rules, basic tactics, and fun activities to
+                build a strong foundation.
               </p>
-            </div>
-
-            {/* Connector Line */}
-            <div className="hidden md:block absolute top-10 left-1/4 right-1/4 h-0.5 bg-gray-300"></div>
-
-            {/* Step 2 */}
-            <div className="flex flex-col items-center text-center flex-1 relative">
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center mb-4 text-2xl font-bold text-white relative z-10"
-                style={{ backgroundColor: "#6B8E23" }}
-              >
-                2
+            </Card>
+            {/* Intermediate Program */}
+            <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+              <div className="w-16 h-16 bg-orange/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">♘</span>
               </div>
-              <h3 className="text-lg font-secondary font-semibold text-navy mb-2">
-                Meet Your Coach
+              <h3 className="text-xl font-secondary font-bold text-navy mb-1">
+                Intermediate
               </h3>
-              <p className="text-gray-700 text-sm">
-                Experience our teaching methodology firsthand
+              <p className="text-gray-700 text-sm mb-2">
+                Sharpen your skills: openings, strategies, and regular practice
+                games with feedback.
               </p>
-            </div>
-
-            {/* Connector Line */}
-            <div className="hidden md:block absolute top-10 left-1/2 right-1/4 h-0.5 bg-gray-300"></div>
-
-            {/* Step 3 */}
-            <div className="flex flex-col items-center text-center flex-1 relative">
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center mb-4 text-2xl font-bold text-white relative z-10"
-                style={{ backgroundColor: "#FC8A24" }}
-              >
-                3
+            </Card>
+            {/* Advanced Program */}
+            <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+              <div className="w-16 h-16 bg-orange/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">♔</span>
               </div>
-              <h3 className="text-lg font-secondary font-semibold text-navy mb-2">
-                Start Learning
+              <h3 className="text-xl font-secondary font-bold text-navy mb-1">
+                Advanced
               </h3>
-              <p className="text-gray-700 text-sm">
-                Begin your chess journey with personalized guidance
+              <p className="text-gray-700 text-sm mb-2">
+                Tournament prep: advanced tactics, endgames, analysis, and
+                one-on-one coaching.
               </p>
-            </div>
+            </Card>
           </div>
-          <div className="text-center">
+          <div className="text-center mt-8">
             <Link to="/book-demo">
               <Button variant="secondary" size="lg">
-                Book Your Free Demo
+                Book a Free Demo for Programs
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Meet Our Coaches */}
-      <section id="coaches" className="py-16 px-6 lg:px-12 bg-cream">
-        <div className="container mx-auto max-w-5xl">
-          <h2 className="text-4xl font-secondary font-bold text-navy text-center mb-4">
-            Our Expert Coaches
+      {/* Subscriptions Section */}
+      <section id="subscriptions" className="py-16 px-6 lg:px-12 bg-cream">
+        <div className="container mx-auto max-w-4xl">
+          <h2 className="text-4xl font-secondary font-bold text-navy text-center mb-12">
+            Subscriptions
           </h2>
-          <p className="text-center text-gray-700 mb-12 max-w-2xl mx-auto">
-            Our team comprises FIDE-rated coaches, Grandmasters, and seasoned
-            educators dedicated to nurturing champions.
-          </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-              <img
-                src="/coaches/COACH1.png"
-                alt="GM Rahul Sharma"
-                className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-navy/10"
-              />
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
+            {/* One-to-One Class Plan */}
+            <Card className="text-center border-2 border-orange shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+              <div className="w-16 h-16 bg-orange/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">👤</span>
+              </div>
               <h3 className="text-xl font-secondary font-bold text-navy mb-1">
-                GM Rahul Sharma
+                One-to-One Class
               </h3>
-              <p className="text-orange mb-3">Grandmaster, Head Coach</p>
-              <p className="text-gray-700 text-sm">
-                Experienced Grandmaster with over 15 years of coaching
-                expertise.
+              <p className="text-gray-700 text-base mb-2">
+                Personalized coaching with a dedicated trainer for rapid
+                progress.
               </p>
+              <div className="text-2xl font-bold text-orange mb-2">
+                ₹2999<span className="text-base font-normal">/month</span>
+              </div>
             </Card>
-            <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-              <img
-                src="/coaches/COACH2.png"
-                alt="WFM Priya Singh"
-                className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-navy/10"
-              />
+            {/* Group Class Plan */}
+            <Card className="text-center border-2 border-navy shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+              <div className="w-16 h-16 bg-navy/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">👥</span>
+              </div>
               <h3 className="text-xl font-secondary font-bold text-navy mb-1">
-                WFM Priya Singh
+                Group Class
               </h3>
-              <p className="text-orange mb-3">FIDE Master, Senior Coach</p>
-              <p className="text-gray-700 text-sm">
-                Dedicated to developing young talent with personalized
-                attention.
+              <p className="text-gray-700 text-base mb-2">
+                Collaborative learning in small groups, interactive sessions,
+                and peer play.
               </p>
+              <div className="text-2xl font-bold text-navy mb-2">
+                ₹1499<span className="text-base font-normal">/month</span>
+              </div>
             </Card>
-            <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-              <img
-                src="/coaches/COACH3.png"
-                alt="FM Anil Kumar"
-                className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-navy/10"
-              />
-              <h3 className="text-xl font-secondary font-bold text-navy mb-1">
-                FM Anil Kumar
-              </h3>
-              <p className="text-orange mb-3">FIDE Master, Junior Coach</p>
-              <p className="text-gray-700 text-sm">
-                Passionate about making chess accessible to all age groups.
-              </p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section id="testimonials" className="py-16 px-6 lg:px-12 bg-cream">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="text-4xl font-secondary font-bold text-navy text-center mb-4">
-            What Parents & Students Say
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                quote:
-                  "Indian Chess Academy has transformed my son's logical thinking. He is more focused and confident now!",
-                author: "Deepika Sharma",
-                role: "Parent of Rohan",
-                image: "/Testimonials/PARENT1.png",
-              },
-              {
-                quote:
-                  "I've improved my rating significantly since joining. The personalized game analysis is simply invaluable!",
-                author: "Aryan Mehta",
-                role: "Advanced Student",
-                image: "/Testimonials/STUDENT.png",
-              },
-              {
-                quote:
-                  "The coaches are patient and encouraging. My daughter loves her classes and looks forward to each session!",
-                author: "Rajesh Patel",
-                role: "Parent of Ananya",
-                image: "/Testimonials/PARENT2.png",
-              },
-            ].map((testimonial, idx) => (
-              <Card
-                key={idx}
-                className="transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-              >
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="text-orange text-xl">
-                      ★
-                    </span>
-                  ))}
-                </div>
-                <p className="text-gray-700 mb-6 italic">
-                  "{testimonial.quote}"
-                </p>
-                <div className="flex items-center">
-                  <img
-                    src={testimonial.image}
-                    alt={testimonial.author}
-                    className="w-12 h-12 rounded-full mr-4 object-cover border-2 border-navy/10"
-                  />
-                  <div>
-                    <p className="font-semibold text-navy">
-                      {testimonial.author}
-                    </p>
-                    <p className="text-sm text-gray-600">{testimonial.role}</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
           </div>
         </div>
       </section>
