@@ -8,6 +8,8 @@ import paymentService from "../../services/paymentService";
 import { format } from "date-fns";
 import api from "../../lib/api";
 import PreferenceMismatchModal from "../../components/demo/PreferenceMismatchModal";
+import { ChevronDown, ChevronUp } from "lucide-react";
+
 const AccessDemoAccount = () => {
   const navigate = useNavigate();
   const {
@@ -21,6 +23,9 @@ const AccessDemoAccount = () => {
   const [loading, setLoading] = useState(true);
   const [meetingLink, setMeetingLink] = useState(null);
   const [processing, setProcessing] = useState(false);
+
+  // Instruction dropdown state
+  const [showInstructions, setShowInstructions] = useState(true);
 
   // Selected plan for payment
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -351,303 +356,415 @@ const AccessDemoAccount = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cream py-12 px-6">
-      <div className="container mx-auto max-w-6xl space-y-8">
+    <div className="min-h-screen bg-gradient-to-b from-cream to-gray-50 py-6 sm:py-8 md:py-12 px-4 sm:px-6">
+      <div className="container mx-auto max-w-7xl space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="text-center">
-          <h1 className="text-4xl font-secondary font-bold text-navy mb-3">
+        <div className="text-center px-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-secondary font-bold text-navy mb-2 sm:mb-3">
             Your Demo Account
           </h1>
-          <p className="text-gray-600 text-lg">
-            Access your demo session details and make payment to unlock full
-            features
+          <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
+            Access your demo session details and complete enrollment
           </p>
         </div>
 
-        {/* Professional Flow Instruction Card */}
-        <Card className="bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 border-2 border-indigo-200 shadow-lg">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-secondary font-bold text-indigo-900 mb-2">
-              📋 Your Journey to Chess Mastery
-            </h2>
-            <p className="text-indigo-700 text-sm">
-              Follow these steps to complete your enrollment and begin learning
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {/* Step 1 */}
-            <div className="flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 border-green-500">
-              <div className="flex-shrink-0 w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                1
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-1">
-                  📚 Book Demo Session
-                </h3>
-                <p className="text-sm text-gray-700">
-                  You've already completed this! Your demo session has been
-                  booked successfully.
-                </p>
-              </div>
-              <span className="text-green-600 text-xl">✓</span>
+        {/* Professional Collapsible Flow Instruction Card */}
+        <Card className="bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 border-2 border-indigo-200 shadow-lg overflow-hidden">
+          {/* Header - Always Visible */}
+          <button
+            onClick={() => setShowInstructions(!showInstructions)}
+            className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-white/30 transition-colors"
+          >
+            <div className="text-left flex-1">
+              <h2 className="text-xl sm:text-2xl font-secondary font-bold text-indigo-900 mb-1 sm:mb-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl">📋</span>
+                <span>Your Journey to Chess Mastery</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-indigo-700">
+                {showInstructions
+                  ? "Click to collapse"
+                  : "Click to view enrollment steps"}
+              </p>
             </div>
-
-            {/* Step 2 */}
-            <div
-              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.scheduledStart ? "border-green-500" : "border-blue-500"}`}
-            >
-              <div
-                className={`flex-shrink-0 w-10 h-10 ${demoData?.scheduledStart ? "bg-green-500" : "bg-blue-500"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
-              >
-                2
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-1">
-                  🗓️ Admin Schedules Demo
-                </h3>
-                <p className="text-sm text-gray-700">
-                  Our admin team reviews your request and schedules a convenient
-                  demo time.
-                </p>
-              </div>
-              {demoData?.scheduledStart && (
-                <span className="text-green-600 text-xl">✓</span>
+            <div className="ml-4">
+              {showInstructions ? (
+                <ChevronUp className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-700" />
+              ) : (
+                <ChevronDown className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-700" />
               )}
             </div>
+          </button>
 
-            {/* Step 3 */}
-            <div
-              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.meetingLink ? "border-green-500" : "border-blue-500"}`}
-            >
-              <div
-                className={`flex-shrink-0 w-10 h-10 ${demoData?.meetingLink ? "bg-green-500" : "bg-blue-500"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
-              >
-                3
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-1">
-                  🔗 Receive Demo Link
-                </h3>
-                <p className="text-sm text-gray-700">
-                  Both you and your assigned coach receive the demo session link
-                  via email.
-                </p>
-              </div>
-              {demoData?.meetingLink && (
-                <span className="text-green-600 text-xl">✓</span>
-              )}
-            </div>
-
-            {/* Step 4 */}
-            <div
-              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.status === "ATTENDED" || demoData?.status === "INTERESTED" || demoData?.status === "PAYMENT_PENDING" || demoData?.status === "CONVERTED" ? "border-green-500" : "border-orange-500"}`}
-            >
-              <div
-                className={`flex-shrink-0 w-10 h-10 ${demoData?.status === "ATTENDED" || demoData?.status === "INTERESTED" || demoData?.status === "PAYMENT_PENDING" || demoData?.status === "CONVERTED" ? "bg-green-500" : "bg-orange-500"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
-              >
-                4
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-1">
-                  🎓 Attend Demo Session
-                </h3>
-                <p className="text-sm text-gray-700">
-                  Join the session at the scheduled time and experience our
-                  coaching firsthand.
-                </p>
-              </div>
-              {(demoData?.status === "ATTENDED" ||
-                demoData?.status === "INTERESTED" ||
-                demoData?.status === "PAYMENT_PENDING" ||
-                demoData?.status === "CONVERTED") && (
-                <span className="text-green-600 text-xl">✓</span>
-              )}
-            </div>
-
-            {/* Step 5 */}
-            <div
-              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${preferencesSaved && interestStatus !== "PENDING" ? "border-green-500" : "border-orange-500"}`}
-            >
-              <div
-                className={`flex-shrink-0 w-10 h-10 ${preferencesSaved && interestStatus !== "PENDING" ? "bg-green-500" : "bg-orange-500"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
-              >
-                5
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-1">
-                  📝 Submit Preferences & Interest
-                </h3>
-                <p className="text-sm text-gray-700">
-                  After the session, mark your interest and share your coaching
-                  preferences. Coach marks attendance.
-                </p>
-                {!(preferencesSaved && interestStatus !== "PENDING") && (
-                  <p className="text-xs text-orange-600 mt-1 font-medium">
-                    👉 Please complete this step below to proceed
+          {/* Collapsible Content */}
+          {showInstructions && (
+            <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-3 sm:space-y-4">
+              {/* Step 1 */}
+              <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-white/60 rounded-lg border-l-4 border-green-500 shadow-sm">
+                <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm sm:text-lg">
+                  1
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-1">
+                    📚 Book Demo Session
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    You've already completed this! Your demo session has been
+                    booked successfully.
                   </p>
+                </div>
+                <span className="text-green-600 text-lg sm:text-xl flex-shrink-0">
+                  ✓
+                </span>
+              </div>
+
+              {/* Step 2 */}
+              <div
+                className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-white/60 rounded-lg border-l-4 shadow-sm ${demoData?.scheduledStart ? "border-green-500" : "border-blue-500"}`}
+              >
+                <div
+                  className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 ${demoData?.scheduledStart ? "bg-green-500" : "bg-blue-500"} text-white rounded-full flex items-center justify-center font-bold text-sm sm:text-lg`}
+                >
+                  2
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-1">
+                    🗓️ Admin Schedules Demo
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    Our admin team reviews your request and schedules a
+                    convenient demo time.
+                  </p>
+                </div>
+                {demoData?.scheduledStart && (
+                  <span className="text-green-600 text-lg sm:text-xl flex-shrink-0">
+                    ✓
+                  </span>
                 )}
               </div>
-              {preferencesSaved && interestStatus !== "PENDING" && (
-                <span className="text-green-600 text-xl">✓</span>
-              )}
-            </div>
 
-            {/* Step 6 */}
-            <div
-              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.status === "INTERESTED" ? "border-green-500" : "border-gray-400"}`}
-            >
+              {/* Step 3 */}
               <div
-                className={`flex-shrink-0 w-10 h-10 ${demoData?.status === "INTERESTED" ? "bg-green-500" : "bg-gray-400"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+                className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-white/60 rounded-lg border-l-4 shadow-sm ${demoData?.meetingLink ? "border-green-500" : "border-blue-500"}`}
               >
-                6
+                <div
+                  className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 ${demoData?.meetingLink ? "bg-green-500" : "bg-blue-500"} text-white rounded-full flex items-center justify-center font-bold text-sm sm:text-lg`}
+                >
+                  3
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-1">
+                    🔗 Receive Demo Link
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    Both you and your assigned coach receive the demo session
+                    link via email.
+                  </p>
+                </div>
+                {demoData?.meetingLink && (
+                  <span className="text-green-600 text-lg sm:text-xl flex-shrink-0">
+                    ✓
+                  </span>
+                )}
               </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-1">
-                  ✅ Admin Verification
-                </h3>
-                <p className="text-sm text-gray-700">
-                  Our admin reviews the demo outcome and marks your application
-                  as 'Interested' to unlock payment.
-                </p>
-              </div>
-              {demoData?.status === "INTERESTED" && (
-                <span className="text-green-600 text-xl">✓</span>
-              )}
-            </div>
 
-            {/* Step 7 */}
-            <div
-              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.status === "INTERESTED" ? "border-orange-500" : demoData?.status === "CONVERTED" ? "border-green-500" : "border-gray-400"}`}
-            >
+              {/* Step 4 */}
               <div
-                className={`flex-shrink-0 w-10 h-10 ${demoData?.status === "INTERESTED" ? "bg-orange-500" : demoData?.status === "CONVERTED" ? "bg-green-500" : "bg-gray-400"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+                className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-white/60 rounded-lg border-l-4 shadow-sm ${
+                  demoData?.status === "ATTENDED" ||
+                  demoData?.status === "INTERESTED" ||
+                  demoData?.status === "PAYMENT_PENDING" ||
+                  demoData?.status === "CONVERTED"
+                    ? "border-green-500"
+                    : "border-gray-400"
+                }`}
               >
-                7
+                <div
+                  className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 ${
+                    demoData?.status === "ATTENDED" ||
+                    demoData?.status === "INTERESTED" ||
+                    demoData?.status === "PAYMENT_PENDING" ||
+                    demoData?.status === "CONVERTED"
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-400 text-white"
+                  } rounded-full flex items-center justify-center font-bold text-sm sm:text-lg`}
+                >
+                  4
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-1">
+                    🎓 Attend Demo Session
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    Join the session at the scheduled time and experience our
+                    coaching firsthand.
+                  </p>
+                </div>
+                {(demoData?.status === "ATTENDED" ||
+                  demoData?.status === "INTERESTED" ||
+                  demoData?.status === "PAYMENT_PENDING" ||
+                  demoData?.status === "CONVERTED") && (
+                  <span className="text-green-600 text-lg sm:text-xl flex-shrink-0">
+                    ✓
+                  </span>
+                )}
               </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-1">
-                  💳 Select Plan & Pay
-                </h3>
-                <p className="text-sm text-gray-700">
-                  Choose a subscription plan below and complete secure payment
-                  to activate your account.
-                </p>
+
+              {/* Step 5 */}
+              <div
+                className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-white/60 rounded-lg border-l-4 shadow-sm ${
+                  preferencesSaved && interestStatus !== "PENDING"
+                    ? "border-green-500"
+                    : "border-gray-400"
+                }`}
+              >
+                <div
+                  className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 ${
+                    preferencesSaved && interestStatus !== "PENDING"
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-400 text-white"
+                  } rounded-full flex items-center justify-center font-bold text-sm sm:text-lg`}
+                >
+                  5
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-1">
+                    📝 Submit Preferences & Interest
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    After the session, mark your interest and share your
+                    coaching preferences.
+                  </p>
+                  {!(preferencesSaved && interestStatus !== "PENDING") && (
+                    <p className="text-xs text-orange-600 mt-1 font-medium">
+                      👉 Please complete this step below to proceed
+                    </p>
+                  )}
+                </div>
+                {preferencesSaved && interestStatus !== "PENDING" && (
+                  <span className="text-green-600 text-lg sm:text-xl flex-shrink-0">
+                    ✓
+                  </span>
+                )}
+              </div>
+
+              {/* Step 6 */}
+              <div
+                className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-white/60 rounded-lg border-l-4 shadow-sm ${
+                  demoData?.status === "INTERESTED"
+                    ? "border-green-500"
+                    : "border-gray-400"
+                }`}
+              >
+                <div
+                  className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 ${
+                    demoData?.status === "INTERESTED"
+                      ? "bg-green-500"
+                      : "bg-gray-400"
+                  } text-white rounded-full flex items-center justify-center font-bold text-sm sm:text-lg`}
+                >
+                  6
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-1">
+                    ✅ Admin Verification
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    Our admin reviews the demo outcome and marks your
+                    application as 'Interested' to unlock payment.
+                  </p>
+                </div>
                 {demoData?.status === "INTERESTED" && (
-                  <p className="text-xs text-orange-600 mt-1 font-medium">
-                    👉 Payment is now unlocked! Select a plan below to continue
-                  </p>
+                  <span className="text-green-600 text-lg sm:text-xl flex-shrink-0">
+                    ✓
+                  </span>
                 )}
               </div>
-              {demoData?.status === "CONVERTED" && (
-                <span className="text-green-600 text-xl">✓</span>
-              )}
-            </div>
 
-            {/* Step 8 */}
-            <div
-              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.status === "CONVERTED" ? "border-green-500" : "border-gray-400"}`}
-            >
+              {/* Step 7 */}
               <div
-                className={`flex-shrink-0 w-10 h-10 ${demoData?.status === "CONVERTED" ? "bg-green-500" : "bg-gray-400"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+                className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-white/60 rounded-lg border-l-4 shadow-sm ${
+                  demoData?.status === "INTERESTED"
+                    ? "border-orange-500"
+                    : demoData?.status === "CONVERTED"
+                      ? "border-green-500"
+                      : "border-gray-400"
+                }`}
               >
-                8
+                <div
+                  className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 ${
+                    demoData?.status === "INTERESTED"
+                      ? "bg-orange-500"
+                      : demoData?.status === "CONVERTED"
+                        ? "bg-green-500"
+                        : "bg-gray-400"
+                  } text-white rounded-full flex items-center justify-center font-bold text-sm sm:text-lg`}
+                >
+                  7
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-1">
+                    💳 Select Plan & Pay
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    Choose a subscription plan below and complete secure payment
+                    to activate your account.
+                  </p>
+                  {demoData?.status === "INTERESTED" && (
+                    <p className="text-xs text-orange-600 mt-1 font-medium">
+                      👉 Payment is now unlocked! Select a plan below to
+                      continue
+                    </p>
+                  )}
+                </div>
+                {demoData?.status === "CONVERTED" && (
+                  <span className="text-green-600 text-lg sm:text-xl flex-shrink-0">
+                    ✓
+                  </span>
+                )}
               </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-1">
-                  📧 Receive Password Setup Email
-                </h3>
-                <p className="text-sm text-gray-700">
-                  After successful payment, you'll receive an email to set up
-                  your password and activate your student account.
-                </p>
-              </div>
-              {demoData?.status === "CONVERTED" && (
-                <span className="text-green-600 text-xl">✓</span>
-              )}
-            </div>
 
-            {/* Step 9 */}
-            <div
-              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.status === "CONVERTED" ? "border-green-500" : "border-gray-400"}`}
-            >
+              {/* Step 8 */}
               <div
-                className={`flex-shrink-0 w-10 h-10 ${demoData?.status === "CONVERTED" ? "bg-green-500" : "bg-gray-400"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+                className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-white/60 rounded-lg border-l-4 shadow-sm ${
+                  demoData?.status === "CONVERTED"
+                    ? "border-green-500"
+                    : "border-gray-400"
+                }`}
               >
-                9
+                <div
+                  className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 ${
+                    demoData?.status === "CONVERTED"
+                      ? "bg-green-500"
+                      : "bg-gray-400"
+                  } text-white rounded-full flex items-center justify-center font-bold text-sm sm:text-lg`}
+                >
+                  8
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-1">
+                    📧 Receive Password Setup Email
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    After successful payment, you'll receive an email to set up
+                    your password and activate your student account.
+                  </p>
+                </div>
+                {demoData?.status === "CONVERTED" && (
+                  <span className="text-green-600 text-lg sm:text-xl flex-shrink-0">
+                    ✓
+                  </span>
+                )}
               </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-1">
-                  🚀 Access Full Dashboard
-                </h3>
-                <p className="text-sm text-gray-700">
-                  Login with your email and password to access classes,
-                  materials, schedule, and all student features!
-                </p>
-              </div>
-              {demoData?.status === "CONVERTED" && (
-                <span className="text-green-600 text-xl">✓</span>
-              )}
-            </div>
-          </div>
 
-          {/* Important Note */}
-          <div className="mt-6 p-4 bg-blue-100 border-l-4 border-blue-500 rounded-lg">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">ℹ️</span>
-              <div>
-                <h4 className="font-bold text-blue-900 mb-1">Important Note</h4>
-                <p className="text-sm text-blue-800">
-                  Payment option will <strong>only be available</strong> after
-                  admin marks your application as "Interested". Please complete
-                  your preferences and interest marking after attending the demo
-                  session to help us process your application faster.
-                </p>
+              {/* Step 9 */}
+              <div
+                className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-white/60 rounded-lg border-l-4 shadow-sm ${
+                  demoData?.status === "CONVERTED"
+                    ? "border-green-500"
+                    : "border-gray-400"
+                }`}
+              >
+                <div
+                  className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 ${
+                    demoData?.status === "CONVERTED"
+                      ? "bg-green-500"
+                      : "bg-gray-400"
+                  } text-white rounded-full flex items-center justify-center font-bold text-sm sm:text-lg`}
+                >
+                  9
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-1">
+                    🚀 Access Full Dashboard
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    Login with your email and password to access classes,
+                    materials, schedule, and all student features!
+                  </p>
+                </div>
+                {demoData?.status === "CONVERTED" && (
+                  <span className="text-green-600 text-lg sm:text-xl flex-shrink-0">
+                    ✓
+                  </span>
+                )}
+              </div>
+
+              {/* Important Note */}
+              <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-100 border-l-4 border-blue-500 rounded-lg">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <span className="text-xl sm:text-2xl flex-shrink-0">ℹ️</span>
+                  <div>
+                    <h4 className="font-bold text-sm sm:text-base text-blue-900 mb-1">
+                      Important Note
+                    </h4>
+                    <p className="text-xs sm:text-sm text-blue-800">
+                      Payment option will <strong>only be available</strong>{" "}
+                      after admin marks your application as "Interested". Please
+                      complete your preferences and interest marking after
+                      attending the demo session to help us process your
+                      application faster.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </Card>
 
         {/* Demo Information */}
         <Card className="bg-gradient-to-r from-navy to-navy/90 text-white">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <h2 className="text-2xl font-secondary font-bold mb-4">
+              <h2 className="text-xl sm:text-2xl font-secondary font-bold mb-3 sm:mb-4">
                 Demo Session Details
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <div>
-                  <p className="text-sm text-white/80 mb-1">Student Name</p>
-                  <p className="text-lg font-semibold">
+                  <p className="text-xs sm:text-sm text-white/80 mb-1">
+                    Student Name
+                  </p>
+                  <p className="text-base sm:text-lg font-semibold break-words">
                     {demoData.studentName}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-white/80 mb-1">Parent Name</p>
-                  <p className="text-lg font-semibold">{demoData.parentName}</p>
+                  <p className="text-xs sm:text-sm text-white/80 mb-1">
+                    Parent Name
+                  </p>
+                  <p className="text-base sm:text-lg font-semibold break-words">
+                    {demoData.parentName}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-white/80 mb-1">Email</p>
-                  <p className="text-lg font-semibold">
+                  <p className="text-xs sm:text-sm text-white/80 mb-1">Email</p>
+                  <p className="text-base sm:text-lg font-semibold break-all">
                     {demoData.parentEmail}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-white/80 mb-1">Student Age</p>
-                  <p className="text-lg font-semibold">
+                  <p className="text-xs sm:text-sm text-white/80 mb-1">
+                    Student Age
+                  </p>
+                  <p className="text-base sm:text-lg font-semibold">
                     {demoData.studentAge} years
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-white/80 mb-1">Country</p>
-                  <p className="text-lg font-semibold">{demoData.country}</p>
+                  <p className="text-xs sm:text-sm text-white/80 mb-1">
+                    Country
+                  </p>
+                  <p className="text-base sm:text-lg font-semibold">
+                    {demoData.country}
+                  </p>
                 </div>
                 {/* Student Interest Section */}
                 <div>
-                  <p className="text-sm text-white/80 mb-1">Your Interest</p>
-                  <div className="flex gap-2 items-center">
+                  <p className="text-xs sm:text-sm text-white/80 mb-2">
+                    Your Interest
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                     <span
-                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                      className={`inline-block px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
                         interestStatus === "INTERESTED"
                           ? "bg-green-200 text-green-900"
                           : interestStatus === "NOT_INTERESTED"
@@ -657,47 +774,54 @@ const AccessDemoAccount = () => {
                     >
                       {interestStatus}
                     </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={
-                        interestLoading ||
-                        interestLocked ||
-                        interestStatus === "INTERESTED"
-                      }
-                      onClick={() => handleMarkInterest("INTERESTED")}
-                    >
-                      {interestStatus === "INTERESTED"
-                        ? "✓ Marked"
-                        : "Mark Interested"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={
-                        interestLoading ||
-                        interestLocked ||
-                        interestStatus === "NOT_INTERESTED"
-                      }
-                      onClick={() => handleMarkInterest("NOT_INTERESTED")}
-                    >
-                      {interestStatus === "NOT_INTERESTED"
-                        ? "✓ Marked"
-                        : "Not Interested"}
-                    </Button>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={
+                          interestLoading ||
+                          interestLocked ||
+                          interestStatus === "INTERESTED"
+                        }
+                        onClick={() => handleMarkInterest("INTERESTED")}
+                        className="flex-1 sm:flex-none text-xs sm:text-sm"
+                      >
+                        {interestStatus === "INTERESTED"
+                          ? "✓ Marked"
+                          : "Mark Interested"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={
+                          interestLoading ||
+                          interestLocked ||
+                          interestStatus === "NOT_INTERESTED"
+                        }
+                        onClick={() => handleMarkInterest("NOT_INTERESTED")}
+                        className="flex-1 sm:flex-none text-xs sm:text-sm"
+                      >
+                        {interestStatus === "NOT_INTERESTED"
+                          ? "✓ Marked"
+                          : "Not Interested"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Student Preferences */}
                 <div
-                  className={`mt-6 p-4 rounded-lg border ${
+                  className={`mt-4 sm:mt-6 p-3 sm:p-4 rounded-lg border ${
                     preferencesLocked
                       ? "bg-white/5 border-white/10 opacity-70"
                       : "bg-white/5 border-white/10"
                   }`}
+                  id="preferences-section"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Your Preferences</h3>
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    <h3 className="text-base sm:text-lg font-semibold">
+                      Your Preferences
+                    </h3>
                     {preferencesLocked && (
                       <span className="text-xs text-green-400 bg-green-500/20 px-2 py-1 rounded">
                         ✓ Saved
@@ -706,11 +830,11 @@ const AccessDemoAccount = () => {
                   </div>
 
                   {/* Coaching Type Selection */}
-                  <div className="mb-4">
-                    <label className="block text-sm text-white/80 mb-2">
+                  <div className="mb-3 sm:mb-4">
+                    <label className="block text-xs sm:text-sm text-white/80 mb-2">
                       Preferred Coaching Type *
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
                       <button
                         type="button"
                         disabled={preferencesLocked}
@@ -718,14 +842,16 @@ const AccessDemoAccount = () => {
                           !preferencesLocked &&
                           setPreferences({ ...preferences, classType: "1-1" })
                         }
-                        className={`p-3 rounded-lg border-2 transition-all text-left ${
+                        className={`p-2 sm:p-3 rounded-lg border-2 transition-all text-left ${
                           preferences.classType === "1-1"
                             ? "border-orange bg-orange/10"
                             : "border-white/20 hover:border-white/40"
                         } ${preferencesLocked ? "cursor-not-allowed" : "cursor-pointer"}`}
                       >
-                        <div className="font-semibold">1-on-1 Coaching</div>
-                        <div className="text-xs text-white/70 mt-1">
+                        <div className="font-semibold text-xs sm:text-sm">
+                          1-on-1 Coaching
+                        </div>
+                        <div className="text-[10px] sm:text-xs text-white/70 mt-1">
                           Personalized attention
                         </div>
                       </button>
@@ -736,14 +862,16 @@ const AccessDemoAccount = () => {
                           !preferencesLocked &&
                           setPreferences({ ...preferences, classType: "GROUP" })
                         }
-                        className={`p-3 rounded-lg border-2 transition-all text-left ${
+                        className={`p-2 sm:p-3 rounded-lg border-2 transition-all text-left ${
                           preferences.classType === "GROUP"
                             ? "border-orange bg-orange/10"
                             : "border-white/20 hover:border-white/40"
                         } ${preferencesLocked ? "cursor-not-allowed" : "cursor-pointer"}`}
                       >
-                        <div className="font-semibold">Group Coaching</div>
-                        <div className="text-xs text-white/70 mt-1">
+                        <div className="font-semibold text-xs sm:text-sm">
+                          Group Coaching
+                        </div>
+                        <div className="text-[10px] sm:text-xs text-white/70 mt-1">
                           Learn with peers
                         </div>
                       </button>
@@ -751,8 +879,8 @@ const AccessDemoAccount = () => {
                   </div>
 
                   {/* Level Selection */}
-                  <div className="mb-4">
-                    <label className="block text-sm text-white/80 mb-2">
+                  <div className="mb-3 sm:mb-4">
+                    <label className="block text-xs sm:text-sm text-white/80 mb-2">
                       Your Chess Level *
                     </label>
                     <select
@@ -765,7 +893,7 @@ const AccessDemoAccount = () => {
                           level: e.target.value,
                         })
                       }
-                      className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-orange disabled:cursor-not-allowed disabled:opacity-80"
+                      className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-orange disabled:cursor-not-allowed disabled:opacity-80"
                     >
                       <option value="" disabled>
                         Select your level
@@ -787,16 +915,16 @@ const AccessDemoAccount = () => {
                         !preferences.classType ||
                         !preferences.level
                       }
-                      className="w-full"
+                      className="w-full text-xs sm:text-sm"
                     >
                       {preferencesLoading ? "Saving..." : "Save Preferences"}
                     </Button>
                   ) : (
                     <div className="text-center py-2">
-                      <p className="text-green-400 text-sm">
+                      <p className="text-green-400 text-xs sm:text-sm">
                         ✓ Your preferences have been saved and locked.
                       </p>
-                      <p className="text-white/50 text-xs mt-1">
+                      <p className="text-white/50 text-[10px] sm:text-xs mt-1">
                         {demoData?.status === "CONVERTED"
                           ? "Preferences cannot be changed after conversion."
                           : "You can view your preferences but cannot change them."}
@@ -807,24 +935,32 @@ const AccessDemoAccount = () => {
               </div>
             </div>
             <div>
-              <h2 className="text-2xl font-secondary font-bold mb-4">
+              <h2 className="text-xl sm:text-2xl font-secondary font-bold mb-3 sm:mb-4">
                 Schedule
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <div>
-                  <p className="text-sm text-white/80 mb-1">Demo Date & Time</p>
-                  <p className="text-lg font-semibold">
+                  <p className="text-xs sm:text-sm text-white/80 mb-1">
+                    Demo Date & Time
+                  </p>
+                  <p className="text-sm sm:text-base md:text-lg font-semibold break-words">
                     {formatDateTime(demoData.scheduledStart)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-white/80 mb-1">Timezone</p>
-                  <p className="text-lg font-semibold">{demoData.timezone}</p>
+                  <p className="text-xs sm:text-sm text-white/80 mb-1">
+                    Timezone
+                  </p>
+                  <p className="text-sm sm:text-base md:text-lg font-semibold">
+                    {demoData.timezone}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-white/80 mb-1">Status</p>
+                  <p className="text-xs sm:text-sm text-white/80 mb-1">
+                    Status
+                  </p>
                   <span
-                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                    className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
                       demoData.status === "BOOKED"
                         ? "bg-blue-500 text-white"
                         : demoData.status === "ATTENDED"
@@ -842,14 +978,14 @@ const AccessDemoAccount = () => {
 
         {/* Demo Meeting Link */}
         <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-2 border-orange-200">
-          <div className="flex items-start gap-4">
+          <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
             <div className="flex-shrink-0">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-3xl">🎓</span>
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-2xl sm:text-3xl">🎓</span>
               </div>
             </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-secondary font-bold text-orange-900 mb-2">
+            <div className="flex-1 w-full">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-secondary font-bold text-orange-900 mb-2">
                 Attend Your Demo Session
               </h3>
               {meetingLink ? (
