@@ -359,25 +359,26 @@ export const uploadClassMaterial = async (req, res) => {
     console.error("Error stack:", error.stack);
     console.error("Request file:", req.file);
     console.error("Request body:", req.body);
-    
+
     // Return specific error messages
     let errorMessage = "Failed to upload material";
     let statusCode = 500;
 
-    if (error.message?.includes('Invalid file type')) {
+    if (error.message?.includes("Invalid file type")) {
       errorMessage = error.message;
       statusCode = 400;
-    } else if (error.message?.includes('File too large')) {
+    } else if (error.message?.includes("File too large")) {
       errorMessage = "File size exceeds 50MB limit";
       statusCode = 400;
-    } else if (error.name === 'ValidationError') {
+    } else if (error.name === "ValidationError") {
       errorMessage = "Validation error: " + error.message;
       statusCode = 400;
-    } else if (!req.file && req.body.fileType !== 'LINK') {
-      errorMessage = "File upload failed. Please try again or check file format.";
+    } else if (!req.file && req.body.fileType !== "LINK") {
+      errorMessage =
+        "File upload failed. Please try again or check file format.";
       statusCode = 400;
     }
-    
+
     res.status(statusCode).json({
       message: errorMessage,
       error: error.message,
@@ -436,19 +437,41 @@ export const getStudentClassMaterials = async (req, res) => {
   try {
     const userId = req.user._id;
 
+    console.log("=== GET STUDENT MATERIALS ===");
+    console.log("1. User ID:", userId);
+
     // Find student record for this customer account
     const student = await Student.findOne({ accountId: userId });
 
     if (!student) {
+      console.log("ERROR: Student profile not found for accountId:", userId);
       return res.status(404).json({ message: "Student profile not found" });
     }
 
+    console.log("2. Student found:", {
+      _id: student._id,
+      name: student.studentName,
+      assignedBatchId: student.assignedBatchId,
+    });
+
+    // Build query conditions - include both 1-on-1 classes and batch classes
+    const queryConditions = [
+      { student: student._id }, // 1-on-1 classes
+    ];
+
+    // Add batch classes if student is in a batch
+    if (student.assignedBatchId) {
+      queryConditions.push({ batch: student.assignedBatchId });
+    }
+
+    console.log(
+      "3. Query conditions:",
+      JSON.stringify(queryConditions, null, 2),
+    );
+
     // Find all classes where this student is enrolled (either via batch or direct)
     const classes = await ClassSession.find({
-      $or: [
-        { student: student._id },
-        { batch: { $in: student.batches || [] } },
-      ],
+      $or: queryConditions,
       isActive: true,
     })
       .populate("coach", "email")
@@ -456,9 +479,18 @@ export const getStudentClassMaterials = async (req, res) => {
       .select("title materials coach batch weekdays startTime meetLink")
       .sort({ createdAt: -1 });
 
+    console.log("4. Classes found:", classes.length);
+
     // Flatten materials with class context
     const materialsWithContext = [];
     classes.forEach((classSession) => {
+      console.log(`5. Processing class: ${classSession.title}`, {
+        classId: classSession._id,
+        materialsCount: classSession.materials?.length || 0,
+        hasBatch: !!classSession.batch,
+        hasStudent: !!classSession.student,
+      });
+
       classSession.materials.forEach((material) => {
         if (material.isVisible) {
           materialsWithContext.push({
@@ -479,6 +511,9 @@ export const getStudentClassMaterials = async (req, res) => {
         }
       });
     });
+
+    console.log("6. Total materials found:", materialsWithContext.length);
+    console.log("=== END GET STUDENT MATERIALS ===\n");
 
     res.json(materialsWithContext);
   } catch (error) {

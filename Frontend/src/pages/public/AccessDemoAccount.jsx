@@ -10,15 +10,21 @@ import api from "../../lib/api";
 import PreferenceMismatchModal from "../../components/demo/PreferenceMismatchModal";
 const AccessDemoAccount = () => {
   const navigate = useNavigate();
-  const { demoData, demoEmail, hasDemoAccess, updateDemoPreferences, updateDemoInterest } = useDemoStore();
+  const {
+    demoData,
+    demoEmail,
+    hasDemoAccess,
+    updateDemoPreferences,
+    updateDemoInterest,
+  } = useDemoStore();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [meetingLink, setMeetingLink] = useState(null);
   const [processing, setProcessing] = useState(false);
-  
+
   // Selected plan for payment
   const [selectedPlan, setSelectedPlan] = useState(null);
-  
+
   // Mismatch modal state
   const [showMismatchModal, setShowMismatchModal] = useState(false);
   const [pendingPlan, setPendingPlan] = useState(null);
@@ -37,13 +43,15 @@ const AccessDemoAccount = () => {
   const [preferencesLoading, setPreferencesLoading] = useState(false);
   // Check if preferences are already saved in database
   const [preferencesSaved, setPreferencesSaved] = useState(
-    !!(demoData?.preferredClassType && demoData?.studentLevel)
+    !!(demoData?.preferredClassType && demoData?.studentLevel),
   );
-  
+
   // Determine if preferences should be locked (already saved or converted)
-  const preferencesLocked = preferencesSaved || demoData?.status === "CONVERTED";
+  const preferencesLocked =
+    preferencesSaved || demoData?.status === "CONVERTED";
   // Determine if interest is locked (already marked or converted)
-  const interestLocked = interestStatus !== "PENDING" || demoData?.status === "CONVERTED";
+  const interestLocked =
+    interestStatus !== "PENDING" || demoData?.status === "CONVERTED";
 
   const handleMarkInterest = async (interest) => {
     setInterestLoading(true);
@@ -78,7 +86,9 @@ const AccessDemoAccount = () => {
       setPreferencesSaved(true);
       // Update store to persist the change
       updateDemoPreferences(preferences);
-      alert("Preferences saved successfully! You can view them but cannot change them now.");
+      alert(
+        "Preferences saved successfully! You can view them but cannot change them now.",
+      );
     } catch (error) {
       alert("Failed to save preferences: " + error.message);
     } finally {
@@ -147,18 +157,18 @@ const AccessDemoAccount = () => {
     // Check if there's a preference mismatch
     const preferredType = demoData?.preferredClassType;
     const selectedType = plan.plan_id;
-    
+
     // Normalize types for comparison
     const normalizedPreferred = preferredType?.toUpperCase();
     const normalizedSelected = selectedType === "1-1" ? "1-1" : "GROUP";
-    
+
     // If preferences exist and don't match
     if (preferredType && normalizedPreferred !== normalizedSelected) {
       setPendingPlan(plan);
       setShowMismatchModal(true);
       return;
     }
-    
+
     // No mismatch, select plan directly
     setSelectedPlan(plan);
   };
@@ -174,7 +184,7 @@ const AccessDemoAccount = () => {
     // Close modal and scroll to preferences section
     setShowMismatchModal(false);
     setPendingPlan(null);
-    
+
     // Scroll to preferences section
     const preferencesSection = document.getElementById("preferences-section");
     if (preferencesSection) {
@@ -197,7 +207,7 @@ const AccessDemoAccount = () => {
       alert("Please select a plan first");
       return;
     }
-    
+
     setProcessing(true);
     try {
       // Create payment order with selected plan details
@@ -207,7 +217,7 @@ const AccessDemoAccount = () => {
         planId: selectedPlan.plan_id,
         billingCycle: "MONTHLY",
       });
-      
+
       const order = response.data;
 
       const scriptLoaded = await loadRazorpayScript();
@@ -354,6 +364,250 @@ const AccessDemoAccount = () => {
           </p>
         </div>
 
+        {/* Professional Flow Instruction Card */}
+        <Card className="bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 border-2 border-indigo-200 shadow-lg">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-secondary font-bold text-indigo-900 mb-2">
+              📋 Your Journey to Chess Mastery
+            </h2>
+            <p className="text-indigo-700 text-sm">
+              Follow these steps to complete your enrollment and begin learning
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {/* Step 1 */}
+            <div className="flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 border-green-500">
+              <div className="flex-shrink-0 w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                1
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-1">
+                  📚 Book Demo Session
+                </h3>
+                <p className="text-sm text-gray-700">
+                  You've already completed this! Your demo session has been
+                  booked successfully.
+                </p>
+              </div>
+              <span className="text-green-600 text-xl">✓</span>
+            </div>
+
+            {/* Step 2 */}
+            <div
+              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.scheduledStart ? "border-green-500" : "border-blue-500"}`}
+            >
+              <div
+                className={`flex-shrink-0 w-10 h-10 ${demoData?.scheduledStart ? "bg-green-500" : "bg-blue-500"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+              >
+                2
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-1">
+                  🗓️ Admin Schedules Demo
+                </h3>
+                <p className="text-sm text-gray-700">
+                  Our admin team reviews your request and schedules a convenient
+                  demo time.
+                </p>
+              </div>
+              {demoData?.scheduledStart && (
+                <span className="text-green-600 text-xl">✓</span>
+              )}
+            </div>
+
+            {/* Step 3 */}
+            <div
+              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.meetingLink ? "border-green-500" : "border-blue-500"}`}
+            >
+              <div
+                className={`flex-shrink-0 w-10 h-10 ${demoData?.meetingLink ? "bg-green-500" : "bg-blue-500"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+              >
+                3
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-1">
+                  🔗 Receive Demo Link
+                </h3>
+                <p className="text-sm text-gray-700">
+                  Both you and your assigned coach receive the demo session link
+                  via email.
+                </p>
+              </div>
+              {demoData?.meetingLink && (
+                <span className="text-green-600 text-xl">✓</span>
+              )}
+            </div>
+
+            {/* Step 4 */}
+            <div
+              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.status === "ATTENDED" || demoData?.status === "INTERESTED" || demoData?.status === "PAYMENT_PENDING" || demoData?.status === "CONVERTED" ? "border-green-500" : "border-orange-500"}`}
+            >
+              <div
+                className={`flex-shrink-0 w-10 h-10 ${demoData?.status === "ATTENDED" || demoData?.status === "INTERESTED" || demoData?.status === "PAYMENT_PENDING" || demoData?.status === "CONVERTED" ? "bg-green-500" : "bg-orange-500"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+              >
+                4
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-1">
+                  🎓 Attend Demo Session
+                </h3>
+                <p className="text-sm text-gray-700">
+                  Join the session at the scheduled time and experience our
+                  coaching firsthand.
+                </p>
+              </div>
+              {(demoData?.status === "ATTENDED" ||
+                demoData?.status === "INTERESTED" ||
+                demoData?.status === "PAYMENT_PENDING" ||
+                demoData?.status === "CONVERTED") && (
+                <span className="text-green-600 text-xl">✓</span>
+              )}
+            </div>
+
+            {/* Step 5 */}
+            <div
+              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${preferencesSaved && interestStatus !== "PENDING" ? "border-green-500" : "border-orange-500"}`}
+            >
+              <div
+                className={`flex-shrink-0 w-10 h-10 ${preferencesSaved && interestStatus !== "PENDING" ? "bg-green-500" : "bg-orange-500"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+              >
+                5
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-1">
+                  📝 Submit Preferences & Interest
+                </h3>
+                <p className="text-sm text-gray-700">
+                  After the session, mark your interest and share your coaching
+                  preferences. Coach marks attendance.
+                </p>
+                {!(preferencesSaved && interestStatus !== "PENDING") && (
+                  <p className="text-xs text-orange-600 mt-1 font-medium">
+                    👉 Please complete this step below to proceed
+                  </p>
+                )}
+              </div>
+              {preferencesSaved && interestStatus !== "PENDING" && (
+                <span className="text-green-600 text-xl">✓</span>
+              )}
+            </div>
+
+            {/* Step 6 */}
+            <div
+              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.status === "INTERESTED" ? "border-green-500" : "border-gray-400"}`}
+            >
+              <div
+                className={`flex-shrink-0 w-10 h-10 ${demoData?.status === "INTERESTED" ? "bg-green-500" : "bg-gray-400"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+              >
+                6
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-1">
+                  ✅ Admin Verification
+                </h3>
+                <p className="text-sm text-gray-700">
+                  Our admin reviews the demo outcome and marks your application
+                  as 'Interested' to unlock payment.
+                </p>
+              </div>
+              {demoData?.status === "INTERESTED" && (
+                <span className="text-green-600 text-xl">✓</span>
+              )}
+            </div>
+
+            {/* Step 7 */}
+            <div
+              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.status === "INTERESTED" ? "border-orange-500" : demoData?.status === "CONVERTED" ? "border-green-500" : "border-gray-400"}`}
+            >
+              <div
+                className={`flex-shrink-0 w-10 h-10 ${demoData?.status === "INTERESTED" ? "bg-orange-500" : demoData?.status === "CONVERTED" ? "bg-green-500" : "bg-gray-400"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+              >
+                7
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-1">
+                  💳 Select Plan & Pay
+                </h3>
+                <p className="text-sm text-gray-700">
+                  Choose a subscription plan below and complete secure payment
+                  to activate your account.
+                </p>
+                {demoData?.status === "INTERESTED" && (
+                  <p className="text-xs text-orange-600 mt-1 font-medium">
+                    👉 Payment is now unlocked! Select a plan below to continue
+                  </p>
+                )}
+              </div>
+              {demoData?.status === "CONVERTED" && (
+                <span className="text-green-600 text-xl">✓</span>
+              )}
+            </div>
+
+            {/* Step 8 */}
+            <div
+              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.status === "CONVERTED" ? "border-green-500" : "border-gray-400"}`}
+            >
+              <div
+                className={`flex-shrink-0 w-10 h-10 ${demoData?.status === "CONVERTED" ? "bg-green-500" : "bg-gray-400"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+              >
+                8
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-1">
+                  📧 Receive Password Setup Email
+                </h3>
+                <p className="text-sm text-gray-700">
+                  After successful payment, you'll receive an email to set up
+                  your password and activate your student account.
+                </p>
+              </div>
+              {demoData?.status === "CONVERTED" && (
+                <span className="text-green-600 text-xl">✓</span>
+              )}
+            </div>
+
+            {/* Step 9 */}
+            <div
+              className={`flex items-start gap-4 p-4 bg-white/60 rounded-lg border-l-4 ${demoData?.status === "CONVERTED" ? "border-green-500" : "border-gray-400"}`}
+            >
+              <div
+                className={`flex-shrink-0 w-10 h-10 ${demoData?.status === "CONVERTED" ? "bg-green-500" : "bg-gray-400"} text-white rounded-full flex items-center justify-center font-bold text-lg`}
+              >
+                9
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-1">
+                  🚀 Access Full Dashboard
+                </h3>
+                <p className="text-sm text-gray-700">
+                  Login with your email and password to access classes,
+                  materials, schedule, and all student features!
+                </p>
+              </div>
+              {demoData?.status === "CONVERTED" && (
+                <span className="text-green-600 text-xl">✓</span>
+              )}
+            </div>
+          </div>
+
+          {/* Important Note */}
+          <div className="mt-6 p-4 bg-blue-100 border-l-4 border-blue-500 rounded-lg">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">ℹ️</span>
+              <div>
+                <h4 className="font-bold text-blue-900 mb-1">Important Note</h4>
+                <p className="text-sm text-blue-800">
+                  Payment option will <strong>only be available</strong> after
+                  admin marks your application as "Interested". Please complete
+                  your preferences and interest marking after attending the demo
+                  session to help us process your application faster.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         {/* Demo Information */}
         <Card className="bg-gradient-to-r from-navy to-navy/90 text-white">
           <div className="grid md:grid-cols-2 gap-6">
@@ -407,38 +661,50 @@ const AccessDemoAccount = () => {
                       size="sm"
                       variant="outline"
                       disabled={
-                        interestLoading || interestLocked || interestStatus === "INTERESTED"
+                        interestLoading ||
+                        interestLocked ||
+                        interestStatus === "INTERESTED"
                       }
                       onClick={() => handleMarkInterest("INTERESTED")}
                     >
-                      {interestStatus === "INTERESTED" ? "✓ Marked" : "Mark Interested"}
+                      {interestStatus === "INTERESTED"
+                        ? "✓ Marked"
+                        : "Mark Interested"}
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       disabled={
-                        interestLoading || interestLocked || interestStatus === "NOT_INTERESTED"
+                        interestLoading ||
+                        interestLocked ||
+                        interestStatus === "NOT_INTERESTED"
                       }
                       onClick={() => handleMarkInterest("NOT_INTERESTED")}
                     >
-                      {interestStatus === "NOT_INTERESTED" ? "✓ Marked" : "Not Interested"}
+                      {interestStatus === "NOT_INTERESTED"
+                        ? "✓ Marked"
+                        : "Not Interested"}
                     </Button>
                   </div>
                 </div>
 
                 {/* Student Preferences */}
-                <div className={`mt-6 p-4 rounded-lg border ${
-                  preferencesLocked
-                    ? "bg-white/5 border-white/10 opacity-70" 
-                    : "bg-white/5 border-white/10"
-                }`}>
+                <div
+                  className={`mt-6 p-4 rounded-lg border ${
+                    preferencesLocked
+                      ? "bg-white/5 border-white/10 opacity-70"
+                      : "bg-white/5 border-white/10"
+                  }`}
+                >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold">Your Preferences</h3>
                     {preferencesLocked && (
-                      <span className="text-xs text-green-400 bg-green-500/20 px-2 py-1 rounded">✓ Saved</span>
+                      <span className="text-xs text-green-400 bg-green-500/20 px-2 py-1 rounded">
+                        ✓ Saved
+                      </span>
                     )}
                   </div>
-                  
+
                   {/* Coaching Type Selection */}
                   <div className="mb-4">
                     <label className="block text-sm text-white/80 mb-2">
@@ -448,7 +714,10 @@ const AccessDemoAccount = () => {
                       <button
                         type="button"
                         disabled={preferencesLocked}
-                        onClick={() => !preferencesLocked && setPreferences({ ...preferences, classType: "1-1" })}
+                        onClick={() =>
+                          !preferencesLocked &&
+                          setPreferences({ ...preferences, classType: "1-1" })
+                        }
                         className={`p-3 rounded-lg border-2 transition-all text-left ${
                           preferences.classType === "1-1"
                             ? "border-orange bg-orange/10"
@@ -456,12 +725,17 @@ const AccessDemoAccount = () => {
                         } ${preferencesLocked ? "cursor-not-allowed" : "cursor-pointer"}`}
                       >
                         <div className="font-semibold">1-on-1 Coaching</div>
-                        <div className="text-xs text-white/70 mt-1">Personalized attention</div>
+                        <div className="text-xs text-white/70 mt-1">
+                          Personalized attention
+                        </div>
                       </button>
                       <button
                         type="button"
                         disabled={preferencesLocked}
-                        onClick={() => !preferencesLocked && setPreferences({ ...preferences, classType: "GROUP" })}
+                        onClick={() =>
+                          !preferencesLocked &&
+                          setPreferences({ ...preferences, classType: "GROUP" })
+                        }
                         className={`p-3 rounded-lg border-2 transition-all text-left ${
                           preferences.classType === "GROUP"
                             ? "border-orange bg-orange/10"
@@ -469,7 +743,9 @@ const AccessDemoAccount = () => {
                         } ${preferencesLocked ? "cursor-not-allowed" : "cursor-pointer"}`}
                       >
                         <div className="font-semibold">Group Coaching</div>
-                        <div className="text-xs text-white/70 mt-1">Learn with peers</div>
+                        <div className="text-xs text-white/70 mt-1">
+                          Learn with peers
+                        </div>
                       </button>
                     </div>
                   </div>
@@ -482,10 +758,18 @@ const AccessDemoAccount = () => {
                     <select
                       value={preferences.level || ""}
                       disabled={preferencesLocked}
-                      onChange={(e) => !preferencesLocked && setPreferences({ ...preferences, level: e.target.value })}
+                      onChange={(e) =>
+                        !preferencesLocked &&
+                        setPreferences({
+                          ...preferences,
+                          level: e.target.value,
+                        })
+                      }
                       className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-orange disabled:cursor-not-allowed disabled:opacity-80"
                     >
-                      <option value="" disabled>Select your level</option>
+                      <option value="" disabled>
+                        Select your level
+                      </option>
                       <option value="BEGINNER">Beginner</option>
                       <option value="INTERMEDIATE">Intermediate</option>
                       <option value="ADVANCED">Advanced</option>
@@ -498,7 +782,11 @@ const AccessDemoAccount = () => {
                       size="sm"
                       variant="primary"
                       onClick={handleSavePreferences}
-                      disabled={preferencesLoading || !preferences.classType || !preferences.level}
+                      disabled={
+                        preferencesLoading ||
+                        !preferences.classType ||
+                        !preferences.level
+                      }
                       className="w-full"
                     >
                       {preferencesLoading ? "Saving..." : "Save Preferences"}
@@ -509,7 +797,7 @@ const AccessDemoAccount = () => {
                         ✓ Your preferences have been saved and locked.
                       </p>
                       <p className="text-white/50 text-xs mt-1">
-                        {demoData?.status === "CONVERTED" 
+                        {demoData?.status === "CONVERTED"
                           ? "Preferences cannot be changed after conversion."
                           : "You can view your preferences but cannot change them."}
                       </p>
@@ -621,58 +909,63 @@ const AccessDemoAccount = () => {
           </div>
 
           {/* Show Pay Now button only if status is INTERESTED */}
-          {demoData.status === "INTERESTED" && demoData.status !== "CONVERTED" && selectedPlan && (
-            <div className="mb-4 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border-2 border-orange">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-navy mb-1">
-                    ✓ Plan Selected - Ready to Pay
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {selectedPlan.name}
-                  </p>
-                  <p className="text-sm font-semibold text-navy mt-1">
-                    Amount: ₹{selectedPlan.price.toLocaleString("en-IN")}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Secure payment • No hidden charges
-                  </p>
+          {demoData.status === "INTERESTED" &&
+            demoData.status !== "CONVERTED" &&
+            selectedPlan && (
+              <div className="mb-4 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border-2 border-orange">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-navy mb-1">
+                      ✓ Plan Selected - Ready to Pay
+                    </p>
+                    <p className="text-sm text-gray-600">{selectedPlan.name}</p>
+                    <p className="text-sm font-semibold text-navy mt-1">
+                      Amount: ₹{selectedPlan.price.toLocaleString("en-IN")}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Secure payment • No hidden charges
+                    </p>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handlePayNow}
+                    disabled={processing}
+                    className="min-w-[160px]"
+                  >
+                    {processing ? "Opening..." : "💳 Pay Now"}
+                  </Button>
                 </div>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  onClick={handlePayNow}
-                  disabled={processing}
-                  className="min-w-[160px]"
-                >
-                  {processing ? "Opening..." : "💳 Pay Now"}
-                </Button>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Show message when admin verification is pending */}
-          {demoData.status !== "INTERESTED" && demoData.status !== "CONVERTED" && (
-            <div className="mb-4 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-300">
-              <div className="text-center">
-                <div className="text-4xl mb-3">🕒</div>
-                <h3 className="text-xl font-semibold text-navy mb-2">
-                  Application Under Review
-                </h3>
-                <p className="text-gray-700 mb-3">
-                  Thank you for your interest! Our admissions team is currently reviewing your demo session and profile.
-                </p>
-                <p className="text-gray-600 text-sm">
-                  Once verified, you'll be able to select a plan and proceed with payment to begin your chess journey with us. We'll notify you via email once the review is complete.
-                </p>
-                <div className="mt-4 p-3 bg-white/60 rounded-lg">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-semibold">Status:</span> Pending Admin Verification
+          {demoData.status !== "INTERESTED" &&
+            demoData.status !== "CONVERTED" && (
+              <div className="mb-4 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-300">
+                <div className="text-center">
+                  <div className="text-4xl mb-3">🕒</div>
+                  <h3 className="text-xl font-semibold text-navy mb-2">
+                    Application Under Review
+                  </h3>
+                  <p className="text-gray-700 mb-3">
+                    Thank you for your interest! Our admissions team is
+                    currently reviewing your demo session and profile.
                   </p>
+                  <p className="text-gray-600 text-sm">
+                    Once verified, you'll be able to select a plan and proceed
+                    with payment to begin your chess journey with us. We'll
+                    notify you via email once the review is complete.
+                  </p>
+                  <div className="mt-4 p-3 bg-white/60 rounded-lg">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-semibold">Status:</span> Pending
+                      Admin Verification
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
         </Card>
 
         {/* Currency Converter */}
@@ -681,88 +974,99 @@ const AccessDemoAccount = () => {
         )}
 
         {/* Subscription Plans */}
-        {demoData.status === "INTERESTED" && demoData.status !== "CONVERTED" && (
-          <>
-            <div className="text-center">
-              <h2 className="text-3xl font-secondary font-bold text-navy mb-2">
-                Choose Your Learning Plan
-              </h2>
-              <p className="text-gray-600">
-                Select a plan and make payment to continue your chess journey
-              </p>
-            </div>
+        {demoData.status === "INTERESTED" &&
+          demoData.status !== "CONVERTED" && (
+            <>
+              <div className="text-center">
+                <h2 className="text-3xl font-secondary font-bold text-navy mb-2">
+                  Choose Your Learning Plan
+                </h2>
+                <p className="text-gray-600">
+                  Select a plan and make payment to continue your chess journey
+                </p>
+              </div>
 
-            <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              {plans.map((plan) => {
-                const isSelected = selectedPlan?.plan_id === plan.plan_id;
-                const isRecommended = demoData?.preferredClassType?.toLowerCase() === plan.plan_id;
-                
-                return (
-                  <Card
-                    key={plan.plan_id}
-                    className={`hover:shadow-lg transition-all cursor-pointer border-2 ${
-                      isSelected
-                        ? "border-orange bg-orange-50"
-                        : isRecommended
-                          ? "border-green-400 bg-green-50"
-                          : "border-gray-200 hover:border-orange"
-                    }`}
-                  >
-                    {isRecommended && (
-                      <div className="mb-3">
-                        <span className="inline-block bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                          ✓ RECOMMENDED FOR YOU
-                        </span>
-                      </div>
-                    )}
-                    {isSelected && (
-                      <div className="mb-3">
-                        <span className="inline-block bg-orange text-white text-xs font-bold px-3 py-1 rounded-full">
-                          ✓ SELECTED
-                        </span>
-                      </div>
-                    )}
-                    
-                    <div className="text-center mb-6">
-                      <h3 className="text-2xl font-secondary font-bold text-navy mb-2">
-                        {plan.name}
-                      </h3>
-                      <div className="text-4xl font-bold text-navy mb-1">
-                        ₹{plan.price.toLocaleString("en-IN")}
-                        <span className="text-lg font-normal text-gray-600">
-                          /month
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 capitalize">
-                        Monthly billing • No hidden fees
-                      </p>
-                    </div>
+              <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                {plans.map((plan) => {
+                  const isSelected = selectedPlan?.plan_id === plan.plan_id;
+                  const isRecommended =
+                    demoData?.preferredClassType?.toLowerCase() ===
+                    plan.plan_id;
 
-                    <ul className="space-y-3 mb-6">
-                      {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="text-olive mr-2 font-bold text-lg flex-shrink-0">
-                            ✓
-                          </span>
-                          <span className="text-gray-700">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    <Button
-                      variant={isSelected ? "primary" : isRecommended ? "primary" : "outline"}
-                      size="lg"
-                      onClick={() => handlePlanSelect(plan)}
-                      className="w-full"
+                  return (
+                    <Card
+                      key={plan.plan_id}
+                      className={`hover:shadow-lg transition-all cursor-pointer border-2 ${
+                        isSelected
+                          ? "border-orange bg-orange-50"
+                          : isRecommended
+                            ? "border-green-400 bg-green-50"
+                            : "border-gray-200 hover:border-orange"
+                      }`}
                     >
-                      {isSelected ? "✓ Selected" : `Select ₹${plan.price.toLocaleString("en-IN")}`}
-                    </Button>
-                  </Card>
-                );
-              })}
-            </div>
-          </>
-        )}
+                      {isRecommended && (
+                        <div className="mb-3">
+                          <span className="inline-block bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                            ✓ RECOMMENDED FOR YOU
+                          </span>
+                        </div>
+                      )}
+                      {isSelected && (
+                        <div className="mb-3">
+                          <span className="inline-block bg-orange text-white text-xs font-bold px-3 py-1 rounded-full">
+                            ✓ SELECTED
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="text-center mb-6">
+                        <h3 className="text-2xl font-secondary font-bold text-navy mb-2">
+                          {plan.name}
+                        </h3>
+                        <div className="text-4xl font-bold text-navy mb-1">
+                          ₹{plan.price.toLocaleString("en-IN")}
+                          <span className="text-lg font-normal text-gray-600">
+                            /month
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500 capitalize">
+                          Monthly billing • No hidden fees
+                        </p>
+                      </div>
+
+                      <ul className="space-y-3 mb-6">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="text-olive mr-2 font-bold text-lg flex-shrink-0">
+                              ✓
+                            </span>
+                            <span className="text-gray-700">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <Button
+                        variant={
+                          isSelected
+                            ? "primary"
+                            : isRecommended
+                              ? "primary"
+                              : "outline"
+                        }
+                        size="lg"
+                        onClick={() => handlePlanSelect(plan)}
+                        className="w-full"
+                      >
+                        {isSelected
+                          ? "✓ Selected"
+                          : `Select ₹${plan.price.toLocaleString("en-IN")}`}
+                      </Button>
+                    </Card>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
         {/* Already Paid Message */}
         {demoData.status === "CONVERTED" && (
