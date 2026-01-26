@@ -14,27 +14,8 @@ import WatermarkBackground from "../../components/common/WatermarkBackground";
 
 const LandingPage = () => {
   const [openFaq, setOpenFaq] = useState(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const sliderImages = [
-    "/Chess/1.jpg",
-    "/Chess/2.jpg",
-    "/Chess/3.jpg",
-    "/Chess/4.jpg",
-    "/Chess/5.jpg",
-    "/Chess/6.jpg",
-    "/Chess/7.jpg",
-  ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
-    }, 4000); // Change slide every 4 seconds
-
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,28 +30,8 @@ const LandingPage = () => {
     setOpenFaq(openFaq === index ? null : index);
   };
 
-  const goToSlide = (index) => {
-    setCurrentSlide(index);
-  };
-
   return (
     <div className="min-h-screen bg-white relative">
-      {/* CSS for zoom animation */}
-      <style>
-        {`
-          @keyframes zoomIn {
-            0% {
-              transform: scale(1);
-            }
-            100% {
-              transform: scale(1.1);
-            }
-          }
-          .zoom-animation {
-            animation: zoomIn 4s ease-out forwards;
-          }
-        `}
-      </style>
       {/* 3D Watermark Background */}
       <WatermarkBackground />
 
@@ -214,40 +175,36 @@ const LandingPage = () => {
 
       {/* Hero Section */}
       <section id="home" className="relative h-screen overflow-hidden mb-0">
-        {/* Image Slider */}
+        {/* Background Video */}
         <div className="absolute inset-0 bg-navy">
-          {sliderImages.map((image, index) => (
-            <div
-              key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
-                index === currentSlide ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <img
-                src={image}
-                alt={`Chess Academy ${index + 1}`}
-                className={`w-full h-full object-cover ${
-                  index === currentSlide ? "zoom-animation" : ""
-                }`}
-                onError={(e) => {
-                  console.log("Image failed to load:", image);
-                  e.target.style.display = "none";
-                }}
-              />
-              {/* Enhanced Smokey Effect with Multiple Layers */}
-              <div className="absolute inset-0 bg-gradient-to-br from-navy/60 via-navy/40 to-orange/30" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
-              <div className="absolute inset-0 backdrop-blur-[1px]" />
-              {/* Vignette Effect */}
-              <div
-                className="absolute inset-0 bg-radial-gradient"
-                style={{
-                  background:
-                    "radial-gradient(circle, transparent 40%, rgba(0,0,0,0.4) 100%)",
-                }}
-              />
-            </div>
-          ))}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover"
+            poster="/Chess/1.jpg"
+          >
+            <source src="/Chess/video.mp4" type="video/mp4" />
+            {/* Fallback image if video doesn't load */}
+            <img
+              src="/Chess/1.jpg"
+              alt="Chess Academy"
+              className="w-full h-full object-cover"
+            />
+          </video>
+          {/* Enhanced Smokey Effect with Multiple Layers */}
+          <div className="absolute inset-0 bg-gradient-to-br from-navy/60 via-navy/40 to-orange/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+          <div className="absolute inset-0 backdrop-blur-[1px]" />
+          {/* Vignette Effect */}
+          <div
+            className="absolute inset-0 bg-radial-gradient"
+            style={{
+              background:
+                "radial-gradient(circle, transparent 40%, rgba(0,0,0,0.4) 100%)",
+            }}
+          />
         </div>
 
         {/* Center Content */}
@@ -277,22 +234,6 @@ const LandingPage = () => {
                   Explore Programs
                 </button>
               </a>
-            </div>
-
-            {/* Slider Dots */}
-            <div className="flex gap-3 justify-center">
-              {sliderImages.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => goToSlide(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentSlide
-                      ? "bg-orange w-8"
-                      : "bg-white/50 hover:bg-white/80"
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
             </div>
           </div>
         </div>
@@ -364,6 +305,97 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Motivational Section */}
+      <section className="relative h-screen overflow-hidden">
+        {/* Full Screen Background Image */}
+        <div className="absolute inset-0 bg-navy">
+          <img
+            src="/Chess/Motivation.jpg"
+            alt="Motivational Chess Stories"
+            className="w-full h-full object-cover"
+          />
+          {/* Enhanced Overlay Effects */}
+          <div className="absolute inset-0 bg-gradient-to-br from-navy/70 via-navy/50 to-orange/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+          <div className="absolute inset-0 backdrop-blur-[0.5px]" />
+          {/* Vignette Effect */}
+          <div
+            className="absolute inset-0 bg-radial-gradient"
+            style={{
+              background:
+                "radial-gradient(circle, transparent 30%, rgba(0,0,0,0.5) 100%)",
+            }}
+          />
+        </div>
+
+        {/* Chess Piece Decorations */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-10 left-10 text-white/10 text-6xl animate-pulse">
+            ♟
+          </div>
+          <div className="absolute top-20 right-20 text-white/10 text-4xl animate-pulse delay-1000">
+            ♚
+          </div>
+          <div className="absolute bottom-20 left-1/4 text-white/10 text-5xl animate-pulse delay-500">
+            ♛
+          </div>
+          <div className="absolute bottom-10 right-10 text-white/10 text-3xl animate-pulse delay-1500">
+            ♜
+          </div>
+        </div>
+
+        {/* Center Content */}
+        <div className="relative z-10 h-full flex items-center justify-center px-4 md:px-6 lg:px-12">
+          <div className="text-center max-w-4xl">
+            {/* Inspiration Badge */}
+            <div className="inline-flex items-center space-x-2 bg-orange/20 backdrop-blur-sm px-4 md:px-6 py-2 md:py-3 rounded-full mb-6 md:mb-8 border border-white/20">
+              <span className="text-2xl md:text-3xl">🎯</span>
+              <span className="text-white font-semibold text-base md:text-lg">
+                INSPIRATION
+              </span>
+            </div>
+
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-secondary font-bold text-white mb-4 md:mb-6 leading-tight">
+              Ignite Your
+              <span className="block text-orange">Chess Passion</span>
+            </h2>
+
+            <p className="text-lg md:text-xl lg:text-2xl text-cream mb-6 md:mb-8 leading-relaxed max-w-3xl mx-auto px-2 md:px-0">
+              Watch real stories of transformation. See how ordinary students
+              become extraordinary chess masters through dedication, strategy,
+              and the timeless wisdom of the game.
+            </p>
+
+            {/* Floating Action Elements */}
+            <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 space-x-0 sm:space-x-6 mb-8 md:mb-12">
+              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 md:px-4 py-2 rounded-full animate-pulse">
+                <span className="text-xl md:text-2xl">🔥</span>
+                <span className="text-white font-semibold text-sm md:text-base">
+                  Real Stories
+                </span>
+              </div>
+              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 md:px-4 py-2 rounded-full animate-pulse">
+                <span className="text-xl md:text-2xl">💪</span>
+                <span className="text-white font-semibold text-sm md:text-base">
+                  Life Skills
+                </span>
+              </div>
+            </div>
+
+            {/* Inspirational Quote */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 md:p-6 max-w-2xl mx-auto border border-white/20">
+              <p className="text-cream font-semibold italic text-base md:text-lg leading-relaxed">
+                "Chess is not just a game. It's a way of life that teaches us
+                patience, strategy, and the beauty of thinking ahead."
+              </p>
+              <p className="text-orange text-xs md:text-sm mt-3 md:mt-4 font-medium">
+                - Viraj Pandit, Founder
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Why Learn Chess Section */}
       <section className="py-16 px-6 lg:px-12 bg-navy relative z-10">
         <div className="container mx-auto max-w-6xl">
@@ -415,6 +447,133 @@ const LandingPage = () => {
                 </Card>
               </RotateCard3D>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16 px-4 md:px-6 lg:px-12 bg-orange relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-10 left-10 text-6xl">♟</div>
+          <div className="absolute top-20 right-20 text-4xl">♚</div>
+          <div className="absolute bottom-20 left-1/4 text-5xl">♛</div>
+          <div className="absolute bottom-10 right-10 text-3xl">♜</div>
+        </div>
+
+        <div className="container mx-auto max-w-7xl relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
+            {/* Video Content */}
+            <div className="order-2 lg:order-1">
+              <div className="relative">
+                {/* Video Container */}
+                <div className="relative max-w-sm md:max-w-md mx-auto lg:mx-0">
+                  {/* Video Player */}
+                  <div className="relative bg-black rounded-lg overflow-hidden aspect-[4/5] shadow-2xl">
+                    <video
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="w-full h-full object-cover"
+                      poster="/Chess/Motivation.jpg"
+                    >
+                      <source src="/Chess/Motivation.mp4" type="video/mp4" />
+                      {/* Fallback content */}
+                      <div className="w-full h-full bg-gradient-to-br from-navy to-orange flex items-center justify-center">
+                        <div className="text-center text-white">
+                          <div className="text-3xl mb-4">🎥</div>
+                          <p className="text-sm">Motivational Video</p>
+                        </div>
+                      </div>
+                    </video>
+
+                    {/* Video Controls Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4">
+                      <div className="flex items-center justify-between text-white">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                          <span className="text-xs font-medium">LIVE</span>
+                        </div>
+                        <div className="text-xs opacity-75">
+                          Motivational Stories
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Floating Elements */}
+                  <div className="absolute -top-3 -right-3 md:-top-4 md:-right-4 w-6 h-6 md:w-8 md:h-8 bg-orange rounded-full flex items-center justify-center text-white text-xs md:text-sm font-bold shadow-lg animate-bounce">
+                    🔥
+                  </div>
+                  <div className="absolute -bottom-3 -left-3 md:-bottom-4 md:-left-4 w-6 h-6 md:w-8 md:h-8 bg-navy rounded-full flex items-center justify-center text-white text-xs md:text-sm font-bold shadow-lg animate-pulse">
+                    💪
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Text Content */}
+            <div className="order-1 lg:order-2 text-center lg:text-left">
+              <div className="space-y-4 md:space-y-6">
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-secondary font-bold text-white leading-tight">
+                  Real Stories of
+                  <span className="block text-white">Transformation</span>
+                </h2>
+
+                <p className="text-base md:text-lg text-white leading-relaxed max-w-lg mx-auto lg:mx-0 px-2 md:px-0">
+                  Watch inspiring journeys of students who turned their chess
+                  dreams into reality. From beginners to champions, see how
+                  dedication and expert guidance create extraordinary results.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center lg:justify-start px-4 md:px-0">
+                  <div className="bg-white/90 backdrop-blur-sm rounded-lg md:rounded-xl p-3 md:p-4 shadow-lg border border-orange/20">
+                    <div className="flex items-center space-x-2 md:space-x-3">
+                      <div className="w-8 h-8 md:w-10 md:h-10 bg-orange rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm md:text-lg">
+                          ⭐
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-navy text-sm md:text-base">
+                          Success Stories
+                        </p>
+                        <p className="text-xs md:text-sm text-gray-600">
+                          Real student journeys
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white/90 backdrop-blur-sm rounded-lg md:rounded-xl p-3 md:p-4 shadow-lg border border-navy/20">
+                    <div className="flex items-center space-x-2 md:space-x-3">
+                      <div className="w-8 h-8 md:w-10 md:h-10 bg-navy rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm md:text-lg">
+                          🎯
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-navy text-sm md:text-base">
+                          Life-Changing Impact
+                        </p>
+                        <p className="text-xs md:text-sm text-gray-600">
+                          Beyond the chessboard
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 md:pt-4 px-4 md:px-0">
+                  <p className="text-navy font-semibold italic text-sm md:text-base leading-relaxed">
+                    "Every champion was once a beginner who refused to give up."
+                  </p>
+                  <p className="text-gray-600 text-xs md:text-sm mt-2">
+                    - Viraj Pandit, Founder
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -609,6 +768,217 @@ const LandingPage = () => {
                 ₹1499<span className="text-base font-normal">/month</span>
               </div>
             </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Coaches Section */}
+      <section id="coaches" className="py-16 px-6 lg:px-12 bg-white">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-4xl font-secondary font-bold text-navy text-center mb-12">
+            Meet Our Expert Coaches
+          </h2>
+          <p className="text-lg text-gray-700 text-center mb-12 max-w-3xl mx-auto">
+            Our certified coaches bring years of experience and passion for
+            chess, helping students achieve their full potential through
+            personalized guidance and strategic mentorship.
+          </p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Coach 1 */}
+            <FloatCard3D floatHeight={15}>
+              <Card className="text-center overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="relative">
+                  <img
+                    src="/coaches/COACH1.png"
+                    alt="Expert Chess Coach"
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="text-xl font-secondary font-bold text-white mb-1">
+                      Grandmaster Arjun
+                    </h3>
+                    <p className="text-orange font-semibold text-sm">
+                      FIDE Rated 2400+
+                    </p>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <p className="text-gray-700 mb-4">
+                    Former National Champion with 15+ years of coaching
+                    experience. Specializes in advanced tactics and tournament
+                    preparation.
+                  </p>
+                  <div className="flex justify-center space-x-4 text-sm text-gray-600">
+                    <span>🏆 50+ Tournaments</span>
+                    <span>👥 200+ Students</span>
+                  </div>
+                </div>
+              </Card>
+            </FloatCard3D>
+
+            {/* Coach 2 */}
+            <FloatCard3D floatHeight={15}>
+              <Card className="text-center overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="relative">
+                  <img
+                    src="/coaches/COACH2.png"
+                    alt="Professional Chess Coach"
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="text-xl font-secondary font-bold text-white mb-1">
+                      Coach Priya
+                    </h3>
+                    <p className="text-orange font-semibold text-sm">
+                      FIDE Rated 2200+
+                    </p>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <p className="text-gray-700 mb-4">
+                    International Women's Champion and youth development
+                    specialist. Expert in beginner to intermediate level
+                    coaching.
+                  </p>
+                  <div className="flex justify-center space-x-4 text-sm text-gray-600">
+                    <span>👑 Women's Champion</span>
+                    <span>🌟 150+ Students</span>
+                  </div>
+                </div>
+              </Card>
+            </FloatCard3D>
+
+            {/* Coach 3 */}
+            <FloatCard3D floatHeight={15}>
+              <Card className="text-center overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="relative">
+                  <img
+                    src="/coaches/COACH3.png"
+                    alt="Experienced Chess Coach"
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="text-xl font-secondary font-bold text-white mb-1">
+                      Coach Ramesh
+                    </h3>
+                    <p className="text-orange font-semibold text-sm">
+                      FIDE Rated 2100+
+                    </p>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <p className="text-gray-700 mb-4">
+                    Chess education specialist with focus on fundamental
+                    development and long-term player growth.
+                  </p>
+                  <div className="flex justify-center space-x-4 text-sm text-gray-600">
+                    <span>📚 Education Expert</span>
+                    <span>🎯 100+ Students</span>
+                  </div>
+                </div>
+              </Card>
+            </FloatCard3D>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-16 px-6 lg:px-12 bg-cream">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-4xl font-secondary font-bold text-navy text-center mb-12">
+            What Our Students & Parents Say
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Parent Testimonial 1 */}
+            <FloatCard3D floatHeight={10}>
+              <Card className="p-6 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+                <div className="flex items-center mb-4">
+                  <img
+                    src="/Testimonials/PARENT1.png"
+                    alt="Parent Testimonial"
+                    className="w-12 h-12 rounded-full object-cover mr-4"
+                  />
+                  <div>
+                    <h4 className="font-semibold text-navy">Mrs. Sharma</h4>
+                    <p className="text-sm text-gray-600">
+                      Parent of Aryan (Age 12)
+                    </p>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <div className="flex text-orange mb-2">{"★".repeat(5)}</div>
+                  <p className="text-gray-700 italic">
+                    "My son has improved tremendously under the guidance of
+                    Coach Arjun. From struggling with basic moves to winning
+                    local tournaments, the transformation has been incredible!"
+                  </p>
+                </div>
+                <div className="text-sm text-gray-500">
+                  ⭐ Improved from beginner to tournament winner in 8 months
+                </div>
+              </Card>
+            </FloatCard3D>
+
+            {/* Student Testimonial */}
+            <FloatCard3D floatHeight={10}>
+              <Card className="p-6 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+                <div className="flex items-center mb-4">
+                  <img
+                    src="/Testimonials/STUDENT.png"
+                    alt="Student Testimonial"
+                    className="w-12 h-12 rounded-full object-cover mr-4"
+                  />
+                  <div>
+                    <h4 className="font-semibold text-navy">Rahul Kumar</h4>
+                    <p className="text-sm text-gray-600">Student (Age 15)</p>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <div className="flex text-orange mb-2">{"★".repeat(5)}</div>
+                  <p className="text-gray-700 italic">
+                    "The coaching methodology is excellent. I love how they
+                    break down complex strategies into simple concepts. My
+                    rating has jumped from 1200 to 1800 in just 6 months!"
+                  </p>
+                </div>
+                <div className="text-sm text-gray-500">
+                  📈 Rating improvement: 1200 → 1800 (6 months)
+                </div>
+              </Card>
+            </FloatCard3D>
+
+            {/* Parent Testimonial 2 */}
+            <FloatCard3D floatHeight={10}>
+              <Card className="p-6 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+                <div className="flex items-center mb-4">
+                  <img
+                    src="/Testimonials/PARENT2.png"
+                    alt="Parent Testimonial"
+                    className="w-12 h-12 rounded-full object-cover mr-4"
+                  />
+                  <div>
+                    <h4 className="font-semibold text-navy">Mr. Patel</h4>
+                    <p className="text-sm text-gray-600">
+                      Parent of Priya (Age 10)
+                    </p>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <div className="flex text-orange mb-2">{"★".repeat(5)}</div>
+                  <p className="text-gray-700 italic">
+                    "Coach Priya has been amazing with my daughter. She not only
+                    teaches chess but also builds confidence and strategic
+                    thinking. The progress reports are detailed and helpful."
+                  </p>
+                </div>
+                <div className="text-sm text-gray-500">
+                  💪 Enhanced confidence and strategic thinking
+                </div>
+              </Card>
+            </FloatCard3D>
           </div>
         </div>
       </section>
