@@ -6,6 +6,16 @@ import crypto from "crypto";
 import { generateSetPasswordToken } from "../utils/passToken.util.js";
 import { sendSetPasswordEmail } from "../utils/email.util.js";
 
+
+const isProd = process.env.NODE_ENV === "production";
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProd, // true in prod, false locally
+  sameSite: isProd ? "none" : "lax",
+};
+
+
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -42,11 +52,8 @@ export const login = async (req, res) => {
     const refreshToken = generateRefreshToken(user);
 
     // 5️⃣ Store refresh token securely
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
+    res.cookie("refreshToken", refreshToken, cookieOptions);
+
 
     // 6️⃣ Send response
     res.json({
@@ -85,11 +92,8 @@ export const refreshAccessToken = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
+  res.clearCookie("refreshToken", cookieOptions);
+
 
   res.json({ message: "Logged out successfully" });
 };
