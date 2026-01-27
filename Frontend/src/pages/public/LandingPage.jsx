@@ -633,15 +633,15 @@ const LandingPage = () => {
                 React, UI/UX, Responsive Design
               </p>
             </Card>
-            {/* Abhinva Verma */}
+            {/* Abhinav Verma */}
             <Card className="text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <img
-                src="/Developers/Abhinav.jpeg"
+                src="/Developers/Abhinav.png"
                 alt="Abhinva Verma"
                 className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-navy/10"
               />
               <h3 className="text-xl font-secondary font-bold text-navy mb-1">
-                Abhinva Verma
+                Abhinav Verma
               </h3>
               <p className="text-sm text-gray-500 mb-1">IIIT Dharwad CSE</p>
               <p className="text-orange mb-2">AI/ML Expert</p>
