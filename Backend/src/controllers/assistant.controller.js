@@ -7,6 +7,38 @@ import {
   simulateFunnelService,
   getExplainableAnalyticsService,
 } from "../services/intelligence.service.js";
+import { CoachProfile } from "../models/coach.model.js";
+import { Student } from "../models/student.model.js";
+import { Demo } from "../models/demo.model.js";
+import { Batch } from "../models/batch.model.js";
+import { Subscription } from "../models/subscription.model.js";
+import { Payment } from "../models/payment.model.js";
+import { CoachPayout } from "../models/coachPayout.model.js";
+
+
+const getDateRange = (timeRange) => {
+  const now = new Date();
+
+  if (timeRange === "this_month") {
+    return { $gte: new Date(now.getFullYear(), now.getMonth(), 1) };
+  }
+
+  if (timeRange === "last_month") {
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { $gte: start, $lt: end };
+  }
+
+  if (timeRange === "this_week") {
+    const start = new Date();
+    start.setDate(now.getDate() - 7);
+    return { $gte: start };
+  }
+
+  return null;
+};
+
+
 
 export const adminAssistant = async (req, res) => {
   try {
@@ -16,6 +48,147 @@ export const adminAssistant = async (req, res) => {
     if (!message || message.trim().length === 0) {
       return res.json({
         answer: "Please ask a valid operational question.",
+      });
+    }
+
+    /* ---------- SIMPLE STATS FAST PATH ---------- */
+    const isSimpleStatsQuestion = /how many|count|total|number of/i.test(
+      message,
+    );
+
+    /* ---------- FILTERED STATS ---------- */
+    const isFilteredStats =
+      /(paid|pending|failed|completed|this month|last month|this week)/i.test(
+        message,
+      );
+
+    if (isFilteredStats) {
+      let count = 0;
+      let answer = "No matching records found.";
+
+      // paid coaches this month
+      if (/coach/i.test(message) && /paid/i.test(message)) {
+       let timeRange = "this_month";
+
+       if (/last month/i.test(message)) timeRange = "last_month";
+       else if (/this week/i.test(message)) timeRange = "this_week";
+
+       const dateRange = getDateRange(timeRange);
+
+
+        const paidCoachIds = await CoachPayout.distinct("coachId", {
+          status: "PAID",
+          ...(dateRange && { paidAt: dateRange }),
+        });
+
+        count = paidCoachIds.length;
+
+
+        answer = `${count} coaches have been paid this month.`;
+      }
+
+      // payment pending demos
+      else if (/demo/i.test(message) && /pending/i.test(message)) {
+        count = await Demo.countDocuments({
+          status: "PAYMENT_PENDING",
+        });
+
+        answer = `${count} demos are currently payment pending.`;
+      }
+
+      return res.json({
+        intent: "FILTERED_STATS",
+        answer,
+      });
+    }
+
+    if (isSimpleStatsQuestion) {
+      let answer = "I couldn't determine the requested count.";
+
+      if (/coach/i.test(message)) {
+        const count = await CoachProfile.countDocuments();
+        answer = `There are currently ${count} coaches in the system.`;
+      } else if (/student/i.test(message)) {
+        const count = await Student.countDocuments();
+        answer = `There are currently ${count} students in the system.`;
+      } else if (/demo/i.test(message)) {
+        const count = await Demo.countDocuments();
+        answer = `There are currently ${count} demos recorded.`;
+      }
+
+      return res.json({
+        intent: "SIMPLE_STATS",
+        answer,
+      });
+    }
+
+    /* ---------- LIST QUERY ---------- */
+    const isListQuery = /(list|show|which|give me)/i.test(message);
+
+    if (isListQuery) {
+      let items = [];
+
+      // demos needing follow-up
+      if (/demo/i.test(message) && /follow/i.test(message)) {
+        items = await Demo.find({
+          status: { $in: ["ATTENDED", "INTERESTED", "PAYMENT_PENDING"] },
+        })
+          .select("_id status scheduledEnd")
+          .limit(5)
+          .lean();
+      }
+
+      if (items.length === 0) {
+        return res.json({
+          intent: "LIST_QUERY",
+          answer: "No matching records found.",
+        });
+      }
+
+      // Let Gemini summarize the list
+      const summary = await geminiGenerate({
+        systemPrompt: `
+Summarize the following list for an admin.
+Do not invent data.
+Keep it short.
+`,
+        userPrompt: JSON.stringify(items),
+      });
+
+      return res.json({
+        intent: "LIST_QUERY",
+        answer: summary,
+        data: items,
+      });
+    }
+
+    /* ---------- AGGREGATE STATS ---------- */
+    const isAggregateStats =
+      /(revenue|amount|total paid|total revenue|payout)/i.test(message);
+
+    if (isAggregateStats) {
+      const dateRange = getDateRange("this_month");
+
+      const result = await Payment.aggregate([
+        {
+          $match: {
+            status: "SUCCESS",
+            ...(dateRange && { createdAt: dateRange }),
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$amount" },
+          },
+        },
+      ]);
+
+      const total = result[0]?.total || 0;
+
+      return res.json({
+        intent: "AGGREGATE_STATS",
+        answer: `Total revenue this month is ₹${total}.`,
       });
     }
 
